@@ -1,62 +1,81 @@
 "use client";
-
-import * as React from "react";
-
-import { cn } from "@/lib/utils";
-import { Spinner } from "@/components/ui/Spinner";
+import { useState } from "react";
+import {
+	Form,
+	FormControl,
+	FormField,
+	FormItem,
+	FormLabel,
+	FormMessage,
+} from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { signInSchema } from "@/lib/zod";
+import { Spinner } from "@/components/ui/Spinner";
+import ErrorMessage from "@/components/error-message";
 
-export function UserAuthForm({ className, ...props }) {
-	const [isLoading, setIsLoading] = React.useState(false);
-
-	async function onSubmit(event) {
-		event.preventDefault();
-		setIsLoading(true);
-
-		setTimeout(() => {
-			setIsLoading(false);
-		}, 3000);
-	}
-
+export function UserAuthForm({ onSubmit, error }) {
+	const form = useForm({
+		resolver: zodResolver(signInSchema),
+		defaultValues: { email: "", password: "" },
+	});
 	return (
-		<div className={cn("grid gap-6", className)} {...props}>
-			<form onSubmit={onSubmit}>
-				<div className="grid gap-2">
-					<div className="grid gap-1">
-						<Label className="sr-only" htmlFor="email">
-							Email
-						</Label>
-						<Input
-							id="email"
-							placeholder="name@example.com"
-							type="email"
-							autoCapitalize="none"
-							autoComplete="email"
-							autoCorrect="off"
-							disabled={isLoading}
-						/>
-					</div>
-					<Button disabled={isLoading}>
-						{isLoading && <Spinner />}
-						Sign In with Email
+		<>
+			{error && <ErrorMessage error={error} />}
+			<Form {...form}>
+				<form
+					method="post"
+					onSubmit={form.handleSubmit(onSubmit)}
+					className="grid space-y-3"
+				>
+					<FormField
+						control={form.control}
+						name="email"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>Email</FormLabel>
+								<FormControl>
+									<Input
+										type="email"
+										placeholder="Enter your email address"
+										autoComplete="off"
+										{...field}
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+
+					<FormField
+						control={form.control}
+						name="password"
+						render={({ field }) => (
+							<FormItem>
+								<FormLabel>Password</FormLabel>
+								<FormControl>
+									<Input
+										type="password"
+										placeholder="Enter password"
+										{...field}
+									/>
+								</FormControl>
+								<FormMessage />
+							</FormItem>
+						)}
+					/>
+
+					<Button
+						type="submit"
+						disabled={form.formState.isSubmitting}
+					>
+						{form.formState.isSubmitting && <Spinner />}
+						Sign In
 					</Button>
-				</div>
-			</form>
-			<div className="relative">
-				<div className="absolute inset-0 flex items-center">
-					<span className="w-full border-t" />
-				</div>
-				<div className="relative flex justify-center text-xs uppercase">
-					<span className="bg-background px-2 text-muted-foreground">
-						Or continue with
-					</span>
-				</div>
-			</div>
-			<Button variant="outline" type="button" disabled={isLoading}>
-				{isLoading ? <Spinner /> : "GitHub"}
-			</Button>
-		</div>
+				</form>
+			</Form>
+		</>
 	);
 }
