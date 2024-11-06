@@ -2,13 +2,11 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-import { compare, hash } from "bcryptjs";
+import { compare } from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
 import { randomBytes } from "crypto";
 
 const prisma = new PrismaClient();
-
-console.log("NextAuth API endpoint loaded");
 
 const handler = NextAuth({
 	providers: [
@@ -18,11 +16,7 @@ const handler = NextAuth({
 		}),
 		CredentialsProvider({
 			name: "Credentials",
-			credentials: {
-				email: { label: "Email", type: "email" },
-				password: { label: "Password", type: "password" },
-			},
-			async authorize(credentials) {
+			async authorize(credentials, req) {
 				if (!credentials?.email || !credentials?.password) {
 					throw new Error("Please enter an email and password");
 				}
@@ -46,7 +40,7 @@ const handler = NextAuth({
 					throw new Error("Invalid password");
 				}
 
-				user;
+				return user;
 			},
 		}),
 	],
@@ -56,14 +50,12 @@ const handler = NextAuth({
 	},
 	callbacks: {
 		async jwt({ token, user }) {
-			console.log("JWT token:", token, user);
 			if (user) {
 				token.id = user.id;
 			}
 			return token;
 		},
 		async session({ session, token }) {
-			console.log("Session:", session);
 			if (session.user) {
 				session.user.id = token.id;
 			}

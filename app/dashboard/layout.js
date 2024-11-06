@@ -14,10 +14,17 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 function DashboardLayout({ children }) {
-	const { data: session } = useSession();
-	console.log(session);
+	const router = useRouter();
+	const { data: session } = useSession({
+		required: true,
+		onUnauthenticated() {
+			router.push("/");
+		},
+	});
+	console.log("session", session);
 	return (
 		<SidebarProvider>
 			<AppSidebar />
