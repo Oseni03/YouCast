@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSelectedLayoutSegments } from "next/navigation";
 
 function DashboardLayout({ children }) {
 	const router = useRouter();
@@ -36,15 +36,7 @@ function DashboardLayout({ children }) {
 							orientation="vertical"
 							className="mr-2 h-4"
 						/>
-						<Breadcrumb>
-							<BreadcrumbList>
-								<BreadcrumbItem>
-									<BreadcrumbPage className="line-clamp-1">
-										Project Management & Task Tracking
-									</BreadcrumbPage>
-								</BreadcrumbItem>
-							</BreadcrumbList>
-						</Breadcrumb>
+						<DashboardBreadcrumb />
 					</div>
 					<div className="ml-auto px-3">
 						<NavActions />
@@ -59,3 +51,29 @@ function DashboardLayout({ children }) {
 }
 
 export default DashboardLayout;
+
+const DashboardBreadcrumb = () => {
+	const segments = useSelectedLayoutSegments();
+
+	let breadcrumb;
+	if (segments.length < 1) {
+		breadcrumb = "Components Management & Engagement Tracking";
+	} else {
+		if (segments[0] == "discover") {
+			breadcrumb = "Discover the latest components";
+		} else if (segments[0] == "components") {
+			breadcrumb = "Manage your UI components all in one place";
+		}
+	}
+	return (
+		<Breadcrumb>
+			<BreadcrumbList>
+				<BreadcrumbItem>
+					<BreadcrumbPage className="line-clamp-1">
+						{breadcrumb}
+					</BreadcrumbPage>
+				</BreadcrumbItem>
+			</BreadcrumbList>
+		</Breadcrumb>
+	);
+};
