@@ -24,7 +24,6 @@ function DashboardLayout({ children }) {
 			router.push("/");
 		},
 	});
-	console.log("session", session);
 	return (
 		<SidebarProvider>
 			<AppSidebar />
