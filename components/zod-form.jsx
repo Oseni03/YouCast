@@ -10,12 +10,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select } from "@/components/ui/select";
 import {
+	Select,
 	SelectTrigger,
 	SelectContent,
-	SelectOption,
-} from "@/components/ui/select"; // Adjust based on your Select component structure
+	SelectValue,
+} from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Spinner } from "@/components/ui/Spinner";
@@ -127,9 +127,9 @@ const FormInput = ({ type, placeholder, options, autoComplete, field }) => {
 				</SelectTrigger>
 				<SelectContent>
 					{options.map((option) => (
-						<SelectOption key={option.value} value={option.value}>
+						<SelectValue key={option.value} value={option.value}>
 							{option.label}
-						</SelectOption>
+						</SelectValue>
 					))}
 				</SelectContent>
 			</Select>

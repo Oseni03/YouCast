@@ -15,9 +15,11 @@ import { FeedbackForm } from "./feedback-form";
 export function NavActions() {
 	return (
 		<div className="flex items-center gap-2 text-sm">
-			<Button variant="outline" size="sm" className="rounded-full">
-				feedback
-			</Button>
+			<FeedbackDialog>
+				<Button variant="outline" size="sm" className="rounded-full">
+					feedback
+				</Button>
+			</FeedbackDialog>
 			<UserDropdownMenu />
 		</div>
 	);
