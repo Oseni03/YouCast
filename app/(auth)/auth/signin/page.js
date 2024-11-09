@@ -4,6 +4,7 @@ import { UserAuthForm } from "../../components/user-auth-form";
 import AuthPage from "../../components/auth-page";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 
 export default function Page() {
 	const router = useRouter();
@@ -22,7 +23,7 @@ export default function Page() {
 				setGlobalError(result.error);
 				return;
 			}
-			console.log("sign -n succesful", result);
+			toast.success("Sign in successful.");
 
 			router.push("/dashboard");
 		} catch (error) {

@@ -4,6 +4,7 @@ import { signIn } from "next-auth/react";
 import { UserAuthForm } from "../../components/user-auth-form";
 import AuthPage from "../../components/auth-page";
 import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 
 // export const metadata = {
 // 	title: "Sign up",
@@ -37,6 +38,7 @@ export default function Page() {
 				}
 
 				router.push("/dashboard");
+				toast.success("Sign up successful.");
 			} else {
 				const data = await res.json();
 				setGlobalError(data.error);
