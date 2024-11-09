@@ -1,24 +1,25 @@
 import { TITLE_TAILWIND_CLASS } from "@/utils/constants";
 import Image from "next/image";
 import Link from "next/link";
+import BlogImage from "@/public/blog-sample.png";
 
 export default function BlogSample() {
 	const articles = [
 		{
 			id: 1,
-			image: "https://seo-heist.s3.amazonaws.com/user_2cxTR5I0BjOLeNCnee3qUze0LUo/1af01aca-6ce1-4a3f-8e54-e945e3104889.png",
+			image: BlogImage,
 			title: "The Importance of Storytelling in Modern Branding",
 			date: "2024-04-15 21:16:04.765648-05",
 		},
 		{
 			id: 2,
-			image: "https://seo-heist.s3.amazonaws.com/user_2cxTR5I0BjOLeNCnee3qUze0LUo/96bf3bb0-9e15-4745-b966-91d719651429.png",
+			image: BlogImage,
 			title: "How to Choose the Right Dog for Your Lifestyle",
 			date: "2024-04-16 08:29:32.188999-05",
 		},
 		{
 			id: 3,
-			image: "https://seo-heist.s3.amazonaws.com/user_2cxTR5I0BjOLeNCnee3qUze0LUo/36292d36-cfae-4106-8d59-ace222f4bc82.png",
+			image: BlogImage,
 			title: "Top Automation Testing Suites for Seamless Software Testing",
 			date: "2024-04-16 15:20:52.368844-05",
 		},

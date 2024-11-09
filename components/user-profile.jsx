@@ -1,3 +1,4 @@
+"use client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
 	DropdownMenu,
@@ -53,6 +54,13 @@ export function UserProfile() {
 							<User className="mr-2 h-4 w-4" />
 							<span>Profile</span>
 							<DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+						</DropdownMenuItem>
+					</Link>
+					<Link href="/dashboard">
+						<DropdownMenuItem>
+							<User className="mr-2 h-4 w-4" />
+							<span>Dashboard</span>
+							<DropdownMenuShortcut>⇧⌘D</DropdownMenuShortcut>
 						</DropdownMenuItem>
 					</Link>
 					<Link href="/dashboard/settings">

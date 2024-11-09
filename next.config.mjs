@@ -8,12 +8,6 @@ const nextConfig = {
 				port: "",
 				pathname: "/f/**",
 			},
-			{
-				protocol: "https",
-				hostname: "seo-heist.s3.amazonaws.com",
-				port: "",
-				pathname: "/**", // Allows all paths under this domain
-			},
 		],
 	},
 };
