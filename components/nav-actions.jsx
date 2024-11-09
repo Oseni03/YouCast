@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import UserDropdownMenu from "./user-dropdown-menu";
+import { UserProfile } from "./user-profile";
 import {
 	Dialog,
 	DialogContent,
@@ -20,7 +20,7 @@ export function NavActions() {
 					feedback
 				</Button>
 			</FeedbackDialog>
-			<UserDropdownMenu />
+			<UserProfile />
 		</div>
 	);
 }

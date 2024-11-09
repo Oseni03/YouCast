@@ -3,15 +3,14 @@ import Link from "next/link";
 import * as React from "react";
 import { GiHamburgerMenu } from "react-icons/gi";
 import { Button } from "../ui/button";
-import {
-	SheetContent,
-	SheetHeader,
-	SheetTitle,
-	SheetTrigger,
-} from "../ui/sheet";
 import { UserProfile } from "../user-profile";
 import ModeToggle from "../mode-toggle";
 import { BlocksIcon } from "lucide-react";
+import {
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
 	NavigationMenu,
 	NavigationMenuContent,
@@ -20,9 +19,7 @@ import {
 	NavigationMenuList,
 	NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
-import config from "@/config";
 import { cn } from "@/lib/utils";
-import { Dialog, DialogClose } from "@radix-ui/react-dialog";
 import { useSession } from "next-auth/react";
 
 const components = [
@@ -46,97 +43,134 @@ const components = [
 export default function NavBar() {
 	let userId = null;
 	const { data: session } = useSession();
+	const [isOpen, setIsOpen] = React.useState(false);
 	userId = session?.user.id;
-	// if (config?.auth?.enabled) {
-	// }
 
 	return (
-		<div className="flex min-w-full fixed justify-between p-2 border-b z-10 dark:bg-black dark:bg-opacity-50 bg-white">
-			<div className="flex justify-between w-full min-[825px]:hidden">
-				<Dialog>
-					<SheetTrigger className="p-2 transition">
-						<Button
-							size="icon"
-							variant="ghost"
-							className="w-4 h-4"
-							aria-label="Open menu"
-							asChild
-						>
-							<GiHamburgerMenu />
-						</Button>
-					</SheetTrigger>
-					<SheetContent side="left">
-						<SheetHeader>
-							<SheetTitle>Next Starter</SheetTitle>
-						</SheetHeader>
-						<div className="flex flex-col space-y-3 mt-[1rem]">
-							<DialogClose asChild>
-								<Link href="/">
-									<Button
-										variant="outline"
-										className="w-full"
-									>
-										Home
-									</Button>
+		<>
+			<Collapsible
+				open={isOpen}
+				onOpenChange={setIsOpen}
+				className="fixed inset-0 z-10 "
+			>
+				<div className="flex min-w-full fixed justify-between items-center p-2 border-b z-20 dark:bg-black dark:bg-opacity-50 bg-white">
+					<div className="flex items-center space-x-2 ">
+						<div className="flex lg:flex-1">
+							<Link
+								href="/"
+								className="pl-2 flex items-center"
+								aria-label="Home"
+							>
+								<BlocksIcon aria-hidden="true" />
+								<span className="sr-only">Home</span>
+							</Link>
+						</div>
+						<CollapsibleTrigger asChild>
+							<Button
+								size="icon"
+								variant="ghost"
+								className="w-4 h-4 md:hidden"
+								aria-label={isOpen ? "Close menu" : "Open menu"}
+							>
+								<GiHamburgerMenu />
+							</Button>
+						</CollapsibleTrigger>
+					</div>
+
+					<NavigationMenu className="hidden md:block">
+						<NavigationMenuList>
+							<NavigationMenuItem className="ml-5">
+								<NavigationMenuTrigger className="dark:bg-black dark:bg-opacity-50">
+									Features
+								</NavigationMenuTrigger>
+								<NavigationMenuContent>
+									<ul className="flex flex-col w-[400px] gap-3 p-4 lg:w-[500px]">
+										{components.map((component, index) => (
+											<ListItem
+												key={index}
+												title={component.title}
+												href={component.href}
+											>
+												{component.description}
+											</ListItem>
+										))}
+									</ul>
+								</NavigationMenuContent>
+							</NavigationMenuItem>
+							<NavigationMenuItem>
+								<Link href="/dashboard" legacyBehavior passHref>
+									<Button variant="ghost">Dashboard</Button>
 								</Link>
-							</DialogClose>
-							<DialogClose asChild>
+							</NavigationMenuItem>
+							<NavigationMenuItem>
+								<Link href="/about" legacyBehavior passHref>
+									<Button variant="ghost">About</Button>
+								</Link>
+							</NavigationMenuItem>
+							<NavigationMenuItem>
 								<Link
-									href="/dashboard"
+									href="/contact-us"
 									legacyBehavior
 									passHref
-									className="cursor-pointer"
 								>
-									<Button variant="outline">Dashboard</Button>
+									<Button variant="ghost">Contact us</Button>
 								</Link>
-							</DialogClose>
-						</div>
-					</SheetContent>
-				</Dialog>
-				<ModeToggle />
-			</div>
-			<NavigationMenu>
-				<NavigationMenuList className="max-[825px]:hidden flex gap-3 w-[100%] justify-between">
-					<Link
-						href="/"
-						className="pl-2 flex items-center"
-						aria-label="Home"
-					>
-						<BlocksIcon aria-hidden="true" />
-						<span className="sr-only">Home</span>
-					</Link>
-				</NavigationMenuList>
-				<NavigationMenuList>
-					<NavigationMenuItem className="max-[825px]:hidden ml-5">
-						<NavigationMenuTrigger className="dark:bg-black dark:bg-opacity-50">
-							Features
-						</NavigationMenuTrigger>
-						<NavigationMenuContent>
-							<ul className="flex flex-col w-[400px] gap-3 p-4 lg:w-[500px]">
-								{components.map((component) => (
-									<ListItem
-										key={component.title}
-										title={component.title}
-										href={component.href}
-									>
-										{component.description}
-									</ListItem>
-								))}
-							</ul>
-						</NavigationMenuContent>
-					</NavigationMenuItem>
-					<NavigationMenuItem className="max-[825px]:hidden">
-						<Link href="/dashboard" legacyBehavior passHref>
-							<Button variant="ghost">Dashboard</Button>
+							</NavigationMenuItem>
+						</NavigationMenuList>
+					</NavigationMenu>
+					<div className="flex items-center gap-2 ">
+						{userId && <UserProfile />}
+						<ModeToggle />
+					</div>
+				</div>
+
+				<CollapsibleContent
+					className={cn(
+						"fixed inset-y-0 left-0 w-64 bg-background border-r shadow-lg transition-transform duration-300 ease-in-out transform",
+						isOpen ? "translate-x-0" : "-translate-x-full"
+					)}
+				>
+					<div className="flex flex-col p-4 space-y-4 mt-16">
+						<Link href="/">
+							<Button
+								variant="ghost"
+								className="w-full justify-start"
+								onClick={() => setIsOpen(false)}
+							>
+								Home
+							</Button>
 						</Link>
-					</NavigationMenuItem>
-				</NavigationMenuList>
-			</NavigationMenu>
-			<div className="flex items-center gap-2 max-[825px]:hidden">
-				{config?.auth?.enabled && <UserProfile />}
-				<ModeToggle />
-			</div>
-		</div>
+						<Link href="/dashboard">
+							<Button
+								variant="ghost"
+								className="w-full justify-start"
+								onClick={() => setIsOpen(false)}
+							>
+								Dashboard
+							</Button>
+						</Link>
+						<Link href="/about">
+							<Button
+								variant="ghost"
+								className="w-full justify-start"
+								onClick={() => setIsOpen(false)}
+							>
+								About
+							</Button>
+						</Link>
+						<Link href="/contact-us">
+							<Button
+								variant="ghost"
+								className="w-full justify-start"
+								onClick={() => setIsOpen(false)}
+							>
+								Contact us
+							</Button>
+						</Link>
+					</div>
+				</CollapsibleContent>
+			</Collapsible>
+		</>
 	);
 }
 
@@ -145,7 +179,7 @@ const ListItem = React.forwardRef(
 		return (
 			<li>
 				<NavigationMenuLink asChild>
-					<a
+					<Link
 						ref={ref}
 						className={cn(
 							"block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
@@ -159,7 +193,7 @@ const ListItem = React.forwardRef(
 						<p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
 							{children}
 						</p>
-					</a>
+					</Link>
 				</NavigationMenuLink>
 			</li>
 		);
