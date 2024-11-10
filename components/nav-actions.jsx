@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { FeedbackForm } from "./feedback-form";
 import ShimmerButton from "./ui/shimmer-button";
+import ModeToggle from "./mode-toggle";
 
 export function NavActions() {
 	return (
@@ -21,6 +22,7 @@ export function NavActions() {
 					</span>
 				</ShimmerButton>
 			</FeedbackDialog>
+			<ModeToggle />
 			<UserProfile />
 		</div>
 	);

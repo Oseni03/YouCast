@@ -12,10 +12,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import config from "@/config";
 import { CircleUser, LogOut, Settings, User } from "lucide-react";
-import { signOut, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { toast } from "react-toastify";
+import { handleLogout } from "@/lib/actions/auth";
 
 export function UserProfile() {
 	const router = useRouter();
@@ -25,16 +25,6 @@ export function UserProfile() {
 	}
 	const { data: session } = useSession();
 	const user = session?.user;
-
-	const handleLogout = async () => {
-		try {
-			await signOut({ redirect: false });
-			router.push("/");
-		} catch (error) {
-			console.log(error);
-			toast.error(error);
-		}
-	};
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild className="w-[2.25rem] h-[2.25rem]">
@@ -71,7 +61,7 @@ export function UserProfile() {
 						</DropdownMenuItem>
 					</Link>
 				</DropdownMenuGroup>
-				<DropdownMenuItem onSelect={handleLogout}>
+				<DropdownMenuItem onSelect={() => handleLogout(router)}>
 					<LogOut className="mr-2 h-4 w-4" />
 					<span>Log out</span>
 					<DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>

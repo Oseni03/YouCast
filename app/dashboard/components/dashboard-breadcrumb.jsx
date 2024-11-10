@@ -12,12 +12,14 @@ export const DashboardBreadcrumb = () => {
 
 	let breadcrumb;
 	if (segments.length < 1) {
-		breadcrumb = "Components Management & Engagement Tracking";
+		breadcrumb = "YouCast: Get the audio-version of YouTube videos";
 	} else {
-		if (segments[0] == "discover") {
-			breadcrumb = "Discover the latest components";
-		} else if (segments[0] == "components") {
-			breadcrumb = "Manage your UI components all in one place";
+		if (segments[0] == "audios") {
+			breadcrumb = "Manage your audios";
+		} else if (segments[0] == "channels") {
+			breadcrumb = "Manage your channel subscription";
+		} else if (segments[0] == "categories") {
+			breadcrumb = "Manage your categories";
 		}
 	}
 	return (

@@ -1,11 +1,12 @@
+"use client";
 import {
-	Calendar,
-	Home,
-	Inbox,
-	Search,
 	Settings,
 	ChevronUp,
 	User2,
+	Music,
+	Tv,
+	Tags,
+	BarChart,
 } from "lucide-react";
 import {
 	DropdownMenu,
@@ -26,37 +27,40 @@ import {
 	SidebarMenuItem,
 	SidebarFooter,
 } from "@/components/ui/sidebar";
+import { handleLogout } from "@/lib/actions/auth";
+import { useRouter } from "next/navigation";
 
 // Menu items.
 const items = [
 	{
-		title: "Home",
-		url: "#",
-		icon: Home,
+		title: "Overview",
+		url: "/dashboad",
+		icon: BarChart,
 	},
 	{
-		title: "Inbox",
-		url: "#",
-		icon: Inbox,
+		title: "Audios",
+		url: "/dashboad/audios",
+		icon: Music,
 	},
 	{
-		title: "Calendar",
-		url: "#",
-		icon: Calendar,
+		title: "Channels",
+		url: "/dashboard/channels",
+		icon: Tv,
 	},
 	{
-		title: "Search",
-		url: "#",
-		icon: Search,
+		title: "Categories",
+		url: "/dashboard/categories",
+		icon: Tags,
 	},
 	{
 		title: "Settings",
-		url: "#",
+		url: "/dashboard/settings",
 		icon: Settings,
 	},
 ];
 
 export function AppSidebar() {
+	const router = useRouter();
 	return (
 		<Sidebar>
 			<SidebarContent>
@@ -98,7 +102,9 @@ export function AppSidebar() {
 								<DropdownMenuItem>
 									<span>Billing</span>
 								</DropdownMenuItem>
-								<DropdownMenuItem>
+								<DropdownMenuItem
+									onSelect={() => handleLogout(router)}
+								>
 									<span>Sign out</span>
 								</DropdownMenuItem>
 							</DropdownMenuContent>
