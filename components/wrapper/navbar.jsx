@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 const components = [
 	{
@@ -41,6 +42,7 @@ const components = [
 ];
 
 export default function NavBar() {
+	const router = useRouter();
 	let userId = null;
 	const { data: session } = useSession();
 	const [isOpen, setIsOpen] = React.useState(false);
@@ -119,7 +121,24 @@ export default function NavBar() {
 						</NavigationMenuList>
 					</NavigationMenu>
 					<div className="flex items-center gap-2 ">
-						{userId && <UserProfile />}
+						{userId ? (
+							<UserProfile />
+						) : (
+							<div className="flex space-x-2">
+								<Button
+									size="sm"
+									onClick={() => router.push("/auth/signin")}
+								>
+									Sign in
+								</Button>
+								<Button
+									size="sm"
+									onClick={() => router.push("/auth/signup")}
+								>
+									Sign up
+								</Button>
+							</div>
+						)}
 						<ModeToggle />
 					</div>
 				</div>

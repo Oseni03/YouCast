@@ -19,6 +19,7 @@ model User {
   sessions      Session[]
   Authenticator Authenticator[]
   feedbacks      Feedback[]
+  subscriptions Channel[]       @relation("UserSubscriptions")
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 }
@@ -85,4 +86,29 @@ model Feedback {
   description String
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Channel {
+  id          String    @id
+  title       String
+  customUrl   String?
+  thumbnailUrl String?
+  subscribers User[]    @relation("UserSubscriptions")
+  videos      Video[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Video {
+  id          String   @id
+  channelId   String
+  channel     Channel  @relation(fields: [channelId], references: [id])
+  title       String
+  description String?
+  thumbnailUrl String?
+  duration    String?
+  publishedAt DateTime
+  audioUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
