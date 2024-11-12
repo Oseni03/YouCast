@@ -38,8 +38,8 @@ const items = [
 		icon: BarChart,
 	},
 	{
-		title: "Audios",
-		url: "/dashboad/audios",
+		title: "Library",
+		url: "/dashboad/library",
 		icon: Music,
 	},
 	{

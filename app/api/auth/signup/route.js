@@ -1,9 +1,6 @@
-// app/api/auth/signup/route.ts
-import { PrismaClient } from "@prisma/client";
 import { hash } from "bcryptjs";
 import { NextResponse } from "next/server";
-// import { prisma } from "@/prisma";
-const prisma = new PrismaClient();
+import {prisma} from "@/lib/db"
 
 export async function POST(req) {
 	try {

@@ -6,6 +6,7 @@ export function useYoutubeProcessor() {
 	return useMutation({
 		mutationFn: (url) => processYoutubeVideo(url),
 		onSuccess: (data) => {
+			console.log(data)
 			// Optionally cache the result using the video ID as a key
 			queryClient.setQueryData(["video", data.videoData.id], data);
 		},
@@ -13,7 +14,7 @@ export function useYoutubeProcessor() {
 }
 
 async function processYoutubeVideo(url) {
-	const response = await fetch("/api/youtube", {
+	const response = await fetch("/api/videos", {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
@@ -22,6 +23,7 @@ async function processYoutubeVideo(url) {
 	});
 
 	const data = await response.json();
+	console.log(data)
 
 	if (!response.ok) {
 		switch (data.code) {

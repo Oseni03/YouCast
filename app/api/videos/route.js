@@ -1,5 +1,8 @@
-import { getVideoData, YouTubeError } from "@/lib/youtube";
-import { extractAudioFromVideo } from "@/lib/youtube";
+import {
+	extractAudioAdvanced,
+	getVideoData,
+	YouTubeError,
+} from "@/lib/youtube";
 
 export async function POST(request) {
 	try {
@@ -22,7 +25,7 @@ export async function POST(request) {
 		// Process video data and audio extraction concurrently
 		const [videoData, audioPath] = await Promise.all([
 			getVideoData(url),
-			extractAudioFromVideo(url),
+			// extractAudioAdvanced()
 		]);
 
 		return Response.json({
