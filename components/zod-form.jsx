@@ -29,6 +29,7 @@ export function ZodForm({
 	submitLabel = "Submit", // Button label text
 	onSubmit, // Function to handle form submission
 	error, // Error message to display
+	isLoading,
 }) {
 	const form = useForm({
 		resolver: zodResolver(schema),
@@ -80,7 +81,9 @@ export function ZodForm({
 						type="submit"
 						disabled={form.formState.isSubmitting}
 					>
-						{form.formState.isSubmitting && <Spinner />}
+						{(form.formState.isSubmitting || isLoading) && (
+							<Spinner />
+						)}
 						{submitLabel}
 					</Button>
 				</form>

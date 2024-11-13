@@ -1,7 +1,7 @@
 import { ZodForm } from "@/components/zod-form";
 import { UrlFormSchema } from "@/lib/zod";
 
-export function UrlForm({ submitHandler, error }) {
+export function UrlForm({ submitHandler, error, isLoading }) {
 	return (
 		<>
 			<ZodForm
@@ -18,6 +18,7 @@ export function UrlForm({ submitHandler, error }) {
 				submitLabel="Add"
 				onSubmit={submitHandler}
 				error={error}
+				isLoading={isLoading}
 			/>
 		</>
 	);

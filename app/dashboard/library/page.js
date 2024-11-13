@@ -22,10 +22,9 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { UrlDialog } from "../components/url-dialog";
 import { prisma } from "@/lib/db";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { UrlForm } from "../components/url-form";
 import { toast } from "react-toastify";
-import { useYoutubeProcessor } from "@/hooks/use-youtube-processor";
 
 const audioLibrary = [
 	{
@@ -122,13 +121,32 @@ const audioLibrary = [
 
 function Page() {
 	const [audios, setAudios] = useState(audioLibrary);
-	const {
-		mutate: processVideo,
-		data: result,
-		error,
-		isLoading,
-		reset,
-	} = useYoutubeProcessor();
+	const [error, setError] = useState("");
+	const [isLoading, setLoading] = useState(false);
+
+	useEffect(() => {
+		fetchAudios();
+	}, []);
+
+	const fetchAudios = async () => {
+		try {
+			const response = await fetch("/api/videos", {
+				method: "GET",
+			});
+
+			if (response.ok) {
+				const userVideos = await response.json();
+				setAudios(userVideos);
+			} else {
+				console.error(
+					"Error fetching audio files:",
+					await response.json()
+				);
+			}
+		} catch (error) {
+			console.error("Error fetching audio files:", error);
+		}
+	};
 
 	const handleFiltering = async (e) => {
 		const query = e.target.value.toLowerCase();
@@ -154,18 +172,32 @@ function Page() {
 	};
 
 	const handleSubmit = async ({ url }) => {
-		reset();
+		setLoading(true);
 
-		processVideo(url, {
-			onSuccess: () => {
-				toast.success("Audio processed successfully!");
-				console.log(result);
-			},
-			onError: (error) => {
-				toast.error(error.message);
-				console.log(error);
-			},
-		});
+		try {
+			const response = await fetch("/api/videos", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ url }),
+			});
+
+			const data = await response.json();
+
+			if (response.ok) {
+				// Update the audios state with the new video data
+				setAudios((prevAudios) => [...prevAudios, data.video]);
+			} else {
+				console.log("Error processing YouTube video:", data.error);
+				setError(data.error);
+			}
+		} catch (error) {
+			console.log("Error submitting YouTube video:", error);
+			setError(error);
+		} finally {
+			setLoading(false);
+		}
 	};
 
 	const dialogTrigger = (
@@ -187,7 +219,11 @@ function Page() {
 					title={"Add audio"}
 					description={"Add a new audio to your library"}
 					content={
-						<UrlForm submitHandler={handleSubmit} error={error} />
+						<UrlForm
+							submitHandler={handleSubmit}
+							error={error}
+							isLoading={isLoading}
+						/>
 					}
 				/>
 			</div>
@@ -216,7 +252,7 @@ function Page() {
 										borderRadius: "4px",
 									}}
 								/>
-								<div className="flex flex-col w-full">
+								<div className="flex flex-col">
 									<div className="flex items-center w-full">
 										<DialogTitle className="text-[10px] font-medium text-black sm:text-xs">
 											{audio.title}
@@ -230,20 +266,13 @@ function Page() {
 												className="w-48"
 											>
 												<DropdownMenuItem className="cursor-pointer">
-													Add to Playlist
-												</DropdownMenuItem>
-												<DropdownMenuItem className="cursor-pointer">
-													Share Track
-												</DropdownMenuItem>
-												<DropdownMenuItem className="cursor-pointer">
-													View Artist
-												</DropdownMenuItem>
-												<DropdownMenuSeparator />
-												<DropdownMenuItem className="cursor-pointer">
-													View Album
+													Share
 												</DropdownMenuItem>
 												<DropdownMenuItem className="cursor-pointer">
 													Download
+												</DropdownMenuItem>
+												<DropdownMenuItem className="cursor-pointer">
+													Delete
 												</DropdownMenuItem>
 											</DropdownMenuContent>
 										</DropdownMenu>

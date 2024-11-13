@@ -1,6 +1,5 @@
 "use client";
 import { useState } from "react";
-import { useYoutubeProcessor } from "@/hooks/use-youtube-processor";
 import { toast } from "react-toastify";
 import { Spinner } from "./ui/Spinner";
 import Image from "next/image";
@@ -11,28 +10,15 @@ import ErrorMessage from "./error-message";
 
 function VideoUrlForm() {
 	const [url, setUrl] = useState("");
-
-	const {
-		mutate: processVideo,
-		data: result,
-		error,
-		isLoading,
-		reset,
-	} = useYoutubeProcessor();
+	const [isLoading, setLoading] = useState(false);
+	const [error, setError] = useState("");
+	const [result, setResult] = useState(null);
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
-		setUrl("");
-		reset();
-
-		processVideo(url, {
-			onSuccess: () => {
-				toast.success("Video processed successfully!");
-			},
-			onError: (error) => {
-				toast.error(error.message);
-			},
-		});
+		setLoading(true);
+		console.log(url);
+		setLoading(false);
 	};
 
 	return (

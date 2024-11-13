@@ -20,6 +20,7 @@ model User {
   Authenticator Authenticator[]
   feedbacks      Feedback[]
   subscriptions Channel[]       @relation("UserSubscriptions")
+  videos        Video[]
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 }
@@ -109,6 +110,7 @@ model Video {
   duration    String?
   publishedAt DateTime
   audioUrl    String?
+  users       User[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
