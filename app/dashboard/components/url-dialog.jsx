@@ -8,20 +8,20 @@ import {
 } from "@/components/ui/dialog";
 import { UrlForm } from "./url-form";
 
-export function UrlDialog({ children }) {
+export function UrlDialog({ trigger, title, description, content }) {
 	return (
 		<Dialog>
-			<DialogTrigger asChild>{children}</DialogTrigger>
+			<DialogTrigger asChild>{trigger}</DialogTrigger>
 			<DialogContent className="max-w-[725px]">
 				<DialogHeader>
 					<DialogTitle className="text-2xl text-center text-primary">
-						Extract video audio
+						{title}
 					</DialogTitle>
 					<DialogDescription className="text-center">
-						Add a new audio to your list
+						{description}
 					</DialogDescription>
 				</DialogHeader>
-				<UrlForm />
+				{content}
 			</DialogContent>
 		</Dialog>
 	);

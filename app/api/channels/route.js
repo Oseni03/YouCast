@@ -63,8 +63,20 @@ export async function GET(request) {
 			where: { id: session.user.id },
 			select: {
 				subscriptions: {
-					include: {
+					select: {
+						id: true,
+						title: true,
+						customUrl: true,
+						thumbnailUrl: true,
+						createdAt: true,
 						videos: {
+							select: {
+								id: true,
+								title: true,
+								description: true,
+								thumbnailUrl: true,
+								publishedAt: true,
+							},
 							orderBy: { publishedAt: "desc" },
 							take: 10,
 						},
@@ -75,7 +87,7 @@ export async function GET(request) {
 
 		return NextResponse.json(channels?.subscriptions || []);
 	} catch (error) {
-		console.error("Error fetching channels:", error);
+		console.log(error.message);
 		return NextResponse.json(
 			{ error: "Failed to fetch channels" },
 			{ status: 500 }

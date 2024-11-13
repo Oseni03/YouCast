@@ -1,14 +1,13 @@
-// app/api/auth/[...nextauth]/route.ts
+// app/api/auth/[...nextauth]/route.js
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import { compare } from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
-import { randomBytes } from "crypto";
 
 const prisma = new PrismaClient();
 
-const handler = NextAuth({
+export const authOptions = {
 	providers: [
 		GoogleProvider({
 			clientId: process.env.GOOGLE_CLIENT_ID,
@@ -16,15 +15,13 @@ const handler = NextAuth({
 		}),
 		CredentialsProvider({
 			name: "Credentials",
-			async authorize(credentials, req) {
+			async authorize(credentials) {
 				if (!credentials?.email || !credentials?.password) {
 					throw new Error("Please enter an email and password");
 				}
 
 				const user = await prisma.user.findUnique({
-					where: {
-						email: credentials.email,
-					},
+					where: { email: credentials.email },
 				});
 
 				if (!user) {
@@ -62,6 +59,8 @@ const handler = NextAuth({
 			return session;
 		},
 	},
-});
+};
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };

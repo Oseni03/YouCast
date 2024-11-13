@@ -39,7 +39,7 @@ const items = [
 	},
 	{
 		title: "Library",
-		url: "/dashboad/library",
+		url: "/dashboard/library",
 		icon: Music,
 	},
 	{

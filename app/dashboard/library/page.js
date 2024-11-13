@@ -20,9 +20,12 @@ import {
 	DialogContainer,
 } from "@/components/motion-ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { UrlDialog } from "./components/url-dialog";
+import { UrlDialog } from "../components/url-dialog";
 import { prisma } from "@/lib/db";
 import { useState } from "react";
+import { UrlForm } from "../components/url-form";
+import { toast } from "react-toastify";
+import { useYoutubeProcessor } from "@/hooks/use-youtube-processor";
 
 const audioLibrary = [
 	{
@@ -119,6 +122,13 @@ const audioLibrary = [
 
 function Page() {
 	const [audios, setAudios] = useState(audioLibrary);
+	const {
+		mutate: processVideo,
+		data: result,
+		error,
+		isLoading,
+		reset,
+	} = useYoutubeProcessor();
 
 	const handleFiltering = async (e) => {
 		const query = e.target.value.toLowerCase();
@@ -142,6 +152,28 @@ function Page() {
 			console.error("Error fetching filtered videos:", error);
 		}
 	};
+
+	const handleSubmit = async ({ url }) => {
+		reset();
+
+		processVideo(url, {
+			onSuccess: () => {
+				toast.success("Audio processed successfully!");
+				console.log(result);
+			},
+			onError: (error) => {
+				toast.error(error.message);
+				console.log(error);
+			},
+		});
+	};
+
+	const dialogTrigger = (
+		<Button>
+			<PlusCircle className="size-4 mr-2" />
+			<span>Add audio</span>
+		</Button>
+	);
 	return (
 		<div>
 			<div className="flex flex-col space-y-2 sm:flex-row sm:items-center justify-between mb-4">
@@ -150,12 +182,14 @@ function Page() {
 					onChange={handleFiltering}
 					className="max-w-sm"
 				/>
-				<UrlDialog>
-					<Button>
-						<PlusCircle className="size-4 mr-2" />
-						<span>Add audio</span>
-					</Button>
-				</UrlDialog>
+				<UrlDialog
+					trigger={dialogTrigger}
+					title={"Add audio"}
+					description={"Add a new audio to your library"}
+					content={
+						<UrlForm submitHandler={handleSubmit} error={error} />
+					}
+				/>
 			</div>
 			<div className="grid space-y-3">
 				{audios.map((audio) => (
