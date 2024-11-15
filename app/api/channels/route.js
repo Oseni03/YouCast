@@ -36,8 +36,8 @@ export async function POST(request) {
 			},
 		});
 
-		// Sync channel videos
-		await syncChannelVideos(channelData.id);
+		// // Sync channel videos
+		// await syncChannelVideos(channelData.id);
 
 		return NextResponse.json(channel);
 	} catch (error) {
@@ -59,33 +59,30 @@ export async function GET(request) {
 			);
 		}
 
-		const channels = await prisma.user.findUnique({
-			where: { id: session.user.id },
-			select: {
-				subscriptions: {
-					select: {
-						id: true,
-						title: true,
-						customUrl: true,
-						thumbnailUrl: true,
-						createdAt: true,
-						videos: {
-							select: {
-								id: true,
-								title: true,
-								description: true,
-								thumbnailUrl: true,
-								publishedAt: true,
-							},
-							orderBy: { publishedAt: "desc" },
-							take: 10,
-						},
+		// Get pagination parameters from the URL
+		const { searchParams } = new URL(request.url);
+		const page = parseInt(searchParams.get("page") || "1");
+		const limit = parseInt(searchParams.get("limit") || "10");
+
+		const channels = await prisma.channel.findMany({
+			where: {
+				subscribers: {
+					some: {
+						id: session.user?.id ?? "",
 					},
 				},
 			},
+			take: limit,
+			skip: (page - 1) * limit,
+			orderBy: {
+				createdAt: "desc",
+			},
 		});
-
-		return NextResponse.json(channels?.subscriptions || []);
+		return NextResponse.json({
+			channels: channels,
+			page: page,
+			pageSize: limit,
+		});
 	} catch (error) {
 		console.log(error.message);
 		return NextResponse.json(

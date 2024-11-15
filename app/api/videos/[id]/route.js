@@ -37,7 +37,7 @@ export async function GET(request, { params }) {
 export async function DELETE(request, { params }) {
 	try {
 		// Extract video ID from the request body
-		const { id } = params;
+		const { id } = await params;
 
 		if (!id) {
 			return Response.json(

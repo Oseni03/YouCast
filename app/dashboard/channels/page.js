@@ -27,81 +27,8 @@ import { UrlDialog } from "../components/url-dialog";
 import { UrlForm } from "../components/url-form";
 import { toast } from "react-toastify";
 
-const youtubeChannels = [
-	{
-		id: "1",
-		title: "Tech Insights",
-		description:
-			"Exploring the latest in tech trends, gadget reviews, and innovation in the tech world.",
-		category: "Technology",
-	},
-	{
-		id: "2",
-		title: "Healthy Living 101",
-		description:
-			"Your go-to source for health tips, workout routines, and nutritious recipes.",
-		category: "Health & Wellness",
-	},
-	{
-		id: "3",
-		title: "Financial Freedom Hub",
-		description:
-			"Learn the best practices in personal finance, investing, and building wealth.",
-		category: "Finance",
-	},
-	{
-		id: "4",
-		title: "Culinary Delights",
-		description:
-			"Delicious recipes, cooking techniques, and kitchen tips for food enthusiasts.",
-		category: "Food & Cooking",
-	},
-	{
-		id: "5",
-		title: "History Revisited",
-		description:
-			"Dive deep into historical events, figures, and intriguing stories from the past.",
-		category: "Education",
-	},
-	{
-		id: "6",
-		title: "Mindful Moments",
-		description:
-			"Guided meditations, mindfulness practices, and stress-relief techniques.",
-		category: "Mental Health",
-	},
-	{
-		id: "7",
-		title: "Daily Science",
-		description:
-			"A channel dedicated to breaking down scientific concepts and latest discoveries.",
-		category: "Science",
-	},
-	{
-		id: "8",
-		title: "Gaming World",
-		description:
-			"Playthroughs, game reviews, and tips for popular video games.",
-		category: "Gaming",
-	},
-	{
-		id: "9",
-		title: "Traveler's Paradise",
-		description:
-			"Travel vlogs, tips, and guides to explore exotic locations around the world.",
-		category: "Travel & Adventure",
-	},
-	{
-		id: "10",
-		title: "Artistic Expressions",
-		description:
-			"Tutorials, artist showcases, and techniques for all things art and design.",
-		category: "Art & Design",
-	},
-];
-
 function Page() {
-	const [channels, setChannels] = useState(youtubeChannels);
+	const [channels, setChannels] = useState([]);
 	const [error, setError] = useState("");
 
 	useEffect(() => {
@@ -109,7 +36,7 @@ function Page() {
 			try {
 				const response = await fetch("/api/channels");
 				const data = await response.json();
-				setChannels(data);
+				setChannels(data.channels);
 			} catch (error) {
 				console.error(error.message);
 			}
@@ -155,7 +82,7 @@ function Page() {
 
 	async function handleSubmit({ url }) {
 		try {
-			const response = await fetch("/api/channel", {
+			const response = await fetch("/api/channels", {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -173,7 +100,6 @@ function Page() {
 				setError(result.error);
 			}
 		} catch (error) {
-			console.log("An unexpected error occurred:", error);
 			setError("An unexpected error occurred. Please try again.");
 		}
 	}
@@ -233,9 +159,9 @@ function Page() {
 					{channels.map((channel) => (
 						<TableRow key={channel.id}>
 							<TableCell className="font-medium">
-								{channel.category}
+								{channel.title}
 							</TableCell>
-							<TableCell>{channel.title}</TableCell>
+							<TableCell>{channel.category}</TableCell>
 							<TableCell className="text-right">
 								<DeleteDialog
 									trigger={deleteDialogTrigger}
