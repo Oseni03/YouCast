@@ -107,6 +107,28 @@ function Page() {
 		}
 	};
 
+	const handleDelete = async (videoId) => {
+		try {
+			const response = await fetch(`/api/videos/${videoId}`, {
+				method: "DELETE",
+			});
+
+			const result = await response.json();
+
+			if (response.ok) {
+				// Update the channels state by filtering out the deleted channel
+				setAudios((prevAudios) =>
+					prevAudios.filter((aud) => aud.id !== videoId)
+				);
+				toast.success("Audio deleted successfully!");
+			} else {
+				toast.error("Failed to delete audio: " + result.error);
+			}
+		} catch (error) {
+			toast.error(error);
+		}
+	};
+
 	const dialogTrigger = (
 		<Button>
 			<PlusCircle className="size-4 mr-2" />
@@ -178,7 +200,12 @@ function Page() {
 												<DropdownMenuItem className="cursor-pointer">
 													Download
 												</DropdownMenuItem>
-												<DropdownMenuItem className="cursor-pointer">
+												<DropdownMenuItem
+													className="cursor-pointer"
+													onSelect={() =>
+														handleDelete(audio.id)
+													}
+												>
 													Delete
 												</DropdownMenuItem>
 											</DropdownMenuContent>
