@@ -76,7 +76,7 @@ function Page() {
 
 	const deleteDialogTrigger = (
 		<Button variant="outline" size="sm" className="border-red-500">
-			Delete
+			Unsubscribe
 		</Button>
 	);
 
@@ -104,29 +104,6 @@ function Page() {
 		}
 	}
 
-	const handleDeleteChannel = async (channelId) => {
-		try {
-			const response = await fetch(`/api/channel/${channelId}`, {
-				method: "DELETE",
-			});
-
-			const result = await response.json();
-
-			if (response.ok) {
-				// Update the channels state by filtering out the deleted channel
-				setChannels((prevChannels) =>
-					prevChannels.filter((channel) => channel.id !== channelId)
-				);
-				toast.success("Channel deleted successfully!");
-			} else {
-				console.error("Error:", result.error);
-				toast.error("Failed to delete channel: " + result.error);
-			}
-		} catch (error) {
-			console.error("An unexpected error occurred:", error);
-			toast.error("An unexpected error occurred. Please try again.");
-		}
-	};
 	return (
 		<div>
 			<div className="flex flex-col space-y-2 sm:flex-row sm:items-center justify-between mb-4">
@@ -166,6 +143,7 @@ function Page() {
 								<DeleteDialog
 									trigger={deleteDialogTrigger}
 									channelId={channel.id}
+									setter={setChannels}
 								/>
 							</TableCell>
 						</TableRow>
@@ -188,7 +166,28 @@ function Page() {
 
 export default Page;
 
-const DeleteDialog = ({ trigger, channelId }) => {
+const DeleteDialog = ({ trigger, channelId, setter }) => {
+	const handleDeleteChannel = async (channelId) => {
+		try {
+			const response = await fetch(`/api/channels/${channelId}`, {
+				method: "DELETE",
+			});
+
+			const result = await response.json();
+
+			if (response.ok) {
+				// Update the channels state by filtering out the deleted channel
+				setter((prevChannels) =>
+					prevChannels.filter((channel) => channel.id !== channelId)
+				);
+				toast.success("Channel deleted successfully!");
+			} else {
+				toast.error("Failed to delete channel: " + result.error);
+			}
+		} catch (error) {
+			toast.error(error);
+		}
+	};
 	return (
 		<AlertDialog>
 			<AlertDialogTrigger asChild>{trigger}</AlertDialogTrigger>
