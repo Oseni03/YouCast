@@ -1,176 +1,102 @@
 import {
-	extractAudioAdvanced,
 	getVideoData,
 	YouTubeError,
-	download,
 	getVideoId,
+	getAudioData,
 } from "@/lib/youtube";
+import { formatDate, formatVideo } from "@/lib/utils";
 import { prisma } from "@/lib/db";
 import { getServerSession } from "next-auth"; // Assuming NextAuth is used
 import { authOptions } from "../auth/[...nextauth]/route"; // Adjust the path based on your setup
 import { NextResponse } from "next/server";
-import path from "path";
-import fs from "fs";
-
-// Helper function to download video
-async function downloadVideo(url, videoId) {
-	const downloadDir = path.resolve("public", "downloads");
-	const videoPath = path.join(downloadDir, `${videoId}.mp4`);
-
-	// Ensure download directory exists
-	if (!fs.existsSync(downloadDir)) {
-		fs.mkdirSync(downloadDir, { recursive: true });
-	}
-
-	// Download video if it doesn't exist
-	if (!fs.existsSync(videoPath)) {
-		await download(url, videoPath);
-	}
-
-	return videoPath;
-}
-
-// Configure output paths
-const AUDIO_DIR = path.resolve("public", "audio");
-if (!fs.existsSync(AUDIO_DIR)) {
-	fs.mkdirSync(AUDIO_DIR, { recursive: true });
-}
 
 export async function POST(request) {
 	try {
-		// Get the current user session
+		// Check user session
 		const session = await getServerSession(authOptions);
 		const user = session?.user;
 
-		const {
-			url,
-			audioFormat = "mp3",
-			audioBitrate = "128k",
-		} = await request.json();
-
-		if (!url) {
-			return Response.json({ error: "URL is required" }, { status: 400 });
-		}
-
-		// Validate YouTube URL
-		const youtubeUrlPattern =
-			/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/;
-		if (!youtubeUrlPattern.test(url)) {
-			return Response.json(
+		// Validate request and URL
+		const { url } = await request.json();
+		if (!url)
+			return NextResponse.json(
+				{ error: "URL is required" },
+				{ status: 400 }
+			);
+		if (!/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+/.test(url)) {
+			return NextResponse.json(
 				{ error: "Invalid YouTube URL" },
 				{ status: 400 }
 			);
 		}
 
-		// Check if the video is already in the database
-		let videoData;
-		const existingVideo = await prisma.video.findFirst({
+		// Check if video already exists for the user
+		const videoId = getVideoId(url);
+		let videoData = await prisma.video.findFirst({
 			where: {
-				id: getVideoId(url),
-				users: {
-					some: {
-						id: user?.id,
-					},
-				},
+				id: videoId,
+				users: { some: { id: user?.id } },
 			},
-			include: {
-				users: true,
-			},
+			include: { channel: true },
 		});
 
-		if (existingVideo) {
-			videoData = {
-				id: existingVideo.id,
-				title: existingVideo.title,
-				description: existingVideo.description,
-				thumbnail: existingVideo.thumbnailUrl,
-				duration: parseInt(existingVideo.duration),
-				view_count: 0, // Not available from database
-				channel: existingVideo.channel.channelId,
-				upload_date: existingVideo.publishedAt
-					.toString()
-					.split("T")[0]
-					.replace(/-/g, ""),
-				audio: {
-					url: existingVideo.audioUrl,
-					format: audioFormat,
-					bitrate: audioBitrate,
-				},
-			};
+		if (videoData) {
+			console.log("Data found in the database");
+			// Map existing video to expected structure
+			videoData = formatVideo(videoData);
 		} else {
-			// Get video metadata
-			videoData = await getVideoData(url);
+			// Fetch video data and audio URL
+			let audioData;
+			[videoData, audioData] = await Promise.all([
+				getVideoData(videoId),
+				getAudioData(videoId),
+			]);
+			console.log("Data arrived");
+			console.log("Video Data: ", videoData);
+			console.log("Audio Data: ", audioData);
 
-			// Generate unique filename based on video ID and timestamp
-			const filename = `${videoData.id}_${Date.now()}`;
-			const outputPath = path.join(
-				AUDIO_DIR,
-				`${filename}.${audioFormat}`
-			);
-
-			// Download video
-			const videoPath = await downloadVideo(url, videoData.id);
-
-			// Extract audio with specified format and options
-			const audioPath = await extractAudioAdvanced(videoPath, {
-				format: audioFormat,
-				bitrate: audioBitrate,
-				outputPath,
-			});
-
-			// Clean up downloaded video file
-			fs.unlinkSync(videoPath);
-
-			// Calculate relative paths for client
-			const audioUrl = `/audio/${path.basename(audioPath)}`;
-
-			// Save video data to the database if the user is authenticated
+			// Save video and audio details to the database for authenticated users
 			if (user) {
-				const newVideo = await prisma.video.create({
-					data: {
-						id: videoData.id,
-						channelId: videoData.channel,
-						title: videoData.title,
-						description: videoData.description,
-						thumbnailUrl: videoData.thumbnail,
-						duration: videoData.duration.toString(),
-						publishedAt: new Date(videoData.upload_date),
-						audioUrl,
-						users: {
-							connect: {
-								id: user.id,
-							},
-						},
+				await prisma.channel.upsert({
+					where: { id: videoData.channelId },
+					update: {},
+					create: {
+						id: videoData.channelId,
+						title: videoData.channelTitle,
 					},
 				});
 
-				videoData.audio = {
-					url: audioUrl,
-					format: audioFormat,
-					bitrate: audioBitrate,
-				};
+				await prisma.video.create({
+					data: {
+						id: videoData.id,
+						channelId: videoData.channelId,
+						title: videoData.title,
+						description: videoData.description,
+						thumbnailUrl: videoData.thumbnail,
+						duration:
+							videoData.duration?.toString() ||
+							audioData.duration?.toString(),
+						publishedAt: new Date(
+							formatDate(videoData.upload_date)
+						),
+						audioUrl: audioData.link,
+						users: { connect: { id: user.id } },
+					},
+				});
 			}
+			console.log("Data saved");
+			videoData.audioUrl = audioData.link;
 		}
-
-		// Return success response with all data
-		return NextResponse.json({
-			success: true,
-			video: videoData,
-		});
+		// Return success response
+		return NextResponse.json(videoData);
 	} catch (error) {
-		// console.log("Error processing YouTube video:", error);
-
-		if (error instanceof YouTubeError) {
-			return NextResponse.json(
-				{ error: error.message, code: error.code },
-				{ status: 400 }
-			);
-		}
-
-		return NextResponse.json(
-			{ error: "Internal server error", code: "INTERNAL_ERROR" },
-			{ status: 500 }
-		);
+		const errorMessage =
+			error instanceof YouTubeError
+				? { error: error.message, code: error.code }
+				: { error: "Internal server error", code: "INTERNAL_ERROR" };
+		return NextResponse.json(errorMessage, {
+			status: error instanceof YouTubeError ? 400 : 500,
+		});
 	}
 }
 
@@ -182,28 +108,57 @@ export async function GET(request) {
 			return Response.json({ error: "Unauthorized" }, { status: 401 });
 		}
 
-		// Fetch all videos owned by the current user's channels
-		const userVideos = await prisma.video.findMany({
+		// Get pagination parameters from the URL
+		const { searchParams } = new URL(request.url);
+		const page = parseInt(searchParams.get("page") || "1");
+		const limit = parseInt(searchParams.get("limit") || "10");
+
+		// Fetch paginated videos owned by the current user's channels
+		const videos = await prisma.video.findMany({
 			where: {
-				channel: {
-					subscribers: {
-						some: {
-							id: session.user.id,
-						},
+				users: {
+					some: {
+						id: session.user?.id,
 					},
 				},
 			},
 			include: {
-				channel: true, // Include related channel data if needed
+				channel: {
+					select: {
+						id: true,
+						title: true,
+						thumbnailUrl: true,
+					},
+				},
 			},
+			take: limit,
+			skip: (page - 1) * limit,
 			orderBy: {
 				publishedAt: "desc",
 			},
 		});
 
-		return Response.json(userVideos);
+		// Format the videos
+		const formattedVideos = videos
+			.map((video) => {
+				try {
+					return formatVideo(video);
+				} catch (error) {
+					console.log(`Error formatting video ${video.id}:`, error);
+					return null;
+				}
+			})
+			.filter(Boolean); // Remove any null values from failed formatting
+
+		return Response.json({
+			videos: formattedVideos,
+			page,
+			pageSize: limit,
+		});
 	} catch (error) {
-		// console.log("Error retrieving user videos:", error);
-		return Response.json({ error: error }, { status: 500 });
+		return Response.json(
+			{ error: error.message || "Internal Server Error" },
+			{ status: 500 }
+		);
 	}
 }

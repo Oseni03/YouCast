@@ -26,101 +26,8 @@ import { useState, useEffect } from "react";
 import { UrlForm } from "../components/url-form";
 import { toast } from "react-toastify";
 
-const audioLibrary = [
-	{
-		id: "1",
-		title: "Relaxing Nature Sounds",
-		description:
-			"A soothing blend of nature sounds including birds, rivers, and gentle wind to help you relax and unwind.",
-		channelName: "Nature Bliss",
-		image: "https://example.com/images/nature-sounds.jpg",
-		audio: "https://example.com/audio/nature-sounds.mp3",
-	},
-	{
-		id: "2",
-		title: "Guided Meditation for Beginners",
-		description:
-			"A peaceful, guided meditation session for beginners to help clear the mind and reduce stress.",
-		channelName: "Mindful Moments",
-		image: "https://example.com/images/guided-meditation.jpg",
-		audio: "https://example.com/audio/guided-meditation.mp3",
-	},
-	{
-		id: "3",
-		title: "Jazz Vibes",
-		description:
-			"A collection of smooth jazz tunes to create a calm and relaxing atmosphere.",
-		channelName: "Jazz Lounge",
-		image: "https://example.com/images/jazz-vibes.jpg",
-		audio: "https://example.com/audio/jazz-vibes.mp3",
-	},
-	{
-		id: "4",
-		title: "Sleep Sounds: Ocean Waves",
-		description:
-			"Relax with the sound of ocean waves, perfect for sleeping or background ambience.",
-		channelName: "Sleep Therapy",
-		image: "https://example.com/images/ocean-waves.jpg",
-		audio: "https://example.com/audio/ocean-waves.mp3",
-	},
-	{
-		id: "5",
-		title: "Daily News Update",
-		description:
-			"Stay informed with the latest headlines and news highlights from around the world.",
-		channelName: "News Central",
-		image: "https://example.com/images/daily-news.jpg",
-		audio: "https://example.com/audio/daily-news.mp3",
-	},
-	{
-		id: "6",
-		title: "The History of Technology",
-		description:
-			"An exploration of the most important technological advancements through the ages.",
-		channelName: "Tech Talks",
-		image: "https://example.com/images/tech-history.jpg",
-		audio: "https://example.com/audio/tech-history.mp3",
-	},
-	{
-		id: "7",
-		title: "Morning Motivation",
-		description:
-			"Get inspired with motivational speeches and advice to start your day positively.",
-		channelName: "Motivation Hub",
-		image: "https://example.com/images/morning-motivation.jpg",
-		audio: "https://example.com/audio/morning-motivation.mp3",
-	},
-	{
-		id: "8",
-		title: "Deep House Mix",
-		description:
-			"A curated mix of deep house tracks to keep you in a relaxed yet energized mood.",
-		channelName: "House Beats",
-		image: "https://example.com/images/deep-house.jpg",
-		audio: "https://example.com/audio/deep-house.mp3",
-	},
-	{
-		id: "9",
-		title: "Science Explained: Black Holes",
-		description:
-			"An in-depth explanation of black holes and their mysteries, simplified for everyone.",
-		channelName: "Science Hub",
-		image: "https://example.com/images/black-holes.jpg",
-		audio: "https://example.com/audio/black-holes.mp3",
-	},
-	{
-		id: "10",
-		title: "Focus Music",
-		description:
-			"Ambient music to help you focus on work, study, or any task that requires concentration.",
-		channelName: "Focus Zone",
-		image: "https://example.com/images/focus-music.jpg",
-		audio: "https://example.com/audio/focus-music.mp3",
-	},
-];
-
 function Page() {
-	const [audios, setAudios] = useState(audioLibrary);
+	const [audios, setAudios] = useState([]);
 	const [error, setError] = useState("");
 	const [isLoading, setLoading] = useState(false);
 
@@ -136,15 +43,15 @@ function Page() {
 
 			if (response.ok) {
 				const userVideos = await response.json();
-				setAudios(userVideos);
+				setAudios(userVideos?.videos);
 			} else {
-				console.error(
+				console.log(
 					"Error fetching audio files:",
 					await response.json()
 				);
 			}
 		} catch (error) {
-			console.error("Error fetching audio files:", error);
+			console.log("Error fetching audio files:", error);
 		}
 	};
 
@@ -187,7 +94,7 @@ function Page() {
 
 			if (response.ok) {
 				// Update the audios state with the new video data
-				setAudios((prevAudios) => [...prevAudios, data.video]);
+				setAudios((prevAudios) => [...prevAudios, data]);
 			} else {
 				console.log("Error processing YouTube video:", data.error);
 				setError(data.error);
@@ -245,7 +152,7 @@ function Page() {
 						>
 							<div className="flex items-center space-x-3 p-3">
 								<DialogImage
-									src="https://m.media-amazon.com/images/I/71skAxiMC2L._AC_UF1000,1000_QL80_.jpg"
+									src={audio.thumbnail}
 									alt={audio.title}
 									className="h-8 w-8 object-cover object-top"
 									style={{
@@ -254,7 +161,7 @@ function Page() {
 								/>
 								<div className="flex flex-col">
 									<div className="flex items-center w-full">
-										<DialogTitle className="text-[10px] font-medium text-black sm:text-xs">
+										<DialogTitle className="text-sm font-medium text-black">
 											{audio.title}
 										</DialogTitle>
 										<DropdownMenu className="ml-auto">
@@ -277,15 +184,15 @@ function Page() {
 											</DropdownMenuContent>
 										</DropdownMenu>
 									</div>
-									<DialogSubtitle className="text-[10px] text-gray-600 sm:text-xs">
-										{audio.channelName}
+									<DialogSubtitle className="text-sm text-gray-600">
+										{audio.channelTitle}
 									</DialogSubtitle>
 								</div>
 							</div>
 							<div className="px-3 mb-3">
 								<audio controls className="mt-2 w-full">
 									<source
-										src="your-audio-file.mp3"
+										src={audio.audioUrl}
 										type="audio/mpeg"
 									/>
 									Your browser does not support the audio
@@ -304,7 +211,7 @@ function Page() {
 									<div className="relative p-6">
 										<div className="flex justify-center py-10">
 											<DialogImage
-												src="https://m.media-amazon.com/images/I/71skAxiMC2L._AC_UF1000,1000_QL80_.jpg"
+												src={audio.thumbnail}
 												alt="What I Talk About When I Talk About Running - book cover"
 												className="h-auto w-[200px]"
 											/>
@@ -341,10 +248,10 @@ function Page() {
 													</DropdownMenuContent>
 												</DropdownMenu>
 											</div>
-											<DialogSubtitle className="font-light text-gray-400">
-												{audio.channelName}
+											<DialogSubtitle className="font-light text-muted-foreground">
+												{audio.channelTitle}
 											</DialogSubtitle>
-											<div className="mt-4 text-sm text-gray-700">
+											<div className="mt-4 text-sm text-gray-800">
 												<p>{audio.description}</p>
 											</div>
 										</div>
