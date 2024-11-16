@@ -25,35 +25,37 @@ import { prisma } from "@/lib/db";
 import { useState, useEffect } from "react";
 import { UrlForm } from "../components/url-form";
 import { toast } from "react-toastify";
+import Pagination from "@/components/pagination";
 
 function Page() {
 	const [audios, setAudios] = useState([]);
 	const [error, setError] = useState("");
 	const [isLoading, setLoading] = useState(false);
+	const [page, setPage] = useState(1);
 
 	useEffect(() => {
-		fetchAudios();
-	}, []);
+		const fetchAudios = async () => {
+			try {
+				const response = await fetch(`/api/videos?page=${page}`, {
+					method: "GET",
+				});
 
-	const fetchAudios = async () => {
-		try {
-			const response = await fetch("/api/videos", {
-				method: "GET",
-			});
-
-			if (response.ok) {
-				const userVideos = await response.json();
-				setAudios(userVideos?.videos);
-			} else {
-				console.log(
-					"Error fetching audio files:",
-					await response.json()
-				);
+				if (response.ok) {
+					const userVideos = await response.json();
+					setAudios(userVideos?.videos);
+				} else {
+					console.log(
+						"Error fetching audio files:",
+						await response.json()
+					);
+				}
+			} catch (error) {
+				console.log("Error fetching audio files:", error);
 			}
-		} catch (error) {
-			console.log("Error fetching audio files:", error);
-		}
-	};
+		};
+
+		fetchAudios();
+	}, [page]);
 
 	const handleFiltering = async (e) => {
 		const query = e.target.value.toLowerCase();
@@ -289,14 +291,11 @@ function Page() {
 						</DialogContainer>
 					</Dialog>
 				))}
-				<div className="ml-auto space-x-2 ">
-					<Button variant="outline" size="sm">
-						Previous
-					</Button>
-					<Button variant="outline" size="sm">
-						Next
-					</Button>
-				</div>
+				<Pagination
+					page={page}
+					setPage={setPage}
+					isLoading={isLoading}
+				/>
 			</div>
 		</div>
 	);
