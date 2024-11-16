@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { getChannelData, syncChannelVideos } from "@/lib/youtube";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
+import { PAGINATION_PAGE_SIZE } from "@/utils/constants";
 
 export async function POST(request) {
 	try {
@@ -62,7 +63,9 @@ export async function GET(request) {
 		// Get pagination parameters from the URL
 		const { searchParams } = new URL(request.url);
 		const page = parseInt(searchParams.get("page") || "1");
-		const limit = parseInt(searchParams.get("limit") || "10");
+		const limit = parseInt(
+			searchParams.get("limit") || PAGINATION_PAGE_SIZE
+		);
 
 		const channels = await prisma.channel.findMany({
 			where: {
