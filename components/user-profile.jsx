@@ -11,11 +11,11 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import config from "@/config";
-import { CircleUser, LogOut, Settings, User } from "lucide-react";
+import { ChartLine, CircleUser, LogOut, Settings, User } from "lucide-react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { handleLogout } from "@/lib/actions/auth";
+import { handleLogout } from "@/lib/actions";
 
 export function UserProfile() {
 	const router = useRouter();
@@ -39,16 +39,16 @@ export function UserProfile() {
 				<DropdownMenuLabel>My Account</DropdownMenuLabel>
 				<DropdownMenuSeparator />
 				<DropdownMenuGroup>
-					<Link href="/user-profile">
+					{/* <Link href="/user-profile">
 						<DropdownMenuItem>
 							<User className="mr-2 h-4 w-4" />
 							<span>Profile</span>
 							<DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
 						</DropdownMenuItem>
-					</Link>
+					</Link> */}
 					<Link href="/dashboard">
 						<DropdownMenuItem>
-							<User className="mr-2 h-4 w-4" />
+							<ChartLine className="mr-2 h-4 w-4" />
 							<span>Dashboard</span>
 							<DropdownMenuShortcut>⇧⌘D</DropdownMenuShortcut>
 						</DropdownMenuItem>

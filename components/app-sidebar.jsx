@@ -27,7 +27,7 @@ import {
 	SidebarMenuItem,
 	SidebarFooter,
 } from "@/components/ui/sidebar";
-import { handleLogout } from "@/lib/actions/auth";
+import { handleLogout } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 
 // Menu items.
