@@ -57,7 +57,7 @@ export const CategoryDialogForm = ({ handleSubmit, error }) => {
 	const dialogTrigger = (
 		<Button>
 			<PlusCircle className="size-4 mr-2" />
-			<span>Add channel</span>
+			<span>Add category</span>
 		</Button>
 	);
 

@@ -14,7 +14,7 @@ import {
 	Select,
 	SelectTrigger,
 	SelectContent,
-	SelectValue,
+	SelectItem,
 } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -130,9 +130,9 @@ const FormInput = ({ type, placeholder, options, autoComplete, field }) => {
 				</SelectTrigger>
 				<SelectContent>
 					{options.map((option) => (
-						<SelectValue key={option.value} value={option.value}>
+						<SelectItem key={option.value} value={option.value}>
 							{option.label}
-						</SelectValue>
+						</SelectItem>
 					))}
 				</SelectContent>
 			</Select>

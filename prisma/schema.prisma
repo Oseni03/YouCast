@@ -19,7 +19,7 @@ model User {
   sessions      Session[]
   Authenticator Authenticator[]
   feedbacks     Feedback[]
-  subscriptions Channel[]       @relation("UserSubscriptions")
+  subscriptions UserSubscription[]
   videos        Video[]
   categories    Category[]      @relation("UserCategories")
   createdAt     DateTime        @default(now())
@@ -91,24 +91,34 @@ model Feedback {
 }
 
 model Channel {
-  id           String   @id @default(uuid())
+  id           String     @id @default(uuid())
   title        String
   customUrl    String?
   thumbnailUrl String?
-  subscribers  User[]   @relation("UserSubscriptions")
   videos       Video[]
-  categoryId  String?      // Make this field nullable
-  category    Category? @relation(fields: [categoryId], references: [id]) // Update relation
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  subscribers  UserSubscription[] // Updated relation to UserSubscription
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model UserSubscription {
+  id           String     @id @default(cuid())
+  userId       String
+  channelId    String
+  categoryId   String?    // Nullable field for categorizing the subscription
+  user         User       @relation(fields: [userId], references: [id])
+  channel      Channel    @relation(fields: [channelId], references: [id])
+  category     Category?  @relation(fields: [categoryId], references: [id]) // Relation to Category
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([userId, channelId]) // Ensure a user cannot subscribe to the same channel twice
 }
 
 model Video {
   id           String   @id
   channelId    String
   channel      Channel  @relation(fields: [channelId], references: [id])
-  categoryId   String?  // Nullable categoryId field
-  category     Category? @relation(fields: [categoryId], references: [id]) // Nullable relation to Category
   title        String
   description  String?
   thumbnailUrl String?
@@ -126,8 +136,7 @@ model Category {
   slug      String
   userId    String
   user      User      @relation("UserCategories", fields: [userId], references: [id])
-  channels  Channel[]
-  videos    Video[]  // One-to-many relation with Video
+  channels  UserSubscription[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 

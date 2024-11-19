@@ -51,9 +51,6 @@ export async function POST(request) {
 				getVideoData(videoId),
 				getAudioData(videoId),
 			]);
-			console.log("Data arrived");
-			console.log("Video Data: ", videoData);
-			console.log("Audio Data: ", audioData);
 
 			// Save video and audio details to the database for authenticated users
 			if (user) {

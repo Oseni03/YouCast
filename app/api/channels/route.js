@@ -2,7 +2,7 @@
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { getChannelData, syncChannelVideos } from "@/lib/youtube";
+import { getChannelData } from "@/lib/youtube";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
 import { PAGINATION_PAGE_SIZE } from "@/utils/constants";
@@ -17,8 +17,15 @@ export async function POST(request) {
 			);
 		}
 
-		const { channelUrl } = await request.json();
-		const channelData = await getChannelData(channelUrl);
+		const { url, category: categoryId } = await request.json();
+		const channelData = await getChannelData(url);
+
+		if (!channelData) {
+			return NextResponse.json(
+				{ error: "Failed to fetch channel data" },
+				{ status: 400 }
+			);
+		}
 
 		// Create or update channel
 		const channel = await prisma.channel.upsert({
@@ -32,7 +39,11 @@ export async function POST(request) {
 			where: { id: session.user.id },
 			data: {
 				subscriptions: {
-					connect: { id: channel.id },
+					connect: {
+						userId: session.user.id,
+						channelId: channel.id,
+						categoryId: categoryId || null,
+					},
 				},
 			},
 		});

@@ -46,12 +46,12 @@ function Page() {
 	};
 
 	// Handle channel addition
-	const handleSubmit = async ({ url }) => {
+	const handleSubmit = async ({ url, category }) => {
 		try {
 			const response = await fetch("/api/channels", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ url }),
+				body: JSON.stringify({ url, category }),
 			});
 			if (!response.ok) throw new Error("Failed to add channel.");
 			const newChannel = await response.json();

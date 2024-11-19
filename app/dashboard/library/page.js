@@ -154,6 +154,7 @@ function Page() {
 							submitHandler={handleSubmit}
 							error={error}
 							isLoading={isLoading}
+							isLibrary={true}
 						/>
 					}
 				/>
