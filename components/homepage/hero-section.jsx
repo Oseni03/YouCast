@@ -1,63 +1,124 @@
-import { cn } from "@/lib/utils";
+"use client";
+import React from "react";
+import Image from "next/image";
+import { useMediaQuery } from "react-responsive";
+import AppImage from "@/public/app-screen-1.jpg";
 import Link from "next/link";
-import TypingAnimation from "../ui/typing-animation";
-import AnimatedGridPattern from "../ui/animated-grid-pattern";
-import VideoUrlForm from "../video-url-form";
+import { Button } from "../ui/button";
+import { BorderBeam } from "../magicui/border-beam";
+import { ArrowRightIcon } from "lucide-react";
+import AnimatedShinyText from "../ui/animated-shiny-text";
+import { cn } from "@/lib/utils";
 
-export default function HeroSection() {
+const HeroSection = () => {
+	const isDesktop = useMediaQuery({ minWidth: 1024 });
+
 	return (
-		<div className="relative isolate px-6 pt-14 lg:px-8">
-			<div className="mx-auto max-w-2xl py-32 sm:py-48 lg:py-56">
-				<div className="hidden sm:mb-8 sm:flex sm:justify-center">
-					<div className="relative rounded-full px-3 py-1 text-sm/6 text-gray-600 ring-1 ring-gray-900/10 hover:ring-gray-900/20">
-						Get instant audios and alert from new videos.{" "}
-						<Link
-							href="/auth/signin"
-							className="font-semibold text-indigo-600"
-						>
-							<span
-								aria-hidden="true"
-								className="absolute inset-0"
-							/>
-							Get started <span aria-hidden="true">&rarr;</span>
-						</Link>
+		<section className="">
+			<div className="container mx-auto px-4 sm:px-6 lg:px-8">
+				<div className="flex flex-col lg:flex-row justify-center lg:justify-start items-center">
+					<div className="lg:w-5/12 text-center lg:text-left">
+						<div className="my-10">
+							<div className="z-10 flex items-center justify-center lg:justify-start my-3">
+								<div
+									className={cn(
+										"group rounded-full border border-black/5 bg-neutral-100 text-base text-white transition-all ease-in hover:cursor-pointer hover:bg-neutral-200 dark:border-white/5 dark:bg-neutral-900 dark:hover:bg-neutral-800"
+									)}
+								>
+									<AnimatedShinyText className="inline-flex items-center justify-center px-4 py-1 transition ease-out hover:text-neutral-600 hover:duration-300 hover:dark:text-neutral-400">
+										<span>✨ Introducing Magic UI</span>
+										<ArrowRightIcon className="ml-1 size-3 transition-transform duration-300 ease-in-out group-hover:translate-x-0.5" />
+									</AnimatedShinyText>
+								</div>
+							</div>
+							<h1 className="text-4xl sm:text-5xl font-bold mb-4">
+								Build your next project even faster.
+							</h1>
+							<p className="text-lg mb-8">
+								Block makes it easy to get your most important
+								work done. Increase efficiency to deliver result
+								& hit your goal on every project.
+							</p>
+						</div>
+						<div className="grid sm:flex sm:flex-row sm:justify-center sm:items-center lg:justify-start space-y-4 sm:space-y-0 sm:space-x-4">
+							<Button>Try for Free</Button>
+							<Button variant="outline">Book a demo</Button>
+						</div>
+						<div className="flex flex-wrap gap-4 mt-10">
+							<div className="flex items-center">
+								<div className="border p-2 rounded-full bg-white text-primary inline-flex items-center">
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="16"
+										height="16"
+										fill="currentColor"
+										className="bi bi-credit-card"
+										viewBox="0 0 16 16"
+									>
+										<path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4zm2-1a1 1 0 0 0-1 1v1h14V4a1 1 0 0 0-1-1H2zm13 4H1v5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V7z" />
+										<path d="M2 10a1 1 0 0 1 1-1h1a1 1 0 0 1 1 1v1a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-1z" />
+									</svg>
+								</div>
+								<span className="ml-2 text-sm">
+									No credit card required
+								</span>
+							</div>
+							<div className="flex items-center">
+								<div className="border p-2 rounded-full bg-white text-primary inline-flex items-center">
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										width="16"
+										height="16"
+										fill="currentColor"
+										className="bi bi-cash-stack"
+										viewBox="0 0 16 16"
+									>
+										<path d="M1 3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1H1zm7 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4z" />
+										<path d="M0 5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H1a1 1 0 0 1-1-1V5zm3 0a2 2 0 0 1-2 2v4a2 2 0 0 1 2 2h10a2 2 0 0 1 2-2V7a2 2 0 0 1-2-2H3z" />
+									</svg>
+								</div>
+								<span className="ml-2 text-sm">
+									Free credits
+								</span>
+							</div>
+						</div>
+					</div>
+					<div className="lg:w-7/12 mt-10 lg:mt-0 lg:pl-12">
+						<div className="relative">
+							<div
+								className="bg-light-subtle p-4 md:p-6 rounded-lg border scene"
+								data-relative-input="true"
+							>
+								<div data-depth="0.09">
+									<figure>
+										<Image
+											src={AppImage}
+											alt="landing"
+											className="w-full rounded-lg shadow border"
+											width={800}
+											height={450}
+										/>
+									</figure>
+								</div>
+							</div>
+							<BorderBeam size={300} duration={12} delay={9} />
+							{isDesktop && (
+								<>
+									<div className="absolute top-0 left-0 mt-40 ml-4">
+										<div className="badge bg-info text-white px-3 py-2 text-sm rounded-full">
+											Developer
+										</div>
+										{/* Additional UI */}
+									</div>
+									{/* Other badges */}
+								</>
+							)}
+						</div>
 					</div>
 				</div>
-				<div className="text-center">
-					<TypingAnimation
-						className="text-balance text-5xl font-semibold tracking-tight text-gray-900 sm:text-7xl dark:text-white"
-						text="Listen to YouTube Content on the Go"
-					/>
-					<p className="mt-8 text-pretty text-lg font-medium text-gray-500 sm:text-xl/8">
-						Never miss an update from your favorite channels.
-						Subscribe to any YouTube channel, and get the audio
-						delivered to you - easy, convenient, and on-demand.
-					</p>
-					<VideoUrlForm />
-					<AnimatedGridPattern
-						numSquares={30}
-						maxOpacity={0.1}
-						duration={3}
-						repeatDelay={1}
-						className={cn(
-							"[mask-image:radial-gradient(500px_circle_at_center,white,transparent)]",
-							"inset-x-0 inset-y-[-30%] h-[200%] skew-y-12"
-						)}
-					/>
-				</div>
 			</div>
-			<div
-				aria-hidden="true"
-				className="absolute inset-x-0 top-[calc(100%-13rem)] -z-10 transform-gpu overflow-hidden blur-3xl sm:top-[calc(100%-30rem)]"
-			>
-				<div
-					style={{
-						clipPath:
-							"polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)",
-					}}
-					className="relative left-[calc(50%+3rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%+36rem)] sm:w-[72.1875rem]"
-				/>
-			</div>
-		</div>
+		</section>
 	);
-}
+};
+
+export default HeroSection;

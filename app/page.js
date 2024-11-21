@@ -1,9 +1,8 @@
 import { AccordionComponent } from "@/components/homepage/accordion-component";
-import BlogSample from "@/components/homepage/blog-samples";
 import HeroSection from "@/components/homepage/hero-section";
-import MarketingCards from "@/components/homepage/marketing-cards";
+import Newsletter from "@/components/homepage/newsletter";
 import Pricing from "@/components/homepage/pricing";
-import SideBySide from "@/components/homepage/side-by-side";
+import Features from "@/components/homepage/features";
 import PageWrapper from "@/components/wrapper/page-wrapper";
 import config from "@/config";
 
@@ -14,22 +13,19 @@ export default function Home() {
 				<HeroSection />
 			</div>
 			<div className="flex my-[8rem] w-full justify-center items-center">
-				<SideBySide />
-			</div>
-			<div className="flex flex-col p-2 w-full justify-center items-center">
-				<MarketingCards />
-			</div>
-			<div className="max-w-[1200px] p-8 mt-[2rem] lg:mt-[6rem] lg:mb-[5rem]">
-				<BlogSample />
+				<Features />
 			</div>
 			{config.auth.enabled && config.payments.enabled && (
 				<div>
 					<Pricing />
 				</div>
 			)}
-			<div className="flex justify-center items-center w-full my-[8rem]">
-				<AccordionComponent />
+			<div className="flex my-[8rem] w-full justify-center items-center px-4">
+				<Newsletter />
 			</div>
+			{/* <div className="flex justify-center items-center w-full my-[8rem]">
+				<AccordionComponent />
+			</div> */}
 		</PageWrapper>
 	);
 }

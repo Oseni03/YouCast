@@ -144,3 +144,10 @@ model Category {
   @@unique([userId, name]) // Enforce unique category names per user
   @@unique([userId, slug]) // Enforce unique slugs per user
 }
+
+model Newsletter {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
