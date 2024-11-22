@@ -5,10 +5,10 @@ import { siteConfig } from "@/config/site";
 
 function AuthPage({ config }) {
 	let url = "";
-	if (config.link.next) {
+	if (config.link?.next) {
 		url = `${config.link.href}?next=${config.link.next}`;
 	} else {
-		url = `${config.link.href}`;
+		url = `${config.link?.href}`;
 	}
 
 	return (

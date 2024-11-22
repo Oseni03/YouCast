@@ -1,8 +1,10 @@
-import { Cloud, Computer, FileAudio, Monitor, Network } from "lucide-react";
+import { Cloud, FileAudio } from "lucide-react";
 import { FaBusinessTime } from "react-icons/fa";
-import { OrbitingCirclesComponent } from "./orbiting-circles";
-import { TITLE_TAILWIND_CLASS } from "@/utils/constants";
 import { cn } from "@/lib/utils";
+import MediaImage from "@/public/illustartions/media.png";
+import ChannelImage from "@/public/illustartions/channels.png";
+import CloudImage from "@/public/illustartions/cloud.png";
+import Image from "next/image";
 
 const features = [
 	{
@@ -10,6 +12,7 @@ const features = [
 		description:
 			"Easily convert any YouTube video into audio with a simple URL input. Enjoy high-quality audio files optimized for your needs, whether it's for offline listening or content creation.",
 		icon: FileAudio,
+		image: MediaImage,
 	},
 	{
 		name: "Automatic Channel Monitoring.",
@@ -17,12 +20,14 @@ const features = [
 			"Subscribe to your favorite YouTube channels and get notified whenever new videos are uploaded. Instantly access audio versions without manually converting each video.",
 		icon: FaBusinessTime,
 		className: "lg:flex-row-reverse",
+		image: ChannelImage,
 	},
 	{
 		name: "Seamless Cloud Integration.",
 		description:
 			"Your extracted audio files are securely uploaded to the cloud, giving you fast access and reliable storage. Share or download audio files effortlessly from anywhere.",
 		icon: Cloud,
+		image: CloudImage,
 	},
 ];
 
@@ -59,7 +64,12 @@ export default function Features() {
 								</dl>
 							</div>
 						</div>
-						<OrbitingCirclesComponent />
+						<Image
+							src={feature.image}
+							width={400}
+							height={400}
+							alt={feature.name}
+						/>
 					</div>
 				))}
 			</div>

@@ -22,9 +22,9 @@ const Newsletter = () => {
 	};
 
 	return (
-		<section className="container bg-gray-300 rounded-md">
+		<section className="container bg-green-100 rounded-md">
 			<div className="mx-auto my-10">
-				<div className="flex flex-col items-center text-center gap-6">
+				<div className="flex flex-col items-center text-center text-black gap-6">
 					<div>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
