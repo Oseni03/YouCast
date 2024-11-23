@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
 	AlertDialog,
 	AlertDialogAction,
@@ -11,14 +11,24 @@ import {
 	AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "./ui/Spinner";
+import { Spinner } from "@/components/ui/Spinner";
 
-export const DeleteDialog = ({ buttonLabel, handler, isLoading }) => {
+export const CancelPlanDialog = () => {
+	const [isLoading, setLoading] = useState(false);
+	const cancelPlanHandler = () => {
+		setLoading(true);
+		try {
+		} catch (error) {
+		} finally {
+			setLoading(false);
+		}
+	};
+
 	return (
 		<AlertDialog>
 			<AlertDialogTrigger asChild>
 				<Button variant="outline" size="sm" className="border-red-500">
-					{buttonLabel}
+					Cancel plan
 				</Button>
 			</AlertDialogTrigger>
 			<AlertDialogContent>
@@ -27,15 +37,15 @@ export const DeleteDialog = ({ buttonLabel, handler, isLoading }) => {
 						Are you absolutely sure?
 					</AlertDialogTitle>
 					<AlertDialogDescription>
-						This action cannot be undone. This will permanently
-						delete the channel.
+						This action cannot be undone. This will cancel/stop your
+						current plan.
 					</AlertDialogDescription>
 				</AlertDialogHeader>
 				<AlertDialogFooter>
 					<AlertDialogCancel>Cancel</AlertDialogCancel>
 					<AlertDialogAction
 						className="bg-red-500 text-white"
-						onClick={handler}
+						onClick={cancelPlanHandler}
 						disabled={isLoading}
 					>
 						{isLoading && <Spinner />}

@@ -7,6 +7,10 @@ export async function POST(req) {
 	const body = await req.json();
 	const { userId, email, priceId, subscription } = body;
 
+	if (!priceId) {
+		throw "Price ID required";
+	}
+
 	try {
 		const sessionConfig = {
 			payment_method_types: ["card"],

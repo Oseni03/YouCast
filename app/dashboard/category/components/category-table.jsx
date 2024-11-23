@@ -47,7 +47,7 @@ const CategoryTable = ({ categories, setCategories }) => {
 				</TableRow>
 			</TableHeader>
 			<TableBody>
-				{categories.map((category) => (
+				{categories?.map((category) => (
 					<TableRow key={category.id}>
 						<TableCell className="font-medium">
 							{category.name}
