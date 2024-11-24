@@ -7,6 +7,7 @@ import {
 	Tv,
 	Tags,
 	BarChart,
+	DollarSign,
 } from "lucide-react";
 import {
 	DropdownMenu,
@@ -29,6 +30,10 @@ import {
 } from "@/components/ui/sidebar";
 import { handleLogout } from "@/lib/actions";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { ProfileDialog } from "./profile-dialog";
+import { Button } from "./ui/button";
+import { useSession } from "next-auth/react";
 
 // Menu items.
 const items = [
@@ -53,14 +58,16 @@ const items = [
 		icon: Tags,
 	},
 	{
-		title: "Settings",
-		url: "/dashboard/settings",
-		icon: Settings,
+		title: "Billing",
+		url: "/dashboard/billing",
+		icon: DollarSign,
 	},
 ];
 
 export function AppSidebar() {
 	const router = useRouter();
+	const { data: session } = useSession();
+
 	return (
 		<Sidebar>
 			<SidebarContent>
@@ -88,7 +95,10 @@ export function AppSidebar() {
 						<DropdownMenu>
 							<DropdownMenuTrigger asChild>
 								<SidebarMenuButton>
-									<User2 /> Username
+									<User2 />{" "}
+									<span className="font-semibold">
+										{session?.user?.email}
+									</span>
 									<ChevronUp className="ml-auto" />
 								</SidebarMenuButton>
 							</DropdownMenuTrigger>
@@ -96,11 +106,25 @@ export function AppSidebar() {
 								side="top"
 								className="w-[--radix-popper-anchor-width]"
 							>
-								<DropdownMenuItem>
-									<span>Account</span>
+								<DropdownMenuItem asChild>
+									<ProfileDialog>
+										<Button
+											variant="ghost"
+											className="px-3 py-0 w-full justify-start"
+										>
+											Profile
+										</Button>
+									</ProfileDialog>
 								</DropdownMenuItem>
 								<DropdownMenuItem>
-									<span>Billing</span>
+									<Link href={"/dashboard/billing"}>
+										<Button
+											variant="ghost"
+											className="p-1 py-0 w-full text-start"
+										>
+											Billing
+										</Button>
+									</Link>
 								</DropdownMenuItem>
 								<DropdownMenuItem
 									onSelect={() => handleLogout(router)}

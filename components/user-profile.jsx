@@ -16,6 +16,8 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { handleLogout } from "@/lib/actions";
+import { ProfileDialog } from "./profile-dialog";
+import { Button } from "./ui/button";
 
 export function UserProfile() {
 	const router = useRouter();
@@ -39,13 +41,15 @@ export function UserProfile() {
 				<DropdownMenuLabel>My Account</DropdownMenuLabel>
 				<DropdownMenuSeparator />
 				<DropdownMenuGroup>
-					{/* <Link href="/user-profile">
-						<DropdownMenuItem>
-							<User className="mr-2 h-4 w-4" />
-							<span>Profile</span>
-							<DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
-						</DropdownMenuItem>
-					</Link> */}
+					<DropdownMenuItem asChild>
+						<ProfileDialog>
+							<Button variant="ghost" className="p-1 py-0 w-full">
+								<User className="mr-2 h-4 w-4" />
+								<span>Profile</span>
+								<DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+							</Button>
+						</ProfileDialog>
+					</DropdownMenuItem>
 					<Link href="/dashboard">
 						<DropdownMenuItem>
 							<ChartLine className="mr-2 h-4 w-4" />
