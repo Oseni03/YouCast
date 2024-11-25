@@ -28,8 +28,10 @@ function DashboardLayout({ children }) {
 							<NavActions />
 						</div>
 					</header>
-					<main className="flex flex-1 flex-col gap-4 px-4 py-10 max-w-screen-lg">
-						{children}
+					<main className="max-w-4xl">
+						<div className="flex flex-1 flex-col gap-4 px-4 py-10">
+							{children}
+						</div>
 					</main>
 				</SidebarInset>
 			</SidebarProvider>

@@ -16,17 +16,15 @@ const ChannelTable = ({ channels, setChannels }) => (
 		<TableHeader>
 			<TableRow>
 				<TableHead className="w-[100px]">TITLE</TableHead>
-				<TableHead>CATEGORY</TableHead>
 				<TableHead className="text-right">ACTION</TableHead>
 			</TableRow>
 		</TableHeader>
 		<TableBody>
-			{channels.map((channel) => (
+			{channels?.map((channel) => (
 				<TableRow key={channel.id}>
 					<TableCell className="font-medium">
 						{channel.title}
 					</TableCell>
-					<TableCell>{channel.category}</TableCell>
 					<TableCell className="text-right">
 						<DeleteDialog
 							channelId={channel.id}

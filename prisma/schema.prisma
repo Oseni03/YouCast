@@ -20,7 +20,7 @@ model User {
   sessions      Session[]
   Authenticator Authenticator[]
   feedbacks     Feedback[]
-  subscriptions UserSubscription[]
+  subscriptions Subscription[]
   videos        Video[]
   categories    Category[]      @relation("UserCategories")
   createdAt     DateTime        @default(now())
@@ -97,23 +97,20 @@ model Channel {
   customUrl    String?
   thumbnailUrl String?
   videos       Video[]
-  subscribers  UserSubscription[] // Updated relation to UserSubscription
+  subscribers  Subscription[]
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 }
 
-model UserSubscription {
-  id           String     @id @default(cuid())
-  userId       String
-  channelId    String
-  categoryId   String?    // Nullable field for categorizing the subscription
-  user         User       @relation(fields: [userId], references: [id])
-  channel      Channel    @relation(fields: [channelId], references: [id])
-  category     Category?  @relation(fields: [categoryId], references: [id]) // Relation to Category
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+model Subscription {
+  id        String   @id @default(cuid())
+  userId    String
+  channelId String
+  user      User     @relation(fields: [userId], references: [id])
+  channel   Channel  @relation(fields: [channelId], references: [id])
+  createdAt DateTime @default(now())
 
-  @@unique([userId, channelId]) // Ensure a user cannot subscribe to the same channel twice
+  @@unique([userId, channelId])
 }
 
 model Video {
@@ -137,7 +134,6 @@ model Category {
   slug      String
   userId    String
   user      User      @relation("UserCategories", fields: [userId], references: [id])
-  channels  UserSubscription[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 

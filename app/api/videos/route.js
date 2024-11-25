@@ -109,31 +109,59 @@ export async function GET(request) {
 		const { searchParams } = new URL(request.url);
 		const page = parseInt(searchParams.get("page") || "1");
 		const limit = parseInt(searchParams.get("limit") || "10");
+		const query = parseInt(searchParams.get("query") || null);
 
-		// Fetch paginated videos owned by the current user's channels
-		const videos = await prisma.video.findMany({
-			where: {
-				users: {
-					some: {
-						id: session.user?.id,
+		let videos = null;
+
+		if (query) {
+			videos = await prisma.video.findMany({
+				where: {
+					title: {
+						contains: query, // Search for titles that contain the query
+						mode: "insensitive", // Make it case-insensitive
 					},
 				},
-			},
-			include: {
-				channel: {
-					select: {
-						id: true,
-						title: true,
-						thumbnailUrl: true,
+				include: {
+					channel: {
+						select: {
+							id: true,
+							title: true,
+							thumbnailUrl: true,
+						},
 					},
 				},
-			},
-			take: limit,
-			skip: (page - 1) * limit,
-			orderBy: {
-				publishedAt: "desc",
-			},
-		});
+				take: limit,
+				skip: (page - 1) * limit,
+				orderBy: {
+					publishedAt: "desc",
+				},
+			});
+		} else {
+			// Fetch paginated videos owned by the current user's channels
+			videos = await prisma.video.findMany({
+				where: {
+					users: {
+						some: {
+							id: session.user?.id,
+						},
+					},
+				},
+				include: {
+					channel: {
+						select: {
+							id: true,
+							title: true,
+							thumbnailUrl: true,
+						},
+					},
+				},
+				take: limit,
+				skip: (page - 1) * limit,
+				orderBy: {
+					publishedAt: "desc",
+				},
+			});
+		}
 
 		// Format the videos
 		const formattedVideos = videos

@@ -17,7 +17,7 @@ export async function POST(request) {
 			);
 		}
 
-		const { url, category: categoryId } = await request.json();
+		const { url } = await request.json();
 		const channelData = await getChannelData(url);
 
 		if (!channelData) {
@@ -34,28 +34,41 @@ export async function POST(request) {
 			create: channelData,
 		});
 
-		// Subscribe user to channel
-		await prisma.user.update({
-			where: { id: session.user.id },
-			data: {
-				subscriptions: {
-					connect: {
-						userId: session.user.id,
-						channelId: channel.id,
-						categoryId: categoryId || null,
-					},
+		// Create subscription (if it doesn't exist)
+		await prisma.subscription.upsert({
+			where: {
+				// Using the composite unique constraint
+				userId_channelId: {
+					userId: session.user.id,
+					channelId: channel.id,
 				},
+			},
+			update: {}, // No updates needed if it exists
+			create: {
+				userId: session.user.id,
+				channelId: channel.id,
 			},
 		});
 
 		// // Sync channel videos
 		// await syncChannelVideos(channelData.id);
 
-		return NextResponse.json(channel);
+		// Return channel with subscription status
+		const channelWithSubscription = await prisma.channel.findUnique({
+			where: { id: channel.id },
+			include: {
+				subscribers: {
+					where: {
+						userId: session.user.id,
+					},
+				},
+			},
+		});
+
+		return NextResponse.json(channelWithSubscription);
 	} catch (error) {
-		console.error("Error creating channel:", error);
 		return NextResponse.json(
-			{ error: "Failed to create channel" },
+			{ error: error || "Internal server error" },
 			{ status: 500 }
 		);
 	}
@@ -78,11 +91,27 @@ export async function GET(request) {
 			searchParams.get("limit") || PAGINATION_PAGE_SIZE
 		);
 
+		// Get channels using the Subscription relation
 		const channels = await prisma.channel.findMany({
 			where: {
 				subscribers: {
 					some: {
-						id: session.user?.id ?? "",
+						userId: session.user.id,
+					},
+				},
+			},
+			include: {
+				subscribers: {
+					where: {
+						userId: session.user.id,
+					},
+					select: {
+						createdAt: true, // Include subscription date
+					},
+				},
+				_count: {
+					select: {
+						subscribers: true, // Get total subscriber count
 					},
 				},
 			},
@@ -92,15 +121,38 @@ export async function GET(request) {
 				createdAt: "desc",
 			},
 		});
+
+		// Get total count for pagination
+		const totalChannels = await prisma.channel.count({
+			where: {
+				subscribers: {
+					some: {
+						userId: session.user.id,
+					},
+				},
+			},
+		});
+
+		// Format the response
+		const formattedChannels = channels.map((channel) => ({
+			...channel,
+			subscribedAt: channel.subscribers[0]?.createdAt,
+			subscriberCount: channel._count.subscribers,
+			// Remove the raw subscribers array from response
+			subscribers: undefined,
+			_count: undefined,
+		}));
+
 		return NextResponse.json({
-			channels: channels,
-			page: page,
+			channels: formattedChannels,
+			page,
 			pageSize: limit,
+			totalChannels,
+			totalPages: Math.ceil(totalChannels / limit),
 		});
 	} catch (error) {
-		console.log(error.message);
 		return NextResponse.json(
-			{ error: "Failed to fetch channels" },
+			{ error: error.message || "Failed to fetch channels" },
 			{ status: 500 }
 		);
 	}

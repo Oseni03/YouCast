@@ -26,19 +26,24 @@ import { useState, useEffect } from "react";
 import { UrlForm } from "../components/url-form";
 import { toast } from "react-toastify";
 import Pagination from "@/components/pagination";
+import SyncAudiosButton from "./components/sync-audios-button";
 
 function Page() {
 	const [audios, setAudios] = useState([]);
 	const [error, setError] = useState("");
 	const [isLoading, setLoading] = useState(false);
 	const [page, setPage] = useState(1);
+	const [query, setQuery] = useState(null);
 
 	useEffect(() => {
 		const fetchAudios = async () => {
 			try {
-				const response = await fetch(`/api/videos?page=${page}`, {
-					method: "GET",
-				});
+				const response = await fetch(
+					`/api/videos?page=${page}&query=${query}`,
+					{
+						method: "GET",
+					}
+				);
 
 				if (response.ok) {
 					const userVideos = await response.json();
@@ -55,30 +60,7 @@ function Page() {
 		};
 
 		fetchAudios();
-	}, [page]);
-
-	const handleFiltering = async (e) => {
-		const query = e.target.value.toLowerCase();
-
-		try {
-			// Query Prisma to filter videos based on title (case-insensitive)
-			const filteredVideos = await prisma.video.findMany({
-				where: {
-					title: {
-						contains: query, // Search for titles that contain the query
-						mode: "insensitive", // Make it case-insensitive
-					},
-				},
-				take: 10,
-			});
-
-			// Log the filtered results or update state to display them
-			console.log(filteredVideos); // You can update state here to display filtered videos
-			setAudios(filteredVideos);
-		} catch (error) {
-			console.error("Error fetching filtered videos:", error);
-		}
-	};
+	}, [page, query]);
 
 	const handleSubmit = async ({ url }) => {
 		setLoading(true);
@@ -138,11 +120,11 @@ function Page() {
 		</Button>
 	);
 	return (
-		<div>
+		<>
 			<div className="flex flex-col space-y-2 sm:flex-row sm:items-center justify-between mb-4">
 				<Input
 					placeholder="Filter library..."
-					onChange={handleFiltering}
+					onChange={(e) => setQuery(e.target.value.toLowerCase())}
 					className="max-w-sm"
 				/>
 				<UrlDialog
@@ -154,12 +136,12 @@ function Page() {
 							submitHandler={handleSubmit}
 							error={error}
 							isLoading={isLoading}
-							isLibrary={true}
 						/>
 					}
 				/>
 			</div>
 			<div className="grid space-y-3">
+				<SyncAudiosButton />
 				{audios.map((audio) => (
 					<Dialog
 						key={audio.id}
@@ -298,7 +280,7 @@ function Page() {
 					isLoading={isLoading}
 				/>
 			</div>
-		</div>
+		</>
 	);
 }
 
