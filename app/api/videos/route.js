@@ -47,12 +47,13 @@ export async function POST(request) {
 		} else {
 			// Fetch video data and audio URL
 			let audioData;
-			[videoData, audioData] = await Promise.all([
-				getVideoData(videoId),
+			[videos, audioData] = await Promise.all([
+				getVideoData([videoId]),
 				getAudioData(videoId),
 			]);
 
 			// Save video and audio details to the database for authenticated users
+			videoData = videos[0];
 			if (user) {
 				await prisma.channel.upsert({
 					where: { id: videoData.channelId },

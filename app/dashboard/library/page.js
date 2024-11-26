@@ -78,7 +78,7 @@ function Page() {
 
 			if (response.ok) {
 				// Update the audios state with the new video data
-				setAudios((prevAudios) => [...prevAudios, data]);
+				setAudios((prevAudios) => [data, ...prevAudios]);
 			} else {
 				console.log("Error processing YouTube video:", data.error);
 				setError(data.error);
@@ -141,7 +141,7 @@ function Page() {
 				/>
 			</div>
 			<div className="grid space-y-3">
-				<SyncAudiosButton />
+				<SyncAudiosButton setAudios={setAudios} />
 				{audios.map((audio) => (
 					<Dialog
 						key={audio.id}

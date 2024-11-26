@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "react-toastify";
 
-function SyncAudiosButton() {
+function SyncAudiosButton({ setAudios }) {
 	const [isLoading, setIsLoading] = useState(false);
 
 	const handleSync = async () => {
@@ -18,7 +18,7 @@ function SyncAudiosButton() {
 			if (!response.ok) {
 				throw new Error(data.error || "Failed to sync videos.");
 			}
-
+			setAudios((prevAudios) => [...data, ...prevAudios]);
 			toast.success("Videos synchronized successfully!");
 		} catch (error) {
 			console.error("Error:", error);

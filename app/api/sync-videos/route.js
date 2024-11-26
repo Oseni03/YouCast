@@ -12,24 +12,22 @@ export async function POST(req) {
 			});
 		}
 
-		await syncUserChannelVideos(session);
+		videos = await syncUserChannelVideos(session.user.id);
 
 		return new Response(
-			JSON.stringify({ message: "Videos synchronized successfully." }),
+			JSON.stringify({
+				message: "Videos synchronized successfully.",
+				videos,
+			}),
 			{
 				status: 200,
 				headers: { "Content-Type": "application/json" },
 			}
 		);
 	} catch (error) {
-		console.error("Error syncing videos:", error);
-
-		return new Response(
-			JSON.stringify({ error: "Failed to sync videos." }),
-			{
-				status: 500,
-				headers: { "Content-Type": "application/json" },
-			}
-		);
+		return new Response(JSON.stringify({ error: error }), {
+			status: 500,
+			headers: { "Content-Type": "application/json" },
+		});
 	}
 }
