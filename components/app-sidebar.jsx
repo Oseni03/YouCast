@@ -34,6 +34,7 @@ import Link from "next/link";
 import { ProfileDialog } from "./profile-dialog";
 import { Button } from "./ui/button";
 import { useSession } from "next-auth/react";
+import CreditBalanceCard from "./credit-balance-card";
 
 // Menu items.
 const items = [
@@ -90,6 +91,7 @@ export function AppSidebar() {
 				</SidebarGroup>
 			</SidebarContent>
 			<SidebarFooter>
+				<CreditBalanceCard />
 				<SidebarMenu>
 					<SidebarMenuItem>
 						<DropdownMenu>

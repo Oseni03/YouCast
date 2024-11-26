@@ -1,28 +1,8 @@
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
+import { prisma } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
-export async function POST(req) {
-	const cookieStore = cookies();
-
-	const supabase = createServerClient(
-		process.env.SUPABASE_URL,
-		process.env.SUPABASE_SERVICE_KEY,
-		{
-			cookies: {
-				get(name) {
-					return cookieStore.get(name)?.value;
-				},
-			},
-		}
-	);
-
-	const reqText = await req.text();
-	return webhooksHandler(reqText, req, supabase);
-}
 
 async function getCustomerEmail(customerId) {
 	try {
@@ -34,7 +14,7 @@ async function getCustomerEmail(customerId) {
 	}
 }
 
-async function handleSubscriptionEvent(event, type, supabase) {
+async function handleSubscriptionEvent(event, type) {
 	const subscription = event.data.object;
 	const customerEmail = await getCustomerEmail(subscription.customer);
 
@@ -45,51 +25,78 @@ async function handleSubscriptionEvent(event, type, supabase) {
 		});
 	}
 
-	const subscriptionData = {
-		subscription_id: subscription.id,
-		stripe_user_id: subscription.customer,
-		status: subscription.status,
-		start_date: new Date(subscription.created * 1000).toISOString(),
-		plan_id: subscription.items.data[0]?.price.id,
-		user_id: subscription.metadata?.userId || "",
-		email: customerEmail,
-	};
+	try {
+		const subscriptionData = {
+			subscription_id: subscription.id,
+			stripe_user_id: subscription.customer,
+			status: subscription.status,
+			start_date: new Date(subscription.created * 1000).toISOString(),
+			plan_id: subscription.items.data[0]?.price.id,
+			user_id: subscription.metadata?.userId || "",
+			email: customerEmail,
+		};
 
-	let data, error;
+		if (type === "deleted") {
+			data = await prisma.subscriptions.update({
+				select: [
+					"subscription_id",
+					"user_id",
+					"email",
+					"start_date",
+					"end_date",
+					"plan_id",
+				],
+				data: { status: "cancelled", email: customerEmail },
+				where: { subscription_id: subscription.id },
+			});
 
-	if (type === "deleted") {
-		({ data, error } = await supabase
-			.from("subscriptions")
-			.update({ status: "cancelled", email: customerEmail })
-			.match({ subscription_id: subscription.id })
-			.select());
-		if (!error) {
-			const { error: userError } = await supabase
-				.from("user")
-				.update({ subscription: null })
-				.eq("email", customerEmail);
-			if (userError) {
+			try {
+				await prisma.user.update({
+					data: { subscription: null },
+					where: { email: customerEmail },
+				});
+			} catch (error) {
 				console.error(
 					"Error updating user subscription status:",
-					userError
+					error
 				);
 				return NextResponse.json({
 					status: 500,
 					error: "Error updating user subscription status",
 				});
 			}
-		}
-	} else {
-		({ data, error } = await supabase
-			.from("subscriptions")
-			[type === "created" ? "insert" : "update"](
-				type === "created" ? [subscriptionData] : subscriptionData
-			)
-			.match({ subscription_id: subscription.id })
-			.select());
-	}
+		} else {
+			data = await prisma.subscriptions.upsert({
+				select: [
+					"subscription_id",
+					"user_id",
+					"email",
+					"start_date",
+					"end_date",
+					"plan_id",
+				],
+				create: subscriptionData,
+				update: subscriptionData,
+				where: { subscription_id: subscription.id },
+			});
 
-	if (error) {
+			// try {
+			// 	await prisma.user.update({
+			// 		data: { subscription: subscription.id },
+			// 		where: { email: customerEmail },
+			// 	});
+			// } catch (error) {
+			// 	console.error(
+			// 		"Error updating user subscription status:",
+			// 		error
+			// 	);
+			// 	return NextResponse.json({
+			// 		status: 500,
+			// 		error: "Error updating user subscription status",
+			// 	});
+			// }
+		}
+	} catch (error) {
 		console.error(`Error during subscription ${type}:`, error);
 		return NextResponse.json({
 			status: 500,
@@ -104,7 +111,7 @@ async function handleSubscriptionEvent(event, type, supabase) {
 	});
 }
 
-async function handleInvoiceEvent(event, status, supabase) {
+async function handleInvoiceEvent(event, status) {
 	const invoice = event.data.object;
 	const customerEmail = await getCustomerEmail(invoice.customer);
 
@@ -115,38 +122,43 @@ async function handleInvoiceEvent(event, status, supabase) {
 		});
 	}
 
-	const invoiceData = {
-		invoice_id: invoice.id,
-		subscription_id: invoice.subscription,
-		amount_paid:
-			status === "succeeded" ? invoice.amount_paid / 100 : undefined,
-		amount_due: status === "failed" ? invoice.amount_due / 100 : undefined,
-		currency: invoice.currency,
-		status,
-		user_id: invoice.metadata?.userId,
-		email: customerEmail,
-	};
+	try {
+		const invoiceData = {
+			invoice_id: invoice.id,
+			subscription_id: invoice.subscription,
+			amount_paid:
+				status === "succeeded" ? invoice.amount_paid / 100 : undefined,
+			amount_due:
+				status === "failed" ? invoice.amount_due / 100 : undefined,
+			currency: invoice.currency,
+			status,
+			user_id: invoice.metadata?.userId,
+			email: customerEmail,
+		};
 
-	const { data, error } = await supabase
-		.from("invoices")
-		.insert([invoiceData]);
+		const data = prisma.invoices.upsert({
+			create: invoiceData,
+			update: invoiceData,
+			where: { invoice_id: invoice.id },
+		});
 
-	if (error) {
+		// CHECK TO SEE IF USER CREDITS GETS UPDATED AFTER A SUBSCRIPTION CYCLE
+
+		return NextResponse.json({
+			status: 200,
+			message: `Invoice payment ${status}`,
+			data,
+		});
+	} catch (error) {
 		console.error(`Error inserting invoice (payment ${status}):`, error);
 		return NextResponse.json({
 			status: 500,
 			error: `Error inserting invoice (payment ${status})`,
 		});
 	}
-
-	return NextResponse.json({
-		status: 200,
-		message: `Invoice payment ${status}`,
-		data,
-	});
 }
 
-async function handleCheckoutSessionCompleted(event, supabase) {
+async function handleCheckoutSessionCompleted(event) {
 	const session = event.data.object;
 	const metadata = session?.metadata;
 
@@ -155,17 +167,15 @@ async function handleCheckoutSessionCompleted(event, supabase) {
 		try {
 			await stripe.subscriptions.update(subscriptionId, { metadata });
 
-			const { error: invoiceError } = await supabase
-				.from("invoices")
-				.update({ user_id: metadata?.userId })
-				.eq("email", metadata?.email);
-			if (invoiceError) throw new Error("Error updating invoice");
+			await prisma.invoices.update({
+				data: { user_id: metadata?.userId },
+				where: { email: metadata?.email },
+			});
 
-			const { error: userError } = await supabase
-				.from("user")
-				.update({ subscription: session.id })
-				.eq("user_id", metadata?.userId);
-			if (userError) throw new Error("Error updating user subscription");
+			await prisma.user.update({
+				data: { subscription: session.id },
+				where: { id: metadata?.userId },
+			});
 
 			return NextResponse.json({
 				status: 200,
@@ -181,11 +191,10 @@ async function handleCheckoutSessionCompleted(event, supabase) {
 	} else {
 		const dateTime = new Date(session.created * 1000).toISOString();
 		try {
-			const { data: user, error: userError } = await supabase
-				.from("user")
-				.select("*")
-				.eq("user_id", metadata?.userId);
-			if (userError) throw new Error("Error fetching user");
+			const user = await prisma.user.findUnique({
+				include: [id, email, credits, subscription],
+				where: { id: metadata?.userId },
+			});
 
 			const paymentData = {
 				user_id: metadata?.userId,
@@ -198,18 +207,15 @@ async function handleCheckoutSessionCompleted(event, supabase) {
 				currency: session.currency,
 			};
 
-			const { data: paymentsData, error: paymentsError } = await supabase
-				.from("payments")
-				.insert([paymentData]);
-			if (paymentsError) throw new Error("Error inserting payment");
+			await prisma.payments.create({ data: paymentData });
 
 			const updatedCredits =
-				Number(user?.[0]?.credits || 0) + session.amount_total / 100;
-			const { data: updatedUser, error: userUpdateError } = await supabase
-				.from("user")
-				.update({ credits: updatedCredits })
-				.eq("user_id", metadata?.userId);
-			if (userUpdateError) throw new Error("Error updating user credits");
+				Number(user?.credits || 0) + session.amount_total / 100;
+
+			const updatedUser = prisma.user.update({
+				data: { credits: updatedCredits },
+				where: { id: metadata?.userId },
+			});
 
 			return NextResponse.json({
 				status: 200,
@@ -226,7 +232,8 @@ async function handleCheckoutSessionCompleted(event, supabase) {
 	}
 }
 
-async function webhooksHandler(reqText, request, supabase) {
+export async function POST(req) {
+	const reqText = await req.text();
 	const sig = request.headers.get("Stripe-Signature");
 
 	try {
@@ -238,17 +245,17 @@ async function webhooksHandler(reqText, request, supabase) {
 
 		switch (event.type) {
 			case "customer.subscription.created":
-				return handleSubscriptionEvent(event, "created", supabase);
+				return handleSubscriptionEvent(event, "created");
 			case "customer.subscription.updated":
-				return handleSubscriptionEvent(event, "updated", supabase);
+				return handleSubscriptionEvent(event, "updated");
 			case "customer.subscription.deleted":
-				return handleSubscriptionEvent(event, "deleted", supabase);
+				return handleSubscriptionEvent(event, "deleted");
 			case "invoice.payment_succeeded":
-				return handleInvoiceEvent(event, "succeeded", supabase);
+				return handleInvoiceEvent(event, "succeeded");
 			case "invoice.payment_failed":
-				return handleInvoiceEvent(event, "failed", supabase);
+				return handleInvoiceEvent(event, "failed");
 			case "checkout.session.completed":
-				return handleCheckoutSessionCompleted(event, supabase);
+				return handleCheckoutSessionCompleted(event);
 			default:
 				return NextResponse.json({
 					status: 400,

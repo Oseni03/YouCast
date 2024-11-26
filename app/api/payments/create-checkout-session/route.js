@@ -8,16 +8,17 @@ export async function POST(req) {
 	const { userId, email, priceId, subscription } = body;
 
 	if (!priceId) {
-		throw "Price ID required";
+		throw new Error("Price ID required");
 	}
 
 	try {
 		const sessionConfig = {
+			// ui_mode: "embedded",
 			payment_method_types: ["card"],
 			line_items: [{ price: priceId, quantity: 1 }],
 			metadata: { userId, email, subscription },
-			success_url: `${process.env.FRONTEND_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-			cancel_url: `${process.env.FRONTEND_URL}/cancel`,
+			success_url: `${process.env.NEXTAUTH_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+			cancel_url: `${process.env.NEXTAUTH_URL}/cancel`,
 		};
 
 		// Add subscription-specific mode
@@ -29,8 +30,10 @@ export async function POST(req) {
 		}
 
 		const session = await stripe.checkout.sessions.create(sessionConfig);
-
-		return NextResponse.json({ sessionId: session.id });
+		return NextResponse.json({
+			url: session.url,
+			sessionId: session.id, // Include full session details if needed
+		});
 	} catch (error) {
 		console.error("Error creating checkout session:", error);
 		return NextResponse.json({

@@ -15,6 +15,7 @@ export const SUBSCRIPTION_PLANS = [
 			"Credits roll over for 30 days",
 		],
 		priceIdMonthly: process.env.NEXT_PUBLIC_STRIPE_STARTER_MONTHLY,
+		priceIdOneOff: process.env.NEXT_PUBLIC_STRIPE_STARTER_ONE_OFF,
 		actionLabel: "Start Free Trial",
 	},
 	{
@@ -31,6 +32,7 @@ export const SUBSCRIPTION_PLANS = [
 		],
 		actionLabel: "Get Pro",
 		priceIdMonthly: process.env.NEXT_PUBLIC_STRIPE_PRO_MONTHLY,
+		priceIdOneOff: process.env.NEXT_PUBLIC_STRIPE_PRO_ONE_OFF,
 		popular: true,
 	},
 	{
@@ -48,6 +50,9 @@ export const SUBSCRIPTION_PLANS = [
 		],
 		actionLabel: "Contact Sales",
 		priceIdMonthly: process.env.NEXT_PUBLIC_STRIPE_ENTERPRISE_MONTHLY,
+		priceIdOneOff: process.env.NEXT_PUBLIC_STRIPE_ENTERPRISE_ONE_OFF,
 		exclusive: true,
 	},
 ];
+
+export const MAXCREDITS = 2500;

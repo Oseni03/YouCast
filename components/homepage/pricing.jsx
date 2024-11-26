@@ -122,7 +122,7 @@ export default function CreditBasedPricing() {
 		setStripePromise(loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY));
 	}, []);
 
-	const handleCheckout = async (priceId) => {
+	const handleCheckout = async (priceId, subscription) => {
 		try {
 			const response = await fetch(
 				"/api/payments/create-checkout-session",
@@ -135,7 +135,7 @@ export default function CreditBasedPricing() {
 						userId: user?.id,
 						email: user?.email,
 						priceId,
-						subscription: true,
+						subscription,
 					}),
 				}
 			);
@@ -145,6 +145,7 @@ export default function CreditBasedPricing() {
 			}
 
 			const data = await response.json();
+			console.log(data);
 
 			if (data.sessionId) {
 				const stripe = await stripePromise;

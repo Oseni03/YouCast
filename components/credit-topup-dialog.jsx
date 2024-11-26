@@ -12,9 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { ZodForm } from "@/components/zod-form";
 import { PlanFormSchema } from "@/lib/zod";
-import { SUBSCRIPTION_PLANS } from "@/utils/constants";
-import { useSession } from "next-auth/react";
-import { loadStripe } from "@stripe/stripe-js";
+import { MAXCREDITS, SUBSCRIPTION_PLANS } from "@/utils/constants";
 import { toast } from "react-toastify";
 
 const PlanForm = ({ onSubmit }) => {
@@ -30,9 +28,9 @@ const PlanForm = ({ onSubmit }) => {
 					type: "radio",
 					label: "Choose plan",
 					options: SUBSCRIPTION_PLANS.map((plan) => ({
-						value: plan.priceIdMonthly,
+						value: plan.priceIdOneOff,
 						label: `${plan.title} (${plan.credits})`,
-						key: plan.priceIdMonthly,
+						key: plan.priceIdOneOff,
 					})),
 				},
 			]}
@@ -42,17 +40,8 @@ const PlanForm = ({ onSubmit }) => {
 	);
 };
 
-export const UpgradeDialog = () => {
-	const { data: session } = useSession();
-	const user = session?.user;
-	const [stripePromise, setStripePromise] = useState(null);
-
-	useEffect(() => {
-		setStripePromise(loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY));
-	}, []);
-
+export const CreditTopupDialog = ({ user }) => {
 	const handleCheckout = async ({ plan_id }) => {
-		console.log(plan_id);
 		try {
 			const response = await fetch(
 				"/api/payments/create-checkout-session",
@@ -65,26 +54,26 @@ export const UpgradeDialog = () => {
 						userId: user?.id,
 						email: user?.email,
 						priceId: plan_id,
-						subscription: true,
+						subscription: false,
 					}),
 				}
 			);
 
 			if (!response.ok) {
-				throw new Error("Failed to create checkout session");
+				const errorData = await response.json();
+				throw new Error(
+					errorData.error || "Failed to create checkout session"
+				);
 			}
 
 			const data = await response.json();
-			console.log(data);
+			console.log("Response: ", data);
 
-			if (data.sessionId) {
-				const stripe = await stripePromise;
-				return stripe?.redirectToCheckout({
-					sessionId: data.sessionId,
-				});
+			if (data.url) {
+				// Redirect directly to Stripe checkout URL
+				window.location.href = data.url;
+				return;
 			}
-
-			toast.error("Failed to create checkout session");
 		} catch (error) {
 			console.error("Error during checkout:", error);
 			toast.error("Error during checkout");
@@ -94,13 +83,22 @@ export const UpgradeDialog = () => {
 	return (
 		<Dialog>
 			<DialogTrigger asChild>
-				<Button>Upgrade plan</Button>
+				<Button
+					variant={
+						user?.credits >= MAXCREDITS ? "secondary" : "default"
+					}
+					disabled={user?.credits >= MAXCREDITS}
+				>
+					{user?.credits >= MAXCREDITS
+						? "Maximum Credits Reached"
+						: "Top Up Credits"}
+				</Button>
 			</DialogTrigger>
 			<DialogContent className="sm:max-w-[425px]">
 				<DialogHeader>
-					<DialogTitle>Upgrade Plan</DialogTitle>
+					<DialogTitle>Credit Top Up</DialogTitle>
 					<DialogDescription>
-						Subscribe to a higher plan for more credit.
+						Top up your credit balance.
 					</DialogDescription>
 				</DialogHeader>
 				<PlanForm onSubmit={handleCheckout} />
