@@ -12,7 +12,7 @@ import { ZodForm } from "./zod-form";
 import { profileFormSchema } from "@/lib/zod";
 import { useState } from "react";
 import { toast } from "react-toastify";
-import { prisma } from "@/lib/db";
+import { updateUserProfile } from "@/lib/actions";
 
 const ProfileForm = () => {
 	const { data: session } = useSession();
@@ -24,21 +24,15 @@ const ProfileForm = () => {
 		setLoading(true);
 		console.log(first_name, last_name);
 
-		try {
-			await prisma.user.update({
-				where: {
-					id: user.id, // Update based on session user ID
-				},
-				data: { first_name, last_name },
-			});
-			toast.success("Profile updated.");
-			// return { success: true, response };
-		} catch (error) {
-			console.error(error);
-			setError("Error updating profile");
-		} finally {
-			setLoading(false);
+		const result = await updateUserProfile(user.id, first_name, last_name);
+
+		if (result.status === "success") {
+			toast.success(result.message);
+		} else {
+			toast.error(result.message);
+			setError(result.error);
 		}
+		setLoading(false);
 	};
 	return (
 		<ZodForm
