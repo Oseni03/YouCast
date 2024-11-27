@@ -28,13 +28,14 @@ import {
 	SidebarMenuItem,
 	SidebarFooter,
 } from "@/components/ui/sidebar";
-import { handleLogout } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ProfileDialog } from "./profile-dialog";
 import { Button } from "./ui/button";
 import { useSession } from "next-auth/react";
 import CreditBalanceCard from "./credit-balance-card";
+import { toast } from "react-toastify";
+import { signOut } from "next-auth/react";
 
 // Menu items.
 const items = [
@@ -68,6 +69,17 @@ const items = [
 export function AppSidebar() {
 	const router = useRouter();
 	const { data: session } = useSession();
+
+	const handleLogout = async () => {
+		try {
+			await signOut({ redirect: false });
+			toast.success("Logout successful");
+			router.push("/");
+		} catch (error) {
+			console.log(error);
+			toast.error("Logout unsuccessful!");
+		}
+	};
 
 	return (
 		<Sidebar>
@@ -128,9 +140,7 @@ export function AppSidebar() {
 										</Button>
 									</Link>
 								</DropdownMenuItem>
-								<DropdownMenuItem
-									onSelect={() => handleLogout(router)}
-								>
+								<DropdownMenuItem onSelect={handleLogout}>
 									<span>Sign out</span>
 								</DropdownMenuItem>
 							</DropdownMenuContent>

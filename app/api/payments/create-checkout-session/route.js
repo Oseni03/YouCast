@@ -5,12 +5,11 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export async function POST(req) {
 	const body = await req.json();
-	const { userId, email, priceId, subscription } = body;
+	const { userId, userCredits, email, priceId, subscription } = body;
 
 	if (!priceId) {
 		throw new Error("Price ID required");
 	}
-	console.log("Email: ", email);
 
 	try {
 		const sessionConfig = {
@@ -18,7 +17,7 @@ export async function POST(req) {
 			customer_email: email,
 			payment_method_types: ["card"],
 			line_items: [{ price: priceId, quantity: 1 }],
-			metadata: { userId, email, subscription, priceId },
+			metadata: { userId, userCredits, email, subscription, priceId },
 			success_url: `${process.env.NEXTAUTH_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
 			cancel_url: `${process.env.NEXTAUTH_URL}/cancel`,
 		};

@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation";
 import { handleLogout } from "@/lib/actions";
 import { ProfileDialog } from "./profile-dialog";
 import { Button } from "./ui/button";
+import { signOut } from "next-auth/react";
 
 export function UserProfile() {
 	const router = useRouter();
@@ -27,6 +28,18 @@ export function UserProfile() {
 	}
 	const { data: session } = useSession();
 	const user = session?.user;
+
+	const handleLogout = async () => {
+		try {
+			await signOut({ redirect: false });
+			toast.success("Logout successful");
+			router.push("/");
+		} catch (error) {
+			console.log(error);
+			toast.error("Logout unsuccessful!");
+		}
+	};
+
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild className="w-[2.25rem] h-[2.25rem]">
@@ -65,7 +78,7 @@ export function UserProfile() {
 						</DropdownMenuItem>
 					</Link>
 				</DropdownMenuGroup>
-				<DropdownMenuItem onSelect={() => handleLogout(router)}>
+				<DropdownMenuItem onSelect={handleLogout}>
 					<LogOut className="mr-2 h-4 w-4" />
 					<span>Log out</span>
 					<DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>

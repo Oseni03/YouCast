@@ -1,25 +1,35 @@
 import { prisma } from "@/lib/db";
 import { getPlanByPriceIdOneOff } from "@/lib/utils";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { logger } from "@/lib/logger"; // Assuming you have a logger utility
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+	apiVersion: "2023-10-16", // Use the latest API version
+});
 
-async function getCustomerEmail(customerId) {
+async function safeGetCustomerEmail(customerId) {
 	try {
 		const customer = await stripe.customers.retrieve(customerId);
-		return customer.email;
+		return customer.email ?? null;
 	} catch (error) {
-		console.error("Error fetching customer:", error);
+		logger.error("Failed to retrieve customer email", {
+			customerId,
+			error: error instanceof Error ? error.message : error,
+		});
 		return null;
 	}
 }
 
 async function handleSubscriptionEvent(event, type) {
 	const subscription = event.data.object;
-	const customerEmail = await getCustomerEmail(subscription.customer);
 
+	const customerEmail = await safeGetCustomerEmail(subscription.customer);
 	if (!customerEmail) {
+		logger.error("Cannot process subscription event - no customer email", {
+			subscriptionId: subscription.id,
+			type,
+		});
 		return NextResponse.json({
 			status: 500,
 			error: "Customer email could not be fetched",
@@ -37,86 +47,62 @@ async function handleSubscriptionEvent(event, type) {
 			email: customerEmail,
 		};
 
-		if (type === "deleted") {
-			data = await prisma.subscriptions.update({
-				select: [
-					"subscription_id",
-					"user_id",
-					"email",
-					"start_date",
-					"end_date",
-					"plan_id",
-				],
-				data: { status: "cancelled", email: customerEmail },
-				where: { subscription_id: subscription.id },
+		const updateUserSubscription = async () => {
+			await prisma.user.update({
+				data: {
+					subscription: type === "deleted" ? null : subscription.id,
+				},
+				where: { email: customerEmail },
 			});
+		};
 
-			try {
-				await prisma.user.update({
-					data: { subscription: null },
-					where: { email: customerEmail },
-				});
-			} catch (error) {
-				console.error(
-					"Error updating user subscription status:",
-					error
-				);
-				return NextResponse.json({
-					status: 500,
-					error: "Error updating user subscription status",
-				});
-			}
-		} else {
-			data = await prisma.subscriptions.upsert({
-				select: [
-					"subscription_id",
-					"user_id",
-					"email",
-					"start_date",
-					"end_date",
-					"plan_id",
-				],
-				create: subscriptionData,
-				update: subscriptionData,
-				where: { subscription_id: subscription.id },
-			});
+		const data = await prisma.subscriptions.upsert({
+			create: subscriptionData,
+			update: subscriptionData,
+			where: { subscription_id: subscription.id },
+			select: {
+				subscription_id: true,
+				user_id: true,
+				email: true,
+				start_date: true,
+				plan_id: true,
+			},
+		});
 
-			try {
-				await prisma.user.update({
-					data: { subscription: subscription.id },
-					where: { email: customerEmail },
-				});
-			} catch (error) {
-				console.error(
-					"Error updating user subscription status:",
-					error
-				);
-				return NextResponse.json({
-					status: 500,
-					error: "Error updating user subscription status",
-				});
-			}
-		}
+		await updateUserSubscription();
+
+		logger.info(`Subscription ${type} processed successfully`, {
+			subscriptionId: subscription.id,
+			email: customerEmail,
+		});
+
+		return NextResponse.json({
+			status: 200,
+			message: `Subscription ${type} success`,
+			data,
+		});
 	} catch (error) {
-		console.error(`Error during subscription ${type}:`, error);
+		logger.error(`Error processing subscription ${type}`, {
+			error: error instanceof Error ? error.message : error,
+			subscriptionId: subscription.id,
+		});
+
 		return NextResponse.json({
 			status: 500,
 			error: `Error during subscription ${type}`,
 		});
 	}
-
-	return NextResponse.json({
-		status: 200,
-		message: `Subscription ${type} success`,
-		data,
-	});
 }
 
 async function handleInvoiceEvent(event, status) {
 	const invoice = event.data.object;
-	const customerEmail = await getCustomerEmail(invoice.customer);
 
+	const customerEmail = await safeGetCustomerEmail(invoice.customer);
 	if (!customerEmail) {
+		logger.error("Cannot process invoice event - no customer email", {
+			invoiceId: invoice.id,
+			status,
+		});
 		return NextResponse.json({
 			status: 500,
 			error: "Customer email could not be fetched",
@@ -137,13 +123,22 @@ async function handleInvoiceEvent(event, status) {
 			email: customerEmail,
 		};
 
-		const data = prisma.invoices.upsert({
+		const data = await prisma.invoices.upsert({
 			create: invoiceData,
 			update: invoiceData,
 			where: { invoice_id: invoice.id },
+			select: {
+				invoice_id: true,
+				subscription_id: true,
+				amount_paid: true,
+				status: true,
+			},
 		});
 
-		// CHECK TO SEE IF USER CREDITS GETS UPDATED AFTER A SUBSCRIPTION CYCLE
+		logger.info(`Invoice payment ${status} processed`, {
+			invoiceId: invoice.id,
+			email: customerEmail,
+		});
 
 		return NextResponse.json({
 			status: 200,
@@ -151,10 +146,14 @@ async function handleInvoiceEvent(event, status) {
 			data,
 		});
 	} catch (error) {
-		console.error(`Error inserting invoice (payment ${status}):`, error);
+		logger.error(`Error processing invoice payment ${status}`, {
+			error: error instanceof Error ? error.message : error,
+			invoiceId: invoice.id,
+		});
+
 		return NextResponse.json({
 			status: 500,
-			error: `Error inserting invoice (payment ${status})`,
+			error: `Error processing invoice payment ${status}`,
 		});
 	}
 }
@@ -162,91 +161,108 @@ async function handleInvoiceEvent(event, status) {
 async function handleCheckoutSessionCompleted(event) {
 	const session = event.data.object;
 	const metadata = session?.metadata;
-	console.log("Session: ", session);
-	console.log("Metadata: ", metadata);
+	logger.info("Metadata", metadata);
 
-	if (metadata?.subscription === "true") {
-		const subscriptionId = session.subscription;
-		try {
+	if (!metadata) {
+		logger.error("No metadata found in checkout session", {
+			sessionId: session.id,
+		});
+		return NextResponse.json({
+			status: 400,
+			error: "Missing metadata",
+		});
+	}
+
+	try {
+		if (metadata.subscription === "true") {
+			// Handle subscription checkout
+			const subscriptionId = session.subscription;
+
 			await stripe.subscriptions.update(subscriptionId, { metadata });
 
-			await prisma.invoices.update({
-				data: { user_id: metadata?.userId },
-				where: { email: metadata?.email },
-			});
+			await prisma.$transaction([
+				prisma.invoices.update({
+					where: { email: metadata.email },
+					data: { user_id: metadata.userId },
+				}),
+				prisma.user.update({
+					where: { id: metadata.userId },
+					data: { subscription: session.id },
+				}),
+			]);
 
-			await prisma.user.update({
-				data: { subscription: session.id },
-				where: { id: metadata?.userId },
+			logger.info("Subscription metadata updated", {
+				subscriptionId,
+				userId: metadata.userId,
 			});
 
 			return NextResponse.json({
 				status: 200,
 				message: "Subscription metadata updated successfully",
 			});
-		} catch (error) {
-			console.error("Error updating subscription metadata:", error);
-			return NextResponse.json({
-				status: 500,
-				error: "Error updating subscription metadata",
-			});
-		}
-	} else {
-		const dateTime = new Date(session.created * 1000).toISOString();
-		try {
-			const user = await prisma.user.findUnique({
-				select: {
-					id: true,
-					email: true,
-					credits: true,
-					subscription: true,
-				},
-				where: { id: metadata?.userId },
-			});
+		} else {
+			// Handle one-off purchase
+			const dateTime = new Date(session.created * 1000);
 
 			const paymentData = {
-				user_id: metadata?.userId,
+				user_id: metadata.userId,
 				stripe_id: session.id,
-				email: metadata?.email,
+				email: metadata.email,
 				amount: session.amount_total / 100,
 				customer_details: JSON.stringify(session.customer_details),
 				payment_intent: session.payment_intent,
 				payment_time: dateTime,
+				payment_date: dateTime,
 				currency: session.currency,
 			};
 
-			await prisma.payments.create({ data: paymentData });
+			const plan = getPlanByPriceIdOneOff(metadata.priceId);
+			const updatedCredits =
+				Number(metadata.userCredits || 0) + plan.credits;
 
-			const plan = getPlanByPriceIdOneOff(metadata?.priceId);
+			await prisma.$transaction([
+				prisma.payments.create({ data: paymentData }),
+				prisma.user.update({
+					where: { id: metadata.userId },
+					data: { credits: updatedCredits },
+				}),
+			]);
 
-			const updatedCredits = Number(user?.credits || 0) + plan.credits;
-			console.log("updated credits: ", updatedCredits);
-
-			const updatedUser = await prisma.user.update({
-				data: { credits: updatedCredits },
-				where: { id: metadata?.userId },
+			logger.info("One-off purchase processed", {
+				userId: metadata?.userId,
+				credits: updatedCredits,
 			});
-			console.log("updated user: ", updatedUser);
 
 			return NextResponse.json({
 				status: 200,
 				message: "Payment and credits updated successfully",
-				updatedUser,
-			});
-		} catch (error) {
-			return NextResponse.json({
-				status: 500,
-				error,
+				credits: updatedCredits,
 			});
 		}
+	} catch (error) {
+		logger.error("Error processing checkout session", {
+			error: error instanceof Error ? error.message : error,
+			metadata,
+		});
+
+		return NextResponse.json({
+			status: 500,
+			error: "Error processing checkout session",
+		});
 	}
 }
 
 export async function POST(req) {
 	const reqText = await req.text();
 	const sig = req.headers.get("stripe-signature");
-	console.log("Request Text: ", reqText);
-	console.log("signature: ", sig);
+
+	if (!sig) {
+		logger.error("Missing Stripe signature");
+		return NextResponse.json({
+			status: 400,
+			error: "Missing signature",
+		});
+	}
 
 	try {
 		const event = await stripe.webhooks.constructEventAsync(
@@ -254,7 +270,6 @@ export async function POST(req) {
 			sig,
 			process.env.STRIPE_WEBHOOK_SECRET
 		);
-		console.log(event);
 
 		switch (event.type) {
 			case "customer.subscription.created":
@@ -270,16 +285,20 @@ export async function POST(req) {
 			case "checkout.session.completed":
 				return handleCheckoutSessionCompleted(event);
 			default:
+				logger.warn("Unhandled event type", { type: event.type });
 				return NextResponse.json({
 					status: 400,
 					error: "Unhandled event type",
 				});
 		}
 	} catch (err) {
-		console.error("Error constructing Stripe event:", err);
+		logger.error("Webhook processing error", {
+			error: err instanceof Error ? err.message : err,
+		});
+
 		return NextResponse.json({
 			status: 500,
-			error: "Webhook Error: Invalid Signature",
+			error: "Webhook processing error",
 		});
 	}
 }

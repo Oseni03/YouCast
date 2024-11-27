@@ -19,6 +19,7 @@ function CreditBalanceCard() {
 	console.log("user", user);
 
 	const progress = (user?.credits || 0 / MAXCREDITS) * 100;
+	console.log("progress", progress);
 
 	return (
 		<div className="mt-auto">
@@ -50,7 +51,7 @@ function CreditBalanceCard() {
 							</div>
 							<Progress value={progress} className="h-2" />
 							<div className="flex justify-between text-xs text-muted-foreground">
-								<span>0</span>
+								<span>{user?.credits}</span>
 								<span>{MAXCREDITS.toLocaleString()}</span>
 							</div>
 						</div>

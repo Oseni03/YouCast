@@ -35,9 +35,9 @@ model payments {
   created_time     DateTime @default(now())
   stripe_id        String
   email            String
-  amount           String
-  payment_time     String
-  payment_date     String
+  amount           Int
+  payment_time     DateTime
+  payment_date     DateTime
   currency         String
   user_id          String
   customer_details String

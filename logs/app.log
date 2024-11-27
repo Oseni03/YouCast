@@ -1,0 +1,49 @@
+2024-11-27 12:14:07 [WARN]: Unhandled event type | {"type":"payment_intent.succeeded"}
+2024-11-27 12:14:07 [WARN]: Unhandled event type | {"type":"payment_intent.created"}
+2024-11-27 12:14:07 [WARN]: Unhandled event type | {"type":"charge.updated"}
+2024-11-27 12:14:07 [WARN]: Unhandled event type | {"type":"charge.succeeded"}
+2024-11-27 12:14:09 [ERROR]: User not found for one-off purchase | {"userId":"cm35bsapw0000h7su0dz2rlm5"}
+2024-11-27 16:48:35 [WARN]: Unhandled event type | {"type":"charge.succeeded"}
+2024-11-27 16:48:35 [WARN]: Unhandled event type | {"type":"payment_intent.succeeded"}
+2024-11-27 16:48:35 [WARN]: Unhandled event type | {"type":"charge.updated"}
+2024-11-27 16:48:35 [WARN]: Unhandled event type | {"type":"payment_intent.created"}
+2024-11-27 16:48:36 [ERROR]: Error processing checkout session | {"error":"\nInvalid `prisma.payments.create()` invocation:\n\n{\n  data: {\n    user_id: \"cm3wigfe00004kxjiv34y1v9s\",\n    stripe_id: \"cs_test_a1qdrnOXfIJ2z2EZ72yQxqFYCs73NUiFMKoCUsJtcTvr9HXyX540X57djA\",\n    email: \"user4@gmail.com\",\n    amount: 25,\n    customer_details: \"{\\\"address\\\":{\\\"city\\\":null,\\\"country\\\":\\\"NG\\\",\\\"line1\\\":null,\\\"line2\\\":null,\\\"postal_code\\\":null,\\\"state\\\":null},\\\"email\\\":\\\"user4@gmail.com\\\",\\\"name\\\":\\\"Jimol Adelabi\\\",\\\"phone\\\":null,\\\"tax_exempt\\\":\\\"none\\\",\\\"tax_ids\\\":[]}\",\n    payment_intent: \"pi_3QPnTWEuBM4N6Bqz0RsSiYAI\",\n    payment_time: new Date(\"2024-11-27T15:48:03.000Z\"),\n    currency: \"usd\",\n+   payment_date: String\n  }\n}\n\nArgument `payment_date` is missing.","metadata":{"subscription":"false","email":"user4@gmail.com","priceId":"price_1QPQk2EuBM4N6BqzAttHzgZA","userId":"cm3wigfe00004kxjiv34y1v9s"}}
+2024-11-27 16:55:06 [WARN]: Unhandled event type | {"type":"checkout.session.expired"}
+2024-11-27 17:06:16 [WARN]: Unhandled event type | {"type":"checkout.session.expired"}
+2024-11-27 17:06:30 [WARN]: Unhandled event type | {"type":"payment_intent.created"}
+2024-11-27 17:06:30 [WARN]: Unhandled event type | {"type":"charge.succeeded"}
+2024-11-27 17:06:30 [WARN]: Unhandled event type | {"type":"payment_intent.succeeded"}
+2024-11-27 17:06:32 [ERROR]: Error processing checkout session | {"error":"\nInvalid `prisma.payments.create()` invocation:\n\n{\n  data: {\n    user_id: \"cm3wigfe00004kxjiv34y1v9s\",\n    stripe_id: \"cs_test_a1Mh02DKDdVss0oiKvTjHbuEmTcbaiwBLYmg4nfAucDLMyxpXzeJzuOJ7m\",\n    email: \"user4@gmail.com\",\n    amount: 99,\n            ~~\n    customer_details: \"{\\\"address\\\":{\\\"city\\\":null,\\\"country\\\":\\\"NG\\\",\\\"line1\\\":null,\\\"line2\\\":null,\\\"postal_code\\\":null,\\\"state\\\":null},\\\"email\\\":\\\"user4@gmail.com\\\",\\\"name\\\":\\\"Jimol Adelabi\\\",\\\"phone\\\":null,\\\"tax_exempt\\\":\\\"none\\\",\\\"tax_ids\\\":[]}\",\n    payment_intent: \"pi_3QPnl0EuBM4N6Bqz1fK4ov5P\",\n    payment_time: new Date(\"2024-11-27T16:06:09.000Z\"),\n    payment_date: new Date(\"2024-11-27T16:06:09.000Z\"),\n    currency: \"usd\"\n  }\n}\n\nArgument `amount`: Invalid value provided. Expected String, provided Int.","metadata":{"subscription":"false","email":"user4@gmail.com","priceId":"price_1QPQmKEuBM4N6Bqz246lzmj1","userId":"cm3wigfe00004kxjiv34y1v9s"}}
+2024-11-27 17:06:33 [WARN]: Unhandled event type | {"type":"charge.updated"}
+2024-11-27 17:11:55 [WARN]: Unhandled event type | {"type":"checkout.session.expired"}
+2024-11-27 17:12:30 [WARN]: Unhandled event type | {"type":"charge.succeeded"}
+2024-11-27 17:12:30 [WARN]: Unhandled event type | {"type":"payment_intent.succeeded"}
+2024-11-27 17:12:30 [WARN]: Unhandled event type | {"type":"payment_intent.created"}
+2024-11-27 17:12:31 [WARN]: Unhandled event type | {"type":"charge.updated"}
+2024-11-27 17:12:36 [ERROR]: Error processing checkout session | {"error":"\nInvalid `prisma.user.findUnique()` invocation:\n\n\nCan't reach database server at `localhost:5432`\n\nPlease make sure your database server is running at `localhost:5432`.","metadata":{"subscription":"false","email":"user4@gmail.com","priceId":"price_1QPQk2EuBM4N6BqzAttHzgZA","userId":"cm3wigfe00004kxjiv34y1v9s"}}
+2024-11-27 17:14:51 [WARN]: Unhandled event type | {"type":"checkout.session.expired"}
+2024-11-27 17:17:34 [WARN]: Unhandled event type | {"type":"checkout.session.expired"}
+2024-11-27 17:21:05 [WARN]: Unhandled event type | {"type":"charge.succeeded"}
+2024-11-27 17:21:05 [WARN]: Unhandled event type | {"type":"payment_intent.succeeded"}
+2024-11-27 17:21:05 [WARN]: Unhandled event type | {"type":"payment_intent.created"}
+2024-11-27 17:21:06 [ERROR]: Error processing checkout session | {"error":"\nInvalid `prisma.payments.create()` invocation:\n\n{\n  data: {\n    user_id: \"cm3wigfe00004kxjiv34y1v9s\",\n    stripe_id: \"cs_test_a1e0gOSJJrFN7NIAiuZS3QlkU4RZ8JMVt9SC3NJ8Vw51a5JdssYrlwrd9L\",\n    email: \"user4@gmail.com\",\n    amount: 99,\n    customer_details: \"{\\\"address\\\":{\\\"city\\\":null,\\\"country\\\":\\\"NG\\\",\\\"line1\\\":null,\\\"line2\\\":null,\\\"postal_code\\\":null,\\\"state\\\":null},\\\"email\\\":\\\"user4@gmail.com\\\",\\\"name\\\":\\\"Jimol Adelabi\\\",\\\"phone\\\":null,\\\"tax_exempt\\\":\\\"none\\\",\\\"tax_ids\\\":[]}\",\n    payment_intent: \"pi_3QPnz7EuBM4N6Bqz1T8nIBtY\",\n    payment_time: new Date(\"2024-11-27T16:20:20.000Z\"),\n                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n    payment_date: new Date(\"2024-11-27T16:20:20.000Z\"),\n    currency: \"usd\"\n  }\n}\n\nArgument `payment_time`: Invalid value provided. Expected String, provided DateTime.","metadata":{"subscription":"false","priceId":"price_1QPQmKEuBM4N6Bqz246lzmj1","email":"user4@gmail.com","userId":"cm3wigfe00004kxjiv34y1v9s"}}
+2024-11-27 17:21:06 [WARN]: Unhandled event type | {"type":"charge.updated"}
+2024-11-27 17:30:57 [WARN]: Unhandled event type | {"type":"checkout.session.expired"}
+2024-11-27 17:37:49 [WARN]: Unhandled event type | {"type":"payment_intent.created"}
+2024-11-27 17:37:49 [WARN]: Unhandled event type | {"type":"payment_intent.succeeded"}
+2024-11-27 17:37:50 [WARN]: Unhandled event type | {"type":"charge.updated"}
+2024-11-27 17:37:50 [WARN]: Unhandled event type | {"type":"charge.succeeded"}
+2024-11-27 17:37:52 [INFO]: One-off purchase processed | {"userId":"cm3wigfe00004kxjiv34y1v9s","credits":500}
+2024-11-27 17:40:30 [WARN]: Unhandled event type | {"type":"payment_intent.succeeded"}
+2024-11-27 17:40:30 [WARN]: Unhandled event type | {"type":"payment_intent.created"}
+2024-11-27 17:40:30 [WARN]: Unhandled event type | {"type":"charge.succeeded"}
+2024-11-27 17:40:30 [WARN]: Unhandled event type | {"type":"charge.updated"}
+2024-11-27 17:40:30 [INFO]: One-off purchase processed | {"userId":"cm3wigfe00004kxjiv34y1v9s","credits":100}
+2024-11-27 17:43:00 [WARN]: Unhandled event type | {"type":"checkout.session.expired"}
+2024-11-27 17:44:22 [INFO]: Metadata | {"subscription":"false","email":"user4@gmail.com","userCredits":"0","userId":"cm3wigfe00004kxjiv34y1v9s","priceId":"price_1QPQmKEuBM4N6Bqz246lzmj1"}
+2024-11-27 17:44:22 [WARN]: Unhandled event type | {"type":"payment_intent.succeeded"}
+2024-11-27 17:44:22 [WARN]: Unhandled event type | {"type":"payment_intent.created"}
+2024-11-27 17:44:22 [WARN]: Unhandled event type | {"type":"charge.succeeded"}
+2024-11-27 17:44:22 [WARN]: Unhandled event type | {"type":"charge.updated"}
+2024-11-27 17:44:23 [INFO]: One-off purchase processed | {"userId":"cm3wigfe00004kxjiv34y1v9s","credits":2000}
+2024-11-27 17:48:38 [WARN]: Unhandled event type | {"type":"checkout.session.expired"}

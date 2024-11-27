@@ -52,6 +52,7 @@ export const CreditTopupDialog = ({ user }) => {
 					},
 					body: JSON.stringify({
 						userId: user?.id,
+						userCredits: user?.credits,
 						email: user?.email,
 						priceId: plan_id,
 						subscription: false,
