@@ -16,6 +16,7 @@ import { MAXCREDITS } from "@/utils/constants";
 function CreditBalanceCard() {
 	const { data: session } = useSession();
 	const user = session?.user;
+	console.log("user", user);
 
 	const progress = (user?.credits || 0 / MAXCREDITS) * 100;
 
@@ -55,7 +56,7 @@ function CreditBalanceCard() {
 						</div>
 
 						<div className="flex flex-col space-y-2">
-							<CreditTopupDialog />
+							<CreditTopupDialog user={user} />
 						</div>
 					</div>
 				</CardContent>

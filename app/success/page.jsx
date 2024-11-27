@@ -7,11 +7,15 @@ import Stripe from "stripe";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export default async function SuccessPage({ searchParams }) {
-	const session = await stripe.checkout.sessions.retrieve(
-		searchParams?.session_id
-	);
+	const sessionId = await searchParams.session_id;
+	console.log(sessionId);
 
-	const jsonString = JSON.stringify(session, null, 2);
+	if (sessionId) {
+		const session = await stripe.checkout.sessions.retrieve(sessionId);
+
+		const jsonString = JSON.stringify(session, null, 2);
+		console.log(jsonString);
+	}
 
 	return (
 		<main className="flex min-w-screen flex-col items-center justify-between">

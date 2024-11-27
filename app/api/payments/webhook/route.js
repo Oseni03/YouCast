@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/db";
+import { getPlanByPriceIdOneOff } from "@/lib/utils";
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
@@ -80,21 +81,21 @@ async function handleSubscriptionEvent(event, type) {
 				where: { subscription_id: subscription.id },
 			});
 
-			// try {
-			// 	await prisma.user.update({
-			// 		data: { subscription: subscription.id },
-			// 		where: { email: customerEmail },
-			// 	});
-			// } catch (error) {
-			// 	console.error(
-			// 		"Error updating user subscription status:",
-			// 		error
-			// 	);
-			// 	return NextResponse.json({
-			// 		status: 500,
-			// 		error: "Error updating user subscription status",
-			// 	});
-			// }
+			try {
+				await prisma.user.update({
+					data: { subscription: subscription.id },
+					where: { email: customerEmail },
+				});
+			} catch (error) {
+				console.error(
+					"Error updating user subscription status:",
+					error
+				);
+				return NextResponse.json({
+					status: 500,
+					error: "Error updating user subscription status",
+				});
+			}
 		}
 	} catch (error) {
 		console.error(`Error during subscription ${type}:`, error);
@@ -161,6 +162,8 @@ async function handleInvoiceEvent(event, status) {
 async function handleCheckoutSessionCompleted(event) {
 	const session = event.data.object;
 	const metadata = session?.metadata;
+	console.log("Session: ", session);
+	console.log("Metadata: ", metadata);
 
 	if (metadata?.subscription === "true") {
 		const subscriptionId = session.subscription;
@@ -192,7 +195,12 @@ async function handleCheckoutSessionCompleted(event) {
 		const dateTime = new Date(session.created * 1000).toISOString();
 		try {
 			const user = await prisma.user.findUnique({
-				include: [id, email, credits, subscription],
+				select: {
+					id: true,
+					email: true,
+					credits: true,
+					subscription: true,
+				},
 				where: { id: metadata?.userId },
 			});
 
@@ -209,13 +217,16 @@ async function handleCheckoutSessionCompleted(event) {
 
 			await prisma.payments.create({ data: paymentData });
 
-			const updatedCredits =
-				Number(user?.credits || 0) + session.amount_total / 100;
+			const plan = getPlanByPriceIdOneOff(metadata?.priceId);
 
-			const updatedUser = prisma.user.update({
+			const updatedCredits = Number(user?.credits || 0) + plan.credits;
+			console.log("updated credits: ", updatedCredits);
+
+			const updatedUser = await prisma.user.update({
 				data: { credits: updatedCredits },
 				where: { id: metadata?.userId },
 			});
+			console.log("updated user: ", updatedUser);
 
 			return NextResponse.json({
 				status: 200,
@@ -223,7 +234,6 @@ async function handleCheckoutSessionCompleted(event) {
 				updatedUser,
 			});
 		} catch (error) {
-			console.error("Error handling checkout session:", error);
 			return NextResponse.json({
 				status: 500,
 				error,
@@ -234,7 +244,9 @@ async function handleCheckoutSessionCompleted(event) {
 
 export async function POST(req) {
 	const reqText = await req.text();
-	const sig = request.headers.get("Stripe-Signature");
+	const sig = req.headers.get("stripe-signature");
+	console.log("Request Text: ", reqText);
+	console.log("signature: ", sig);
 
 	try {
 		const event = await stripe.webhooks.constructEventAsync(
@@ -242,6 +254,7 @@ export async function POST(req) {
 			sig,
 			process.env.STRIPE_WEBHOOK_SECRET
 		);
+		console.log(event);
 
 		switch (event.type) {
 			case "customer.subscription.created":

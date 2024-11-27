@@ -10,13 +10,15 @@ export async function POST(req) {
 	if (!priceId) {
 		throw new Error("Price ID required");
 	}
+	console.log("Email: ", email);
 
 	try {
 		const sessionConfig = {
 			// ui_mode: "embedded",
+			customer_email: email,
 			payment_method_types: ["card"],
 			line_items: [{ price: priceId, quantity: 1 }],
-			metadata: { userId, email, subscription },
+			metadata: { userId, email, subscription, priceId },
 			success_url: `${process.env.NEXTAUTH_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
 			cancel_url: `${process.env.NEXTAUTH_URL}/cancel`,
 		};
