@@ -56,13 +56,17 @@ export const authOptions = {
 		// error: "/auth/error",
 	},
 	callbacks: {
-		async jwt({ token, user }) {
+		async jwt({ token, user, account, profile }) {
 			if (user) {
 				// Include additional user fields in the token
 				token.id = user.id;
 				token.first_name = user.first_name;
 				token.last_name = user.last_name;
 				token.credits = user.credits;
+			}
+			if (account) {
+				token.accessToken = account.access_token;
+				token.id = profile.id;
 			}
 			return token;
 		},
@@ -73,6 +77,7 @@ export const authOptions = {
 				session.user.first_name = token.first_name;
 				session.user.last_name = token.last_name;
 				session.user.credits = token.credits;
+				session.accessToken = token.accessToken;
 			}
 			return session;
 		},
