@@ -22,24 +22,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-
-const components = [
-	{
-		title: "Marketing Page",
-		href: "/marketing-page",
-		description: "Write some wavy here to get them to click.",
-	},
-	{
-		title: "Marketing Page",
-		href: "/marketing-page",
-		description: "Write some wavy here to get them to click.",
-	},
-	{
-		title: "Marketing Page",
-		href: "/marketing-page",
-		description: "Write some wavy here to get them to click.",
-	},
-];
+import { siteConfig } from "@/config/site";
 
 export default function NavBar() {
 	const router = useRouter();
@@ -87,26 +70,23 @@ export default function NavBar() {
 								</NavigationMenuTrigger>
 								<NavigationMenuContent>
 									<ul className="flex flex-col w-[400px] gap-3 p-4 lg:w-[500px]">
-										{components.map((component, index) => (
-											<ListItem
-												key={index}
-												title={component.title}
-												href={component.href}
-											>
-												{component.description}
-											</ListItem>
-										))}
+										{siteConfig.features.map(
+											(component, index) => (
+												<ListItem
+													key={index}
+													title={component.name}
+													href={`/#${component.id}`}
+												>
+													{component.description}
+												</ListItem>
+											)
+										)}
 									</ul>
 								</NavigationMenuContent>
 							</NavigationMenuItem>
 							<NavigationMenuItem>
-								<Link href="/dashboard" legacyBehavior passHref>
-									<Button variant="ghost">Dashboard</Button>
-								</Link>
-							</NavigationMenuItem>
-							<NavigationMenuItem>
-								<Link href="/about" legacyBehavior passHref>
-									<Button variant="ghost">About</Button>
+								<Link href="/#pricing" legacyBehavior passHref>
+									<Button variant="ghost">Pricing</Button>
 								</Link>
 							</NavigationMenuItem>
 							<NavigationMenuItem>
@@ -121,6 +101,7 @@ export default function NavBar() {
 						</NavigationMenuList>
 					</NavigationMenu>
 					<div className="flex items-center gap-2 ">
+						<ModeToggle />
 						{userId ? (
 							<UserProfile />
 						) : (
@@ -139,7 +120,6 @@ export default function NavBar() {
 								</Button>
 							</div>
 						)}
-						<ModeToggle />
 					</div>
 				</div>
 

@@ -41,7 +41,7 @@ import { signOut } from "next-auth/react";
 const items = [
 	{
 		title: "Overview",
-		url: "/dashboad",
+		url: "/dashboard",
 		icon: BarChart,
 	},
 	{
@@ -53,11 +53,6 @@ const items = [
 		title: "Channels",
 		url: "/dashboard/channels",
 		icon: Tv,
-	},
-	{
-		title: "Categories",
-		url: "/dashboard/categories",
-		icon: Tags,
 	},
 	{
 		title: "Billing",

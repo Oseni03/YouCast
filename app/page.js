@@ -9,18 +9,27 @@ import config from "@/config";
 export default function Home() {
 	return (
 		<PageWrapper>
-			<div className="flex flex-col justify-center items-center w-full mt-[1rem] p-3">
+			<div
+				id="hero"
+				className="flex flex-col justify-center items-center w-full mt-[1rem] p-3"
+			>
 				<HeroSection />
 			</div>
-			<div className="flex my-[8rem] w-full justify-center items-center">
+			<div
+				className="flex my-[8rem] w-full justify-center items-center"
+				id="features"
+			>
 				<Features />
 			</div>
 			{config.auth.enabled && config.payments.enabled && (
-				<div>
+				<div id="pricing">
 					<Pricing />
 				</div>
 			)}
-			<div className="flex my-[8rem] w-full justify-center items-center px-4">
+			<div
+				id="newsletter"
+				className="flex my-[8rem] w-full justify-center items-center px-4"
+			>
 				<Newsletter />
 			</div>
 			{/* <div className="flex justify-center items-center w-full my-[8rem]">

@@ -9,6 +9,7 @@ import { BorderBeam } from "../magicui/border-beam";
 import { ArrowRightIcon } from "lucide-react";
 import AnimatedShinyText from "../ui/animated-shiny-text";
 import { cn } from "@/lib/utils";
+import { siteConfig } from "@/config/site";
 
 const HeroSection = () => {
 	const isDesktop = useMediaQuery({ minWidth: 1024 });
@@ -26,23 +27,25 @@ const HeroSection = () => {
 									)}
 								>
 									<AnimatedShinyText className="inline-flex items-center justify-center px-4 py-1 transition ease-out hover:text-neutral-600 hover:duration-300 hover:dark:text-neutral-400">
-										<span>✨ Introducing Magic UI</span>
+										<span>
+											✨ Introducing {siteConfig.name}
+										</span>
 										<ArrowRightIcon className="ml-1 size-3 transition-transform duration-300 ease-in-out group-hover:translate-x-0.5" />
 									</AnimatedShinyText>
 								</div>
 							</div>
 							<h1 className="text-4xl sm:text-5xl font-bold mb-4">
-								Build your next project even faster.
+								{siteConfig.heroIntro}
 							</h1>
 							<p className="text-lg mb-8">
-								Block makes it easy to get your most important
-								work done. Increase efficiency to deliver result
-								& hit your goal on every project.
+								{siteConfig.description}
 							</p>
 						</div>
 						<div className="grid sm:flex sm:flex-row sm:justify-center sm:items-center lg:justify-start space-y-4 sm:space-y-0 sm:space-x-4">
-							<Button>Try for Free</Button>
-							<Button variant="outline">Book a demo</Button>
+							<Button>
+								<Link href={"/auth/signup"}>Try for Free</Link>
+							</Button>
+							<Button variant="outline">Star on GitHub</Button>
 						</div>
 						<div className="flex flex-wrap gap-4 mt-10">
 							<div className="flex items-center">

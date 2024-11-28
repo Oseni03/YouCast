@@ -1,4 +1,4 @@
-import Footer from "../homepage/footer";
+import Footer from "./footer";
 import NavBar from "./navbar";
 
 export default function PageWrapper({ children }) {
