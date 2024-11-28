@@ -5,7 +5,9 @@ import GoogleProvider from "next-auth/providers/google";
 import { compare } from "bcryptjs";
 import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+// Use a singleton pattern for Prisma
+const prisma = global.prisma || new PrismaClient();
+if (process.env.NODE_ENV === "development") global.prisma = prisma;
 
 export const authOptions = {
 	providers: [
@@ -20,22 +22,22 @@ export const authOptions = {
 					throw new Error("Please enter an email and password");
 				}
 
-				const selectUserFields = {
-					id: true,
-					email: true,
-					password: true,
-					first_name: true,
-					last_name: true,
-					credits: true,
-				};
-
 				const user = await prisma.user.findUnique({
 					where: { email: credentials.email },
-					select: selectUserFields,
+					select: {
+						id: true,
+						email: true,
+						password: true,
+						first_name: true,
+						last_name: true,
+						credits: true,
+					},
 				});
 
-				if (!user) {
-					throw new Error("No user found with this email");
+				if (!user || !user.password) {
+					throw new Error(
+						"No user found with this email or password is invalid."
+					);
 				}
 
 				const isPasswordValid = await compare(
@@ -47,32 +49,37 @@ export const authOptions = {
 					throw new Error("Invalid password");
 				}
 
-				return user;
+				return {
+					id: user.id,
+					email: user.email,
+					first_name: user.first_name,
+					last_name: user.last_name,
+					credits: user.credits,
+				};
 			},
 		}),
 	],
 	pages: {
 		signIn: "/auth/signin",
-		// error: "/auth/error",
+		error: "/auth/error", // Define custom error page
 	},
 	callbacks: {
-		async jwt({ token, user, account, profile }) {
+		async jwt({ token, user, account }) {
+			// Include additional user fields in the token
 			if (user) {
-				// Include additional user fields in the token
 				token.id = user.id;
 				token.first_name = user.first_name;
 				token.last_name = user.last_name;
 				token.credits = user.credits;
 			}
-			if (account) {
+			if (account && account.access_token) {
 				token.accessToken = account.access_token;
-				token.id = profile.id;
 			}
 			return token;
 		},
 		async session({ session, token }) {
+			// Populate session with token data
 			if (session.user) {
-				// Add the additional fields to the session user object
 				session.user.id = token.id;
 				session.user.first_name = token.first_name;
 				session.user.last_name = token.last_name;

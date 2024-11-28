@@ -14,6 +14,7 @@ function SyncAudiosButton({ setAudios }) {
 				method: "POST",
 			});
 			const data = await response.json();
+			console.log("Synced response data: ", data);
 
 			if (!response.ok) {
 				throw new Error(data.error || "Failed to sync videos.");
@@ -21,7 +22,7 @@ function SyncAudiosButton({ setAudios }) {
 			setAudios((prevAudios) => [...data, ...prevAudios]);
 			toast.success("Videos synchronized successfully!");
 		} catch (error) {
-			console.error("Error:", error);
+			console.log(error);
 			toast.error(error.message || "An error occurred.");
 		} finally {
 			setIsLoading(false);
