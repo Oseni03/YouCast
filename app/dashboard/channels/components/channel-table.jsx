@@ -15,7 +15,7 @@ const ChannelTable = ({ channels, setChannels }) => (
 		<TableCaption>A list of your subscribed channels.</TableCaption>
 		<TableHeader>
 			<TableRow>
-				<TableHead className="w-[100px]">TITLE</TableHead>
+				<TableHead>TITLE</TableHead>
 				<TableHead className="text-right">ACTION</TableHead>
 			</TableRow>
 		</TableHeader>

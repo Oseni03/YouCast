@@ -150,6 +150,7 @@ function Page() {
 							stiffness: 200,
 							damping: 24,
 						}}
+						id={audio.id}
 					>
 						<DialogTrigger
 							style={{
