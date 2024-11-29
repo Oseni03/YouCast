@@ -10,15 +10,28 @@ import {
 import { useSession } from "next-auth/react";
 import { ZodForm } from "./zod-form";
 import { profileFormSchema } from "@/lib/zod";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { updateUserProfile } from "@/lib/actions";
+import { getUser } from "@/lib/actions";
 
-const ProfileForm = () => {
+export const ProfileDialog = ({ children }) => {
 	const { data: session } = useSession();
-	const user = session?.user;
+	const userId = session?.user.id;
+	const [user, setUser] = useState({});
 	const [isLoading, setLoading] = useState(false);
 	const [error, setError] = useState(null);
+
+	useEffect(() => {
+		async function getUserData() {
+			const result = await getUser(userId);
+			console.log(result);
+			if (result.success) {
+				setUser(result.user);
+			}
+		}
+		getUserData();
+	}, [userId]);
 
 	const updateProfile = async ({ first_name, last_name }) => {
 		setLoading(true);
@@ -35,36 +48,6 @@ const ProfileForm = () => {
 		setLoading(false);
 	};
 	return (
-		<ZodForm
-			schema={profileFormSchema}
-			defaultValues={{
-				first_name: user?.first_name || "",
-				last_name: user?.last_name || "",
-			}}
-			fields={[
-				{
-					name: "first_name",
-					type: "text",
-					label: "First Name",
-					placeholder: "Enter your first name",
-				},
-				{
-					name: "last_name",
-					type: "text",
-					label: "Last Name",
-					placeholder: "Enter your last name",
-				},
-			]}
-			error={error}
-			isLoading={isLoading}
-			submitLabel="Update"
-			onSubmit={updateProfile}
-		/>
-	);
-};
-
-export const ProfileDialog = ({ children }) => {
-	return (
 		<Dialog>
 			<DialogTrigger asChild>{children}</DialogTrigger>
 			<DialogContent className="sm:max-w-[425px]">
@@ -74,7 +57,31 @@ export const ProfileDialog = ({ children }) => {
 						Subscribe to a higher plan for more credit.
 					</DialogDescription>
 				</DialogHeader>
-				<ProfileForm />
+				<ZodForm
+					schema={profileFormSchema}
+					defaultValues={{
+						first_name: user?.first_name || "",
+						last_name: user?.last_name || "",
+					}}
+					fields={[
+						{
+							name: "first_name",
+							type: "text",
+							label: "First Name",
+							placeholder: "Enter your first name",
+						},
+						{
+							name: "last_name",
+							type: "text",
+							label: "Last Name",
+							placeholder: "Enter your last name",
+						},
+					]}
+					error={error}
+					isLoading={isLoading}
+					submitLabel="Update"
+					onSubmit={updateProfile}
+				/>
 			</DialogContent>
 		</Dialog>
 	);

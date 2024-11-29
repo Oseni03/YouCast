@@ -12,15 +12,25 @@ import { Wallet } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { CreditTopupDialog } from "./credit-topup-dialog";
 import { MAXCREDITS } from "@/utils/constants";
+import { useEffect, useState } from "react";
+import { getUser } from "@/lib/actions";
 
 function CreditBalanceCard() {
 	const { data: session } = useSession();
-	const user = session?.user;
-	console.log("user", user);
+	const userId = session?.user.id;
+	const [user, setUser] = useState({});
 
-	const progress = (user?.credits || 0 / MAXCREDITS) * 100;
-	console.log("progress", progress);
+	useEffect(() => {
+		async function getUserData() {
+			const result = await getUser(userId);
+			if (result.success) {
+				setUser(result.user);
+			}
+		}
+		getUserData();
+	}, [userId]);
 
+	const progress = (user?.credits / MAXCREDITS) * 100;
 	return (
 		<div className="mt-auto">
 			<Card>

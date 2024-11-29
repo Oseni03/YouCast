@@ -4,6 +4,7 @@ import { ToastContainer } from "react-toastify";
 import { ThemeProvider } from "@/components/theme-provider";
 import AuthWrapper from "@/components/wrapper/auth-wrapper";
 import Provider from "./provider";
+import { siteConfig } from "@/config/site";
 import "react-toastify/dist/ReactToastify.css";
 
 const geistSans = localFont({
@@ -20,19 +21,16 @@ const geistMono = localFont({
 export const metadata = {
 	// metadataBase: new URL("https://starter.rasmic.xyz"),
 	title: {
-		default: "Nextjs Starter Kit",
-		template: `%s | Nextjs Starter Kit`,
+		default: siteConfig.name,
+		template: `%s | ${siteConfig.name}`,
 	},
-	description:
-		"The Ultimate Nextjs 14 Starter Kit for quickly building your SaaS, giving you time to focus on what really matters",
+	description: siteConfig.description,
 
 	twitter: {
 		card: "summary_large_image",
-		title: "Nextjs Starter Kit",
-		description:
-			"The Ultimate Nextjs 14 Starter Kit for quickly building your SaaS, giving you time to focus on what really matters",
-		siteId: "",
-		creator: "@rasmic",
+		title: siteConfig.name,
+		description: siteConfig.description,
+		creator: "@Oseni03",
 		creatorId: "",
 	},
 };
