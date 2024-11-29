@@ -36,9 +36,7 @@ export default function NavBar() {
 			<Collapsible
 				open={isOpen}
 				onOpenChange={setIsOpen}
-				className={`fixed top-0 left-0 right-0 z-10 ${
-					isOpen ? "pointer-events-auto" : "pointer-events-none"
-				}`}
+				className={`fixed top-0 left-0 right-0 z-10`}
 			>
 				<div className="flex min-w-full fixed justify-between items-center p-2 border-b z-20 dark:bg-black dark:bg-opacity-50 bg-white">
 					<div className="flex items-center space-x-2 ">
@@ -100,6 +98,15 @@ export default function NavBar() {
 									<Button variant="ghost">Contact us</Button>
 								</Link>
 							</NavigationMenuItem>
+							<NavigationMenuItem>
+								<Link
+									href="/#newsletter"
+									legacyBehavior
+									passHref
+								>
+									<Button variant="ghost">Newsletter</Button>
+								</Link>
+							</NavigationMenuItem>
 						</NavigationMenuList>
 					</NavigationMenu>
 					<div className="flex items-center gap-2 ">
@@ -150,13 +157,13 @@ export default function NavBar() {
 								Dashboard
 							</Button>
 						</Link>
-						<Link href="/about">
+						<Link href="/#pricing">
 							<Button
 								variant="ghost"
 								className="w-full justify-start"
 								onClick={() => setIsOpen(false)}
 							>
-								About
+								Pricing
 							</Button>
 						</Link>
 						<Link href="/contact-us">
@@ -166,6 +173,15 @@ export default function NavBar() {
 								onClick={() => setIsOpen(false)}
 							>
 								Contact us
+							</Button>
+						</Link>
+						<Link href="/#newsletter">
+							<Button
+								variant="ghost"
+								className="w-full justify-start"
+								onClick={() => setIsOpen(false)}
+							>
+								Newsletter
 							</Button>
 						</Link>
 					</div>
