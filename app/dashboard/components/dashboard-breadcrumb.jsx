@@ -18,8 +18,6 @@ export const DashboardBreadcrumb = () => {
 			breadcrumb = "Manage your audio library";
 		} else if (segments[0] == "channels") {
 			breadcrumb = "Manage your channel subscription";
-		} else if (segments[0] == "categories") {
-			breadcrumb = "Manage your categories";
 		}
 	}
 	return (
