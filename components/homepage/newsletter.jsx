@@ -4,12 +4,16 @@ import { useState } from "react";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { toast } from "react-toastify";
+import { addNewsletterSubscriber } from "@/lib/actions";
+import { Spinner } from "../ui/Spinner";
 
 const Newsletter = () => {
 	const [email, setEmail] = useState("");
+	const [isLoading, setLoading] = useState(false);
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
+		setLoading(true);
 
 		const response = await addNewsletterSubscriber(email);
 
@@ -19,6 +23,8 @@ const Newsletter = () => {
 		} else {
 			toast.info(response.message);
 		}
+		setLoading(false);
+		setEmail("");
 	};
 
 	return (
@@ -78,7 +84,12 @@ const Newsletter = () => {
 								</div>
 							</div>
 							<div>
-								<Button type="submit" name="subscribe">
+								<Button
+									type="submit"
+									name="subscribe"
+									disabled={isLoading}
+								>
+									{isLoading && <Spinner />}
 									Subscribe
 								</Button>
 							</div>
