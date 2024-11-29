@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 
-const DeleteDialog = ({ channelId, setter }) => {
+const ChannelDeleteDialog = ({ channelId, setter }) => {
 	const handleDeleteChannel = async (channelId) => {
 		try {
 			const response = await fetch(`/api/channels/${channelId}`, {
@@ -63,4 +63,4 @@ const DeleteDialog = ({ channelId, setter }) => {
 	);
 };
 
-export default DeleteDialog;
+export default ChannelDeleteDialog;

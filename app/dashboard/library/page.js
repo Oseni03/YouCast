@@ -27,6 +27,7 @@ import { UrlForm } from "../components/url-form";
 import { toast } from "react-toastify";
 import Pagination from "@/components/pagination";
 import SyncAudiosButton from "./components/sync-audios-button";
+import AudioDeleteDialog from "./components/audio-delete-dialog";
 
 function Page() {
 	const [audios, setAudios] = useState([]);
@@ -91,28 +92,6 @@ function Page() {
 		}
 	};
 
-	const handleDelete = async (videoId) => {
-		try {
-			const response = await fetch(`/api/videos/${videoId}`, {
-				method: "DELETE",
-			});
-
-			const result = await response.json();
-
-			if (response.ok) {
-				// Update the channels state by filtering out the deleted channel
-				setAudios((prevAudios) =>
-					prevAudios.filter((aud) => aud.id !== videoId)
-				);
-				toast.success("Audio deleted successfully!");
-			} else {
-				toast.error("Failed to delete audio: " + result.error);
-			}
-		} catch (error) {
-			toast.error(error);
-		}
-	};
-
 	const dialogTrigger = (
 		<Button>
 			<PlusCircle className="size-4 mr-2" />
@@ -168,35 +147,9 @@ function Page() {
 									}}
 								/>
 								<div className="flex flex-col">
-									<div className="flex items-center w-full">
-										<DialogTitle className="text-sm font-medium text-black">
-											{audio.title}
-										</DialogTitle>
-										<DropdownMenu className="ml-auto">
-											<DropdownMenuTrigger className="p-2 hover:bg-black/5 rounded-full transition-colors">
-												<MoreVertical className="w-5 h-5 text-gray-600" />
-											</DropdownMenuTrigger>
-											<DropdownMenuContent
-												align="end"
-												className="w-48"
-											>
-												<DropdownMenuItem className="cursor-pointer">
-													Share
-												</DropdownMenuItem>
-												<DropdownMenuItem className="cursor-pointer">
-													Download
-												</DropdownMenuItem>
-												<DropdownMenuItem
-													className="cursor-pointer"
-													onSelect={() =>
-														handleDelete(audio.id)
-													}
-												>
-													Delete
-												</DropdownMenuItem>
-											</DropdownMenuContent>
-										</DropdownMenu>
-									</div>
+									<DialogTitle className="text-sm font-medium text-black">
+										{audio.title}
+									</DialogTitle>
 									<DialogSubtitle className="text-sm text-gray-600">
 										{audio.channelTitle}
 									</DialogSubtitle>
@@ -230,36 +183,14 @@ function Page() {
 											/>
 										</div>
 										<div className="">
-											<div className="flex">
+											<div className="flex justify-between items-center">
 												<DialogTitle className="text-black">
 													{audio.title}
 												</DialogTitle>
-												<DropdownMenu className="ml-auto">
-													<DropdownMenuTrigger className="p-2 hover:bg-black/5 rounded-full transition-colors">
-														<MoreVertical className="w-5 h-5 text-gray-600" />
-													</DropdownMenuTrigger>
-													<DropdownMenuContent
-														align="end"
-														className="w-48"
-													>
-														<DropdownMenuItem className="cursor-pointer">
-															Add to Playlist
-														</DropdownMenuItem>
-														<DropdownMenuItem className="cursor-pointer">
-															Share Track
-														</DropdownMenuItem>
-														<DropdownMenuItem className="cursor-pointer">
-															View Artist
-														</DropdownMenuItem>
-														<DropdownMenuSeparator />
-														<DropdownMenuItem className="cursor-pointer">
-															View Album
-														</DropdownMenuItem>
-														<DropdownMenuItem className="cursor-pointer">
-															Download
-														</DropdownMenuItem>
-													</DropdownMenuContent>
-												</DropdownMenu>
+												<AudioDeleteDialog
+													audioId={audio.id}
+													setter={setAudios}
+												/>
 											</div>
 											<DialogSubtitle className="font-light text-muted-foreground">
 												{audio.channelTitle}

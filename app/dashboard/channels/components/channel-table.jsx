@@ -8,7 +8,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
-import DeleteDialog from "./delete-dialog";
+import ChannelDeleteDialog from "./channel-delete-dialog";
 
 const ChannelTable = ({ channels, setChannels }) => (
 	<Table>
@@ -26,7 +26,7 @@ const ChannelTable = ({ channels, setChannels }) => (
 						{channel.title}
 					</TableCell>
 					<TableCell className="text-right">
-						<DeleteDialog
+						<ChannelDeleteDialog
 							channelId={channel.id}
 							setter={setChannels}
 						/>
