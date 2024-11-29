@@ -2,7 +2,7 @@
 import React from "react";
 import Image from "next/image";
 import { useMediaQuery } from "react-responsive";
-import AppImage from "@/public/app-screen-1.jpg";
+import AppImage from "@/public/app-screen-1.png";
 import Link from "next/link";
 import { Button } from "../ui/button";
 import { BorderBeam } from "../magicui/border-beam";
@@ -105,17 +105,6 @@ const HeroSection = () => {
 								</div>
 							</div>
 							<BorderBeam size={300} duration={12} delay={9} />
-							{isDesktop && (
-								<>
-									<div className="absolute top-0 left-0 mt-40 ml-4">
-										<div className="badge bg-info text-white px-3 py-2 text-sm rounded-full">
-											Developer
-										</div>
-										{/* Additional UI */}
-									</div>
-									{/* Other badges */}
-								</>
-							)}
 						</div>
 					</div>
 				</div>

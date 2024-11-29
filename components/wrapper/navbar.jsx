@@ -36,7 +36,9 @@ export default function NavBar() {
 			<Collapsible
 				open={isOpen}
 				onOpenChange={setIsOpen}
-				className="fixed inset-0 z-10 "
+				className={`fixed top-0 left-0 right-0 z-10 ${
+					isOpen ? "pointer-events-auto" : "pointer-events-none"
+				}`}
 			>
 				<div className="flex min-w-full fixed justify-between items-center p-2 border-b z-20 dark:bg-black dark:bg-opacity-50 bg-white">
 					<div className="flex items-center space-x-2 ">
