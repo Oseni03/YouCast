@@ -35,7 +35,6 @@ export function UserProfile() {
 	useEffect(() => {
 		async function getUserData() {
 			const result = await getUser(userId);
-			console.log(result);
 			if (result.success) {
 				setUser(result.user);
 			}

@@ -72,7 +72,7 @@ function Page() {
 						</>
 					) : (
 						<EmptyPlaceholder
-							title={"No videos"}
+							title={"No audio"}
 							description={"Visit the library tab to add"}
 						/>
 					)}

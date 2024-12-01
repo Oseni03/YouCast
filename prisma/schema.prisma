@@ -16,7 +16,6 @@ model User {
   password      String? // Add this field
   emailVerified DateTime?
   image         String?
-  subscription  String?
   credits       Int?            @default(0)
   user_id       String?          @unique
   accounts      Account[]
@@ -24,51 +23,35 @@ model User {
   Authenticator Authenticator[]
   feedbacks     Feedback[]
   subscriptions Subscription[]
+  transactions  Transaction[]
   videos        Video[]
   categories    Category[]      @relation("UserCategories")
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 }
 
-model payments {
-  id               Int      @id @default(autoincrement())
-  created_time     DateTime @default(now())
-  stripe_id        String
-  email            String
-  amount           Int
-  payment_time     DateTime
-  payment_date     DateTime
-  currency         String
-  user_id          String
-  customer_details String
-  payment_intent   String
+model Transaction {
+  id                String   @id @default(cuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id])
+  amount            Float
+  currency          String   @default("USD")
+  status            TransactionStatus @default(PENDING)
+  credits           Int?
+  providerReference String?  // Flutterwave transaction reference
+  providerResponse  Json?    // Store full provider response
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  subscriptionId    String?
+  metadata          Json?
 }
 
-model subscriptions {
-  id                        Int      @id @default(autoincrement())
-  created_time              DateTime @default(now())
-  subscription_id           String
-  stripe_user_id            String
-  status                    String
-  start_date                String
-  end_date                  String?
-  plan_id                   String
-  default_payment_method_id String?
-  email                     String
-  user_id                   String
-}
-
-model invoices {
-  id              Int      @id @default(autoincrement())
-  created_time    DateTime @default(now())
-  invoice_id      String
-  subscription_id String
-  amount_paid     String
-  amount_due      String?
-  currency        String
-  status          String
-  email           String
-  user_id         String?
+enum TransactionStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  CANCELLED
 }
 
 model Account {

@@ -11,10 +11,11 @@ import {
 import { CheckCircle2, Coins } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { loadStripe } from "@stripe/stripe-js";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
 import { SUBSCRIPTION_PLANS } from "@/utils/constants";
+import { getUser } from "@/lib/actions";
+import { Spinner } from "../ui/Spinner";
 
 const PricingHeader = ({ title, subtitle }) => (
 	<section className="text-center">
@@ -44,8 +45,9 @@ const PricingCard = ({
 	user,
 	handleCheckout,
 	title,
-	priceIdMonthly,
-	monthlyPrice,
+	priceId,
+	isLoading,
+	amount,
 	description,
 	features,
 	credits,
@@ -71,10 +73,10 @@ const PricingCard = ({
 				</CardTitle>
 				<div className="flex gap-0.5">
 					<h2 className="text-3xl font-bold">
-						{monthlyPrice ? `$${monthlyPrice}` : "Custom"}
+						{amount ? `$${amount}` : "Custom"}
 					</h2>
 					<span className="flex flex-col justify-end text-sm mb-1">
-						{monthlyPrice ? "/month" : null}
+						{amount ? "/month" : null}
 					</span>
 				</div>
 				<CreditDisplay credits={credits} bonusCredits={0} />
@@ -100,13 +102,15 @@ const PricingCard = ({
 			<Button
 				onClick={() => {
 					if (user?.id) {
-						handleCheckout(priceIdMonthly, true);
+						handleCheckout(priceId);
 					} else {
 						toast.info("You must be logged in to make a purchase");
 					}
 				}}
 				className="relative inline-flex w-full items-center justify-center rounded-md bg-black text-white dark:bg-white px-6 font-medium dark:text-black transition-colors focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:ring-offset-slate-50"
+				disabled={isLoading}
 			>
+				{isLoading && <Spinner />}
 				{actionLabel}
 			</Button>
 		</CardFooter>
@@ -115,15 +119,23 @@ const PricingCard = ({
 
 export default function CreditBasedPricing() {
 	const { data: session } = useSession();
-	const user = session?.user;
-	const [stripePromise, setStripePromise] = useState(null);
+	const userId = session?.user.id;
+	const [user, setUser] = useState({});
+	const [isLoading, setLoading] = useState(false);
 
 	useEffect(() => {
-		setStripePromise(loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY));
-	}, []);
+		async function getUserData() {
+			const result = await getUser(userId);
+			if (result.success) {
+				setUser(result.user);
+			}
+		}
+		getUserData();
+	}, [userId]);
 
-	const handleCheckout = async (priceId, subscription) => {
+	const handleCheckout = async (priceId) => {
 		try {
+			setLoading(true);
 			const response = await fetch(
 				"/api/payments/create-checkout-session",
 				{
@@ -133,9 +145,9 @@ export default function CreditBasedPricing() {
 					},
 					body: JSON.stringify({
 						userId: user?.id,
+						userCredits: user?.credits,
 						email: user?.email,
 						priceId,
-						subscription,
 					}),
 				}
 			);
@@ -147,17 +159,16 @@ export default function CreditBasedPricing() {
 			const data = await response.json();
 			console.log(data);
 
-			if (data.sessionId) {
-				const stripe = await stripePromise;
-				return stripe?.redirectToCheckout({
-					sessionId: data.sessionId,
-				});
+			if (data.url) {
+				window.location.href = data.url;
+				return;
 			}
-
-			toast.error("Failed to create checkout session");
-		} catch (error) {
-			console.error("Error during checkout:", error);
 			toast.error("Error during checkout");
+		} catch (error) {
+			console.log("Error during checkout:", error);
+			toast.error("Error during checkout");
+		} finally {
+			setLoading(false);
 		}
 	};
 
@@ -173,6 +184,8 @@ export default function CreditBasedPricing() {
 						key={plan.title}
 						user={user}
 						handleCheckout={handleCheckout}
+						priceId={plan.id}
+						isLoading={isLoading}
 						{...plan}
 					/>
 				))}

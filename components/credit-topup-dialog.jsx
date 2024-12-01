@@ -1,6 +1,3 @@
-"use client";
-
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
 	Dialog,
@@ -28,9 +25,9 @@ const PlanForm = ({ onSubmit }) => {
 					type: "radio",
 					label: "Choose plan",
 					options: SUBSCRIPTION_PLANS.map((plan) => ({
-						value: plan.priceIdOneOff,
+						value: plan.id,
 						label: `${plan.title} (${plan.credits})`,
-						key: plan.priceIdOneOff,
+						key: plan.id,
 					})),
 				},
 			]}
@@ -55,13 +52,13 @@ export const CreditTopupDialog = ({ user }) => {
 						userCredits: user?.credits,
 						email: user?.email,
 						priceId: plan_id,
-						subscription: false,
 					}),
 				}
 			);
 
 			if (!response.ok) {
 				const errorData = await response.json();
+				console.log("Error: ", errorData);
 				throw new Error(
 					errorData.error || "Failed to create checkout session"
 				);

@@ -70,14 +70,15 @@ export async function POST(request) {
 						channelId: videoData.channelId,
 						title: videoData.title,
 						description: videoData.description,
-						thumbnailUrl: videoData.thumbnail,
+						thumbnailUrl:
+							videoData.thumbnail || audioData.thumbnail,
 						duration:
 							videoData.duration?.toString() ||
-							audioData.duration?.toString(),
+							audioData?.duration?.toString(),
 						publishedAt: new Date(
 							formatDate(videoData.upload_date)
 						),
-						audioUrl: audioData.link,
+						audioUrl: audioData.link || audioData.url,
 						users: { connect: { id: user.id } },
 					},
 				});
