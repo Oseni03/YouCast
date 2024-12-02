@@ -5,6 +5,7 @@ import { UserAuthForm } from "../../components/user-auth-form";
 import AuthPage from "../../components/auth-page";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
+import { useSession } from "next-auth/react";
 
 // export const metadata = {
 // 	title: "Sign up",
@@ -13,6 +14,11 @@ import { toast } from "react-toastify";
 
 export default function Page() {
 	const router = useRouter();
+	const { data: session } = useSession();
+
+	if (session?.user) {
+		router.push("/dashboard");
+	}
 	const [globalError, setGlobalError] = useState("");
 
 	const handleSubmit = async ({ email, password }) => {

@@ -1,3 +1,4 @@
+import { siteConfig } from "@/config/site";
 import Link from "next/link";
 
 const Footer = () => {
@@ -38,14 +39,16 @@ const Footer = () => {
 				</li>
 				<li className="mx-2">
 					<Link
-						href="terms"
+						href="/terms"
 						className="text-gray-500 hover:text-gray-700"
 					>
 						Terms
 					</Link>
 				</li>
 			</ul>
-			<p className="text-center text-gray-500">© 2024 Company, Inc</p>
+			<p className="text-center text-gray-500">
+				© {new Date().getFullYear()} {siteConfig.name}
+			</p>
 		</footer>
 	);
 };

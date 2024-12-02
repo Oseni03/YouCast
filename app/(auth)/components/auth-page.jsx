@@ -95,7 +95,7 @@ function AuthPage({ config }) {
 								</Link>{" "}
 								and{" "}
 								<Link
-									href="/privacy"
+									href="/privacy-policy"
 									className="underline underline-offset-4 hover:text-primary"
 								>
 									Privacy Policy
