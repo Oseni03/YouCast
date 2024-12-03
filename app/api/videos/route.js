@@ -46,8 +46,7 @@ export async function POST(request) {
 			videoData = formatVideo(videoData);
 		} else {
 			// Fetch video data and audio URL
-			let audioData;
-			[videos, audioData] = await Promise.all([
+			const [videos, audioData] = await Promise.all([
 				getVideoData([videoId]),
 				getAudioData(videoId),
 			]);

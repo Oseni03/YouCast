@@ -23,7 +23,7 @@ function SyncAudiosButton({ setAudios }) {
 			toast.success("Videos synchronized successfully!");
 		} catch (error) {
 			console.log(error);
-			toast.error(error.message || "An error occurred.");
+			toast.error("An error occurred.");
 		} finally {
 			setIsLoading(false);
 		}

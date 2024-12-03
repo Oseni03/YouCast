@@ -61,19 +61,6 @@ const items = [
 export function AppSidebar() {
 	const router = useRouter();
 	const { data: session } = useSession();
-	const userId = session?.user.id;
-	const [user, setUser] = useState({});
-
-	useEffect(() => {
-		async function getUserData() {
-			const result = await getUser(userId);
-			console.log(result);
-			if (result.success) {
-				setUser(result.user);
-			}
-		}
-		getUserData();
-	}, [userId]);
 
 	const handleLogout = async () => {
 		try {
@@ -83,49 +70,6 @@ export function AppSidebar() {
 		} catch (error) {
 			console.log(error);
 			toast.error("Logout unsuccessful!");
-		}
-	};
-
-	const handleBilling = async () => {
-		try {
-			if (!user.subscription) {
-				toast.info("Subscribe to a plan to access");
-				router.push("/#pricing");
-				return;
-			}
-
-			const subscription = await getUserSubscription(userId);
-
-			if (!subscription.success) {
-				toast.error(subscription.error);
-				return;
-			}
-
-			const response = await fetch("/api/payments/portal", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					customerId: subscription?.subscription.stripe_user_id,
-				}),
-			});
-
-			if (!response.ok) {
-				const errorData = await response.json();
-				throw new Error(
-					errorData.error || "Failed to create checkout session"
-				);
-			}
-
-			const data = await response.json();
-			if (data.url) {
-				// Redirect directly to Stripe checkout URL
-				window.location.href = data.url;
-				return;
-			}
-		} catch (error) {
-			toast.error("Error during checkout");
 		}
 	};
 
@@ -177,9 +121,6 @@ export function AppSidebar() {
 											Profile
 										</Button>
 									</ProfileDialog>
-								</DropdownMenuItem>
-								<DropdownMenuItem onSelect={handleBilling}>
-									<span>Billing</span>
 								</DropdownMenuItem>
 								<DropdownMenuItem onSelect={handleLogout}>
 									<span>Sign out</span>
