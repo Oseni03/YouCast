@@ -1,61 +1,52 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useEffect } from "react";
-import { updateTransactionStatus } from "@/lib/actions";
+import { Suspense } from "react";
 
-function Page() {
+function PaymentStatusContent() {
 	const searchParams = useSearchParams();
 	const status = searchParams.get("status");
 	const tx_ref = searchParams.get("tx_ref");
 
 	// Determine transaction status
-	let transactionStatus;
-	switch (status) {
-		case "successful":
-			transactionStatus = "SUCCESS";
-			break;
-		case "failed":
-			transactionStatus = "FAILED";
-			break;
-		case "cancelled":
-			transactionStatus = "CANCELLED";
-			break;
-	}
+	const transactionStatus =
+		status === "successful"
+			? "SUCCESS"
+			: status === "failed"
+			? "FAILED"
+			: status === "cancelled"
+			? "CANCELLED"
+			: null;
 
-	useEffect(() => {
-		const updateTransaction = async () => {
-			// Update transaction status
-			const data = await updateTransactionStatus(
-				tx_ref,
-				transactionStatus
-			);
-			console.log("Updated trnx: ", data);
-			const transaction = data.data;
+	// Client-side effect for transaction update
+	const updateTransaction = async () => {
+		if (!tx_ref || !transactionStatus) return;
 
-			// Additional logic for successful transactions (e.g., credit user)
-			if (transactionStatus === "SUCCESS") {
-				// Implement user credit allocation logic
-				const updatedCredits =
-					Number(transaction?.user?.credits || 0) +
-					transaction.credits;
+		try {
+			const response = await fetch("/api/payment/update-status", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ tx_ref, transactionStatus }),
+			});
 
-				await prisma.user.update({
-					where: { id: transaction.userId },
-					data: { credits: updatedCredits },
-				});
-
-				logger.info("One-off purchase processed", {
-					userId: transaction.user.id,
-					credits: updatedCredits,
-				});
+			if (!response.ok) {
+				console.error(
+					"Failed to update transaction:",
+					await response.text()
+				);
+				return;
 			}
-		};
 
-		updateTransaction();
-	}, [transactionStatus, tx_ref]);
+			const data = await response.json();
+			console.log("Transaction updated successfully:", data);
+		} catch (error) {
+			console.error("Error updating transaction:", error);
+		}
+	};
 
-	console.log("Payment status: ", status);
+	// Trigger update on render
+	updateTransaction();
+
 	return (
 		<div className="flex flex-col justify-center items-center h-screen">
 			<h1 className="text-3xl font-semibold text-center">
@@ -67,4 +58,10 @@ function Page() {
 	);
 }
 
-export default Page;
+export default function Page() {
+	return (
+		<Suspense fallback={<div>Loading...</div>}>
+			<PaymentStatusContent />
+		</Suspense>
+	);
+}

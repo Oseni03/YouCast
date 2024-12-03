@@ -1,5 +1,5 @@
 import { syncUserChannelVideos } from "@/lib/youtube";
-import prisma from "@/lib/prisma"; // Assuming you have a Prisma client setup
+import { prisma } from "@/lib/db"; // Assuming you have a Prisma client setup
 
 export const dynamic = "force-dynamic"; // static by default, unless reading the request
 
