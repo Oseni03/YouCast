@@ -82,10 +82,12 @@ function Page() {
 				setAudios((prevAudios) => [data, ...prevAudios]);
 			} else {
 				console.log("Error processing YouTube video:", data.error);
+				toast.info(data.error);
 				setError(data.error);
 			}
 		} catch (error) {
 			console.log("Error submitting YouTube video:", error);
+			toast.error(data.error);
 			setError(error);
 		} finally {
 			setLoading(false);

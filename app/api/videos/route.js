@@ -29,6 +29,13 @@ export async function POST(request) {
 				{ status: 400 }
 			);
 		}
+		if (user.credits < 1)
+			return NextResponse.json(
+				{
+					error: "You need more credits to perform this action. Add credit!",
+				},
+				{ status: 400 }
+			);
 
 		// Check if video already exists for the user
 		const videoId = getVideoId(url);
