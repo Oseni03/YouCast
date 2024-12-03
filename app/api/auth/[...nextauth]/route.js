@@ -1,4 +1,3 @@
-// app/api/auth/[...nextauth]/route.js
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
@@ -63,6 +62,12 @@ export const authOptions = {
 		signIn: "/auth/signin",
 		error: "/auth/error", // Define custom error page
 	},
+	secret: process.env.NEXTAUTH_SECRET, // Ensure the secret is defined
+	session: {
+		strategy: "jwt", // Using JSON Web Tokens for sessions
+		maxAge: 7 * 24 * 60 * 60, // 7 days
+		updateAge: 24 * 60 * 60, // Update session every 24 hours
+	},
 	callbacks: {
 		async jwt({ token, user, account }) {
 			// Include additional user fields in the token
@@ -87,6 +92,18 @@ export const authOptions = {
 				session.accessToken = token.accessToken;
 			}
 			return session;
+		},
+	},
+	debug: process.env.NODE_ENV === "development", // Enable debug logs in development
+	events: {
+		async signIn(message) {
+			console.log("User signed in", message);
+		},
+		async signOut(message) {
+			console.log("User signed out", message);
+		},
+		async error(error) {
+			console.error("NextAuth error", error);
 		},
 	},
 };
