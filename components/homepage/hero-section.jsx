@@ -46,7 +46,7 @@ const HeroSection = () => {
 							<Button>
 								<Link href={"/auth/signup"}>Try for Free</Link>
 							</Button>
-							<Link href={""}>
+							<Link href={"https://github.com/Oseni03/YouCast"}>
 								<Button variant="outline">
 									<svg
 										xmlns="http://www.w3.org/2000/svg"

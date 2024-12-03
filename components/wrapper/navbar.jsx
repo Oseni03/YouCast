@@ -46,8 +46,9 @@ export default function NavBar() {
 								className="pl-2 flex items-center"
 								aria-label="Home"
 							>
-								<BlocksIcon aria-hidden="true" />
-								<span className="sr-only">Home</span>
+								<span className="font-semibold text-xl">
+									{siteConfig.name}
+								</span>
 							</Link>
 						</div>
 						<CollapsibleTrigger asChild>
