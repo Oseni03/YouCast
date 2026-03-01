@@ -62,7 +62,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    # "apps.analytics.middleware.RSSAnalyticsMiddleware",  # logs RSS feed requests
+    "apps.analytics.middleware.RSSAnalyticsMiddleware",  # logs RSS feed requests
 ]
 
 ROOT_URLCONF = "config.urls"
