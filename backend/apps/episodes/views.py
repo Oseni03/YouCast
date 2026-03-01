@@ -1,3 +1,131 @@
-from django.shortcuts import render
+from django.db.models import Q
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
 
-# Create your views here.
+from .models import Episode, ProcessingStatus
+from .serializers import EpisodeSerializer, EpisodeListSerializer
+from channels.models import Channel
+
+
+class EpisodeListView(APIView):
+    """
+    GET /api/episodes/
+    List episodes across all of the creator's channels.
+    Supports filtering by channel, status, and search query.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        creator_channel_ids = Channel.objects.filter(
+            creator=request.user
+        ).values_list('id', flat=True)
+
+        episodes = Episode.objects.filter(channel_id__in=creator_channel_ids)
+
+        # Optional filters
+        channel_id = request.query_params.get('channel')
+        if channel_id:
+            episodes = episodes.filter(channel_id=channel_id)
+
+        proc_status = request.query_params.get('status')
+        if proc_status:
+            episodes = episodes.filter(processing_status=proc_status)
+
+        search = request.query_params.get('search')
+        if search:
+            episodes = episodes.filter(
+                Q(title__icontains=search) | Q(description__icontains=search)
+            )
+
+        # Pagination
+        page      = int(request.query_params.get('page', 1))
+        page_size = int(request.query_params.get('page_size', 20))
+        start     = (page - 1) * page_size
+        end       = start + page_size
+
+        total   = episodes.count()
+        episodes = episodes[start:end]
+
+        return Response({
+            'count':   total,
+            'page':    page,
+            'results': EpisodeListSerializer(episodes, many=True).data,
+        })
+
+
+class EpisodeDetailView(APIView):
+    """GET /api/episodes/<id>/ — full episode detail including processing history."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, episode_id):
+        creator_channel_ids = Channel.objects.filter(
+            creator=request.user
+        ).values_list('id', flat=True)
+
+        try:
+            episode = Episode.objects.get(id=episode_id, channel_id__in=creator_channel_ids)
+        except Episode.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        return Response(EpisodeSerializer(episode).data)
+
+
+class EpisodeRetryView(APIView):
+    """POST /api/episodes/<id>/retry/ — re-queue a failed episode for processing."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, episode_id):
+        creator_channel_ids = Channel.objects.filter(
+            creator=request.user
+        ).values_list('id', flat=True)
+
+        try:
+            episode = Episode.objects.get(id=episode_id, channel_id__in=creator_channel_ids)
+        except Episode.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        if episode.processing_status != ProcessingStatus.FAILED:
+            return Response(
+                {'error': 'Only failed episodes can be retried.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if episode.retry_count >= 3:
+            return Response(
+                {'error': 'Maximum retry limit (3) reached.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        from tasks.pipeline import extract_audio
+        episode.processing_status = ProcessingStatus.QUEUED
+        episode.processing_error  = ''
+        episode.save(update_fields=['processing_status', 'processing_error'])
+
+        extract_audio.delay(str(episode.id))
+        return Response({'status': 'queued'})
+
+
+class ChannelEpisodeListView(APIView):
+    """GET /api/channels/<channel_id>/episodes/ — episodes scoped to a single channel."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, channel_id):
+        try:
+            channel = Channel.objects.get(id=channel_id, creator=request.user)
+        except Channel.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        episodes  = channel.episodes.all()
+        page      = int(request.query_params.get('page', 1))
+        page_size = int(request.query_params.get('page_size', 20))
+        start     = (page - 1) * page_size
+        end       = start + page_size
+        total     = episodes.count()
+
+        return Response({
+            'count':   total,
+            'page':    page,
+            'results': EpisodeListSerializer(episodes[start:end], many=True).data,
+        })
