@@ -95,7 +95,7 @@ TEMPLATES = [
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME":     os.environ.get("DB_NAME",     "podcastifyyt"),
+        "NAME":     os.environ.get("DB_NAME",     "audiosync"),
         "USER":     os.environ.get("DB_USER",     "postgres"),
         "PASSWORD": os.environ.get("DB_PASSWORD", "postgres"),
         "HOST":     os.environ.get("DB_HOST",     "localhost"),
