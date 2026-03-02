@@ -8,7 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status as drf_status
 from django.utils import timezone
 
-from channels.models import Channel
+from apps.channels.models import Channel
 from .models import PodcastDirectory
 from .services.builder import RSSFeedBuilder
 from .serializers import PodcastDirectorySerializer

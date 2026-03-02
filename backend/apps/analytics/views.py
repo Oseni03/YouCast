@@ -5,8 +5,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from datetime import timedelta, date
 
-from channels.models import Channel
-from episodes.models import Episode
+from apps.channels.models import Channel
+from apps.episodes.models import Episode
 from .models import AnalyticsEvent
 
 

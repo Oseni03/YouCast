@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
-    path('', include('feeds.urls_rss')),
+    path('', include('apps.feeds.urls_rss')),
     path('admin/', admin.site.urls),
     path('api/auth/', include('apps.accounts.urls')),
     path('api/channels/', include('apps.channels.urls')),

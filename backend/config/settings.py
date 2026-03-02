@@ -18,7 +18,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ---------------------------------------------------------------------------
 # Core
 # ---------------------------------------------------------------------------
-SECRET_KEY = os.environ.get("SECRET_KEY", "change-me-in-production")
+SECRET_KEY = os.environ.get("SECRET_KEY", "hRjeuLVTpfMZZqfKc4cMuOxQueNUmIWP3TNkHMpp1xsq7n4zKpLEm3y0zfZqiqZU__Y")
 
 DEBUG = os.environ.get("DEBUG", "True") == "True"
 
@@ -171,7 +171,7 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION":       True,    # old refresh token is blacklisted
     "UPDATE_LAST_LOGIN":              True,
     "ALGORITHM":                      "HS256",
-    "SIGNING_KEY":                    os.environ.get("SECRET_KEY", "change-me-in-production"),
+    "SIGNING_KEY":                    os.environ.get("SECRET_KEY", "hRjeuLVTpfMZZqfKc4cMuOxQueNUmIWP3TNkHMpp1xsq7n4zKpLEm3y0zfZqiqZU__Y"),
     "AUTH_HEADER_TYPES":              ("Bearer",),
     "AUTH_HEADER_NAME":               "HTTP_AUTHORIZATION",
     "USER_ID_FIELD":                  "id",
@@ -218,25 +218,6 @@ GOOGLE_OAUTH_CLIENT_CONFIG = {
         "redirect_uris": [GOOGLE_OAUTH_REDIRECT_URI],
     }
 }
-
-
-# ---------------------------------------------------------------------------
-# Stripe
-# ---------------------------------------------------------------------------
-STRIPE_SECRET_KEY      = os.environ.get("STRIPE_SECRET_KEY", "")
-STRIPE_WEBHOOK_SECRET  = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
-STRIPE_PRICE_STARTER   = os.environ.get("STRIPE_PRICE_STARTER", "")
-STRIPE_PRICE_PRO       = os.environ.get("STRIPE_PRICE_PRO", "")
-STRIPE_PRICE_AGENCY    = os.environ.get("STRIPE_PRICE_AGENCY", "")
-
-
-# ---------------------------------------------------------------------------
-# Storage — Cloudflare R2 / AWS S3
-# ---------------------------------------------------------------------------
-S3_ENDPOINT_URL  = os.environ.get("S3_ENDPOINT_URL", "")    # leave blank for native AWS S3
-S3_ACCESS_KEY    = os.environ.get("S3_ACCESS_KEY", "")
-S3_SECRET_KEY    = os.environ.get("S3_SECRET_KEY", "")
-S3_AUDIO_BUCKET  = os.environ.get("S3_AUDIO_BUCKET", "podcastifyyt-audio")
 
 
 # ---------------------------------------------------------------------------

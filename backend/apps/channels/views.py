@@ -9,7 +9,7 @@ from .models import Channel
 from .serializers import ChannelSerializer, ChannelCreateSerializer, ChannelUpdateSerializer
 from .services.youtube import YouTubeService
 from .services.websub import WebSubService
-from tasks.monitor import schedule_channel_polling
+from .tasks.pipeline import schedule_channel_polling
 
 
 class ChannelListCreateView(APIView):

@@ -1,6 +1,6 @@
 from feedgen.feed import FeedGenerator
 from django.utils import timezone
-from episodes.models import Episode, ProcessingStatus
+from apps.episodes.models import Episode, ProcessingStatus
 
 
 class RSSFeedBuilder:

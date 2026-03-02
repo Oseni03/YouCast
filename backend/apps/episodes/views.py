@@ -6,7 +6,7 @@ from rest_framework import status
 
 from .models import Episode, ProcessingStatus
 from .serializers import EpisodeSerializer, EpisodeListSerializer
-from channels.models import Channel
+from apps.channels.models import Channel
 
 
 class EpisodeListView(APIView):
