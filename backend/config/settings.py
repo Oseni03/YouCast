@@ -219,6 +219,16 @@ GOOGLE_OAUTH_CLIENT_CONFIG = {
     }
 }
 
+# =============================================================================
+# Polar.sh API Keys
+# =============================================================================
+
+POLAR_ACCESS_TOKEN    = os.environ.get("POLAR_ACCESS_TOKEN", "")
+POLAR_WEBHOOK_SECRET  = os.environ.get("POLAR_WEBHOOK_SECRET", "")
+POLAR_PRODUCT_STARTER = os.environ.get("POLAR_PRODUCT_STARTER", "")
+POLAR_PRODUCT_PRO     = os.environ.get("POLAR_PRODUCT_PRO", "")
+POLAR_PRODUCT_AGENCY  = os.environ.get("POLAR_PRODUCT_AGENCY", "")
+
 
 # ---------------------------------------------------------------------------
 # WebSub / PubSubHubbub
