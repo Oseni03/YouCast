@@ -1,65 +1,110 @@
+import { ArrowRight, Play, Save, WandSparkles, Rss, Activity } from "lucide-react";
 import Image from "next/image";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-white text-black selection:bg-black selection:text-white">
+      <nav className="max-w-7xl mx-auto px-6 py-8 flex items-center justify-between border-b border-black">
+        <div className="flex items-center gap-3">
+          <div className="size-10 rounded-none bg-black flex items-center justify-center text-white shadow-none">
+            <Save />
+          </div>
+          <span className="text-xl font-black tracking-tighter uppercase">AudioSync</span>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+        <div className="hidden md:flex items-center gap-8">
+          <a href="#" className="text-xs font-bold uppercase tracking-widest hover:underline transition-colors">Features</a>
+          <a href="#" className="text-xs font-bold uppercase tracking-widest hover:underline transition-colors">Pricing</a>
+          <a href="#" className="text-xs font-bold uppercase tracking-widest hover:underline transition-colors">Testimonials</a>
+          <button className="text-xs font-bold uppercase tracking-widest bg-black text-white px-8 py-3 rounded-none hover:bg-slate-800 transition-all">
+            Login
+          </button>
+        </div>
+      </nav>
+
+      <main className="max-w-7xl mx-auto px-6 pt-20 pb-32">
+        <div className="text-left max-w-5xl">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-none bg-black text-white text-[10px] font-bold uppercase tracking-widest mb-8 border border-black">
+            <span className="size-2 rounded-full bg-white animate-pulse"></span>
+            New: AI Audio Enhancement Included
+          </div>
+          <h1 className="text-7xl md:text-[120px] font-black tracking-tighter leading-[0.85] mb-12 uppercase">
+            Turn your <br />
+            YouTube into <br />
+            <span className="bg-black text-white px-4">a Podcast.</span>
+          </h1>
+          <p className="text-xl text-black max-w-2xl mb-12 leading-relaxed font-medium">
+            Automatically convert your video uploads into high-quality podcast episodes and distribute them to Spotify, Apple, and Google with one click.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center gap-4">
+            <button 
+              className="w-full sm:w-auto px-12 py-6 bg-black text-white text-xl font-black rounded-none hover:bg-slate-800 transition-all flex items-center justify-center gap-3 uppercase tracking-tighter"
+            >
+              Start Syncing Now
+              <ArrowRight />
+            </button>
+            <button className="w-full sm:w-auto px-12 py-6 bg-white border-2 border-black text-xl font-black rounded-none hover:bg-black hover:text-white transition-all flex items-center justify-center gap-3 uppercase tracking-tighter">
+              Watch Demo
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-32 relative">
+          <div className="relative bg-white rounded-none border-4 border-black shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] overflow-hidden aspect-video">
+            <div className="absolute inset-0 flex items-center justify-center z-10">
+              <div className="size-24 rounded-none bg-black border-2 border-white flex items-center justify-center cursor-pointer hover:scale-110 transition-transform group">
+                <Play />
+              </div>
+            </div>
+            <img 
+              src="https://picsum.photos/seed/dashboard/1920/1080?grayscale" 
+              alt="App Dashboard" 
+              className="w-full h-full object-cover grayscale opacity-80"
+              referrerPolicy="no-referrer"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          </div>
+        </div>
+
+        <div className="mt-32 grid grid-cols-1 md:grid-cols-3 gap-0 border-t border-l border-black">
+          <div className="text-left p-12 border-r border-b border-black hover:bg-black hover:text-white transition-colors group">
+            <div className="size-14 rounded-none bg-black flex items-center justify-center text-white mb-8 group-hover:bg-white group-hover:text-black transition-colors">
+              <WandSparkles className="size-8" strokeWidth={2.5} />
+            </div>
+            <h3 className="text-2xl font-black mb-4 uppercase tracking-tight">AI Enhancement</h3>
+            <p className="text-sm font-medium leading-relaxed opacity-70">Our advanced AI removes background noise and normalizes audio levels for a studio-quality sound.</p>
+          </div>
+          <div className="text-left p-12 border-r border-b border-black hover:bg-black hover:text-white transition-colors group">
+            <div className="size-14 rounded-none bg-black flex items-center justify-center text-white mb-8 group-hover:bg-white group-hover:text-black transition-colors">
+              <Rss className="size-8" strokeWidth={2.5} />
+            </div>
+            <h3 className="text-2xl font-black mb-4 uppercase tracking-tight">Auto-Distribution</h3>
+            <p className="text-sm font-medium leading-relaxed opacity-70">One-click sync to major platforms. We handle the RSS feeds, metadata, and hosting for you.</p>
+          </div>
+          <div className="text-left p-12 border-r border-b border-black hover:bg-black hover:text-white transition-colors group">
+            <div className="size-14 rounded-none bg-black flex items-center justify-center text-white mb-8 group-hover:bg-white group-hover:text-black transition-colors">
+              <Activity className="size-8" strokeWidth={2.5} />
+            </div>
+            <h3 className="text-2xl font-black mb-4 uppercase tracking-tight">Advanced Analytics</h3>
+            <p className="text-sm font-medium leading-relaxed opacity-70">Track your growth across all platforms in one unified dashboard with deep listener insights.</p>
+          </div>
         </div>
       </main>
+
+      <footer className="border-t border-black py-20 bg-black text-white">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-12">
+          <div className="flex items-center gap-3">
+            <div className="size-8 rounded-none bg-white flex items-center justify-center text-black">
+              <Save className="size-5" />
+            </div>
+            <span className="text-lg font-black tracking-tighter uppercase">AudioSync</span>
+          </div>
+          <div className="flex gap-8 text-[10px] font-bold uppercase tracking-widest">
+            <a href="#" className="hover:underline transition-colors">Privacy Policy</a>
+            <a href="#" className="hover:underline transition-colors">Terms of Service</a>
+            <a href="#" className="hover:underline transition-colors">Contact Us</a>
+          </div>
+          <p className="text-[10px] font-bold uppercase tracking-widest opacity-50">© 2024 AudioSync Inc. All rights reserved.</p>
+        </div>
+      </footer>
     </div>
   );
 }
