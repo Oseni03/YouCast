@@ -10,8 +10,8 @@ def process_new_video_notification(self, atom_xml: str):
     video_id   = root.find('.//yt:videoId', ns).text
     channel_id = root.find('.//yt:channelId', ns).text
 
-    from channels.models import Channel
-    from episodes.models import Episode
+    from apps.channels.models import Channel
+    from apps.episodes.models import Episode
     try:
         channel = Channel.objects.get(youtube_channel_id=channel_id, monitoring_active=True)
     except Channel.DoesNotExist:
@@ -21,7 +21,7 @@ def process_new_video_notification(self, atom_xml: str):
         return  # Already processed
 
     # Apply creator filters
-    from channels.services.youtube import YouTubeService
+    from apps.channels.services.youtube import YouTubeService
     yt          = YouTubeService(channel.creator)
     video_data  = yt.get_video_details(video_id)
     if not video_data:
@@ -37,9 +37,9 @@ def process_new_video_notification(self, atom_xml: str):
 
 # @shared_task(bind=True, max_retries=3)
 def extract_audio(self, episode_id: str):
-    from episodes.models import Episode, ProcessingStatus
-    from episodes.services.extractor import AudioExtractor
-    from episodes.services.storage import AudioStorageService
+    from apps.episodes.models import Episode, ProcessingStatus
+    from apps.episodes.services.extractor import AudioExtractor
+    from apps.episodes.services.storage import AudioStorageService
 
     episode = Episode.objects.get(id=episode_id)
     episode.processing_status    = ProcessingStatus.PROCESSING
@@ -74,9 +74,9 @@ def extract_audio(self, episode_id: str):
 # @shared_task
 def schedule_channel_polling(channel_id: str):
     """Fallback polling — called every 15 min by Celery Beat for all active channels."""
-    from channels.models import Channel
-    from episodes.models import Episode
-    from channels.services.youtube import YouTubeService
+    from apps.channels.models import Channel
+    from apps.episodes.models import Episode
+    from apps.channels.services.youtube import YouTubeService
 
     channel  = Channel.objects.get(id=channel_id)
     yt       = YouTubeService(channel.creator)
@@ -96,8 +96,8 @@ def schedule_channel_polling(channel_id: str):
 # @shared_task
 def schedule_channel_cleanup(channel_id: str):
     """Deletes all audio files from S3 for a disconnected channel."""
-    from episodes.models import Episode
-    from episodes.services.storage import AudioStorageService
+    from apps.episodes.models import Episode
+    from apps.episodes.services.storage import AudioStorageService
 
     episodes = Episode.objects.filter(channel_id=channel_id, audio_s3_key__isnull=False)
     storage  = AudioStorageService()

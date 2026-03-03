@@ -110,24 +110,16 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # ---------------------------------------------------------------------------
-# Cache — Redis
+# Cache — local memory (Redis removed for local dev)
 # ---------------------------------------------------------------------------
-REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
-
 CACHES = {
     "default": {
-        "BACKEND":  "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": REDIS_URL,
-        "OPTIONS": {
-            "socket_connect_timeout": 5,
-            "socket_timeout":         5,
-        },
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
     }
 }
 
-# Use Redis for sessions too (instead of DB — faster)
-SESSION_ENGINE   = "django.contrib.sessions.backends.cache"
-SESSION_CACHE_ALIAS = "default"
+# Sessions — database backend (default)
+SESSION_ENGINE = "django.contrib.sessions.backends.db"
 
 
 # ---------------------------------------------------------------------------

@@ -37,7 +37,7 @@ class WebSubService:
     @classmethod
     def confirm_subscription(cls, topic_url, lease_seconds):
         """Called when YouTube hub confirms subscription via GET challenge."""
-        from channels.models import Channel
+        from apps.channels.models import Channel
         # Extract channel ID from topic URL
         channel_id = topic_url.split('channel_id=')[-1]
         Channel.objects.filter(youtube_channel_id=channel_id).update(

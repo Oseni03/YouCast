@@ -179,7 +179,7 @@ class PolarWebhookView(APIView):
         Fired when access ends (after cancel_at_period_end period expires).
         Downgrades the creator to the free tier.
         """
-        from accounts.models import PlanTier
+        from apps.accounts.models import PlanTier
 
         creator = self._get_creator_by_polar_customer(data.customer_id)
         if not creator:
@@ -240,7 +240,7 @@ class PolarWebhookView(APIView):
         if not creator_id:
             return
 
-        from accounts.models import Creator
+        from apps.accounts.models import Creator
         try:
             creator = Creator.objects.get(id=creator_id)
         except Creator.DoesNotExist:
@@ -255,7 +255,7 @@ class PolarWebhookView(APIView):
     # ------------------------------------------------------------------
 
     def _upsert_subscription(self, creator, data):
-        from accounts.models import PlanTier
+        from apps.accounts.models import PlanTier
         from django.utils.dateparse import parse_datetime
 
         plan_tier    = self._resolve_plan_tier(data.product_id)
@@ -293,7 +293,7 @@ class PolarWebhookView(APIView):
         Falls back to scanning the Subscription table on first-ever webhook
         delivery before the Creator row has been updated.
         """
-        from accounts.models import Creator
+        from apps.accounts.models import Creator
 
         try:
             return Creator.objects.get(polar_customer_id=polar_customer_id)
@@ -304,7 +304,7 @@ class PolarWebhookView(APIView):
             return sub.creator if sub else None
 
     def _resolve_plan_tier(self, polar_product_id: str) -> str:
-        from accounts.models import PlanTier
+        from apps.accounts.models import PlanTier
 
         mapping = {
             settings.POLAR_PRODUCT_STARTER: PlanTier.STARTER,

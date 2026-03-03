@@ -1,8 +1,8 @@
 # from celery import shared_task
 import geoip2.database
 from .models import AnalyticsEvent
-from channels.models import Channel
-from episodes.models import Episode
+from apps.channels.models import Channel
+from apps.episodes.models import Episode
 
 
 KNOWN_PODCAST_APPS = {
@@ -59,7 +59,7 @@ def send_weekly_digest():
     Sends each creator a summary email with last week's download stats.
     """
     from django.core.mail import send_mail
-    from accounts.models import Creator
+    from apps.accounts.models import Creator
     from django.template.loader import render_to_string
     from datetime import date, timedelta
 
