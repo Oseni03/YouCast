@@ -7,9 +7,10 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework_simplejwt.tokens import RefreshToken
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
+from django.contrib.auth import authenticate
 
 from .models import Creator
-from .serializers import CreatorSerializer, CreatorUpdateSerializer, TOSAcceptSerializer
+from .serializers import CreatorSerializer, CreatorUpdateSerializer, TOSAcceptSerializer, SignupSerializer
 
 
 class GoogleOAuthCallbackView(APIView):
@@ -37,23 +38,23 @@ class GoogleOAuthCallbackView(APIView):
 
         google_user_id = payload['sub']
         email          = payload['email']
-        display_name   = payload.get('name', '')
+        username       = email.split('@')[0]
         avatar_url     = payload.get('picture', '')
 
         creator, created = Creator.objects.get_or_create(
             google_user_id=google_user_id,
             defaults={
                 'email':        email,
-                'display_name': display_name,
+                'username':     username,
                 'avatar_url':   avatar_url,
             }
         )
 
         # Update profile fields on every login
         if not created:
-            creator.display_name = display_name
+            creator.username     = username
             creator.avatar_url   = avatar_url
-            creator.save(update_fields=['display_name', 'avatar_url'])
+            creator.save(update_fields=['username', 'avatar_url'])
 
         refresh = RefreshToken.for_user(creator)
         return Response({
@@ -143,3 +144,45 @@ class LogoutView(APIView):
         except Exception:
             pass  # Token already invalid — that's fine
         return Response({'status': 'logged_out'})
+
+
+class SignupView(APIView):
+    """POST /api/auth/signup/ — create a new user with email and password."""
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = SignupSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        creator = serializer.save()
+        refresh = RefreshToken.for_user(creator)
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'creator': CreatorSerializer(creator).data,
+            'is_new': True,
+        }, status=status.HTTP_201_CREATED)
+
+
+class EmailLoginView(APIView):
+    """POST /api/auth/login/ — authenticate with email and password."""
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get('email')
+        password = request.data.get('password')
+
+        if not email or not password:
+            return Response({'error': 'Email and password are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        creator = authenticate(request, username=email, password=password)
+
+        if creator is not None:
+            refresh = RefreshToken.for_user(creator)
+            return Response({
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
+                'creator': CreatorSerializer(creator).data,
+                'is_new': False,
+            }, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)

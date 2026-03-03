@@ -3,6 +3,10 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from . import views
 
 urlpatterns = [
+    # Email/Password flow
+    path('signup/',          views.SignupView.as_view(),                    name='signup'),
+    path('login/',           views.EmailLoginView.as_view(),                name='login'),
+
     # OAuth flow
     path('google/callback/', views.GoogleOAuthCallbackView.as_view(),      name='google_callback'),
     path('google/token/',    views.GoogleOAuthTokenExchangeView.as_view(),  name='google_token'),
