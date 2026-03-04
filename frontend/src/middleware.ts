@@ -5,7 +5,7 @@ import type { NextRequest } from 'next/server';
 const PROTECTED_PREFIXES = ['/dashboard', '/onboarding'];
 
 // Routes accessible only to unauthenticated users
-const AUTH_ROUTES = ['/auth'];
+const AUTH_ROUTES = ['/login', '/signup'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -15,14 +15,14 @@ export function middleware(request: NextRequest) {
   const isProtected = PROTECTED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
   const isAuthRoute = AUTH_ROUTES.some((route) => pathname.startsWith(route));
 
-  // Unauthenticated user trying to access a protected route → redirect to /auth
+  // Unauthenticated user trying to access a protected route → send to login
   if (isProtected && !isAuthenticated) {
     const url = request.nextUrl.clone();
-    url.pathname = '/auth';
+    url.pathname = '/login';
     return NextResponse.redirect(url);
   }
 
-  // Authenticated user trying to access the auth page → redirect to dashboard
+  // Authenticated user trying to access an auth page → send to dashboard
   if (isAuthRoute && isAuthenticated) {
     const url = request.nextUrl.clone();
     url.pathname = '/dashboard';
@@ -33,6 +33,6 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Run middleware only on matched routes (skip static files, api routes, etc.)
-  matcher: ['/dashboard/:path*', '/onboarding/:path*', '/auth'],
+  // Run middleware on dashboard, onboarding, and all /auth/* routes
+  matcher: ['/dashboard/:path*', '/onboarding/:path*', '/login', '/signup'],
 };

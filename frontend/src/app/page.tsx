@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { ArrowRight, Play, Save, WandSparkles, Rss, Activity } from "lucide-react";
 import Image from "next/image";
 
@@ -15,9 +16,18 @@ export default function Home() {
           <a href="#" className="text-xs font-bold uppercase tracking-widest hover:underline transition-colors">Features</a>
           <a href="#" className="text-xs font-bold uppercase tracking-widest hover:underline transition-colors">Pricing</a>
           <a href="#" className="text-xs font-bold uppercase tracking-widest hover:underline transition-colors">Testimonials</a>
-          <button className="text-xs font-bold uppercase tracking-widest bg-black text-white px-8 py-3 rounded-none hover:bg-slate-800 transition-all">
+          <Link
+            href="/login"
+            className="text-xs font-bold uppercase tracking-widest hover:underline transition-colors"
+          >
             Login
-          </button>
+          </Link>
+          <Link
+            href="/signup"
+            className="text-xs font-bold uppercase tracking-widest bg-black text-white px-8 py-3 rounded-none hover:bg-slate-800 transition-all"
+          >
+            Sign Up
+          </Link>
         </div>
       </nav>
 
@@ -36,12 +46,13 @@ export default function Home() {
             Automatically convert your video uploads into high-quality podcast episodes and distribute them to Spotify, Apple, and Google with one click.
           </p>
           <div className="flex flex-col sm:flex-row items-center gap-4">
-            <button 
+            <Link
+              href="/signup"
               className="w-full sm:w-auto px-12 py-6 bg-black text-white text-xl font-black rounded-none hover:bg-slate-800 transition-all flex items-center justify-center gap-3 uppercase tracking-tighter"
             >
               Start Syncing Now
               <ArrowRight />
-            </button>
+            </Link>
             <button className="w-full sm:w-auto px-12 py-6 bg-white border-2 border-black text-xl font-black rounded-none hover:bg-black hover:text-white transition-all flex items-center justify-center gap-3 uppercase tracking-tighter">
               Watch Demo
             </button>
