@@ -6,7 +6,7 @@ class CreatorSerializer(serializers.ModelSerializer):
     class Meta:
         model  = Creator
         fields = [
-            'id', 'email', 'username', 'avatar_url',
+            'id', 'email', 'username', 'avatar_url', 'bio',
             'plan_tier', 'tos_accepted_at', 'created_at',
         ]
         read_only_fields = ['id', 'email', 'plan_tier', 'created_at']
@@ -16,7 +16,7 @@ class CreatorUpdateSerializer(serializers.ModelSerializer):
     """For profile updates — only mutable fields."""
     class Meta:
         model  = Creator
-        fields = ['username', 'avatar_url']
+        fields = ['username', 'avatar_url', 'bio']
 
 
 class TOSAcceptSerializer(serializers.Serializer):

@@ -6,6 +6,8 @@ urlpatterns = [
     # Email/Password flow
     path('signup/',          views.SignupView.as_view(),                    name='signup'),
     path('login/',           views.EmailLoginView.as_view(),                name='login'),
+    path('logout/',          views.LogoutView.as_view(),                    name='logout'),
+    path('deactivate/',      views.DeactivateAccountView.as_view(),         name='deactivate'),
 
     # OAuth flow
     path('google/callback/', views.GoogleOAuthCallbackView.as_view(),      name='google_callback'),

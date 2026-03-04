@@ -1,15 +1,11 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
+import type { Creator } from '@/lib/types';
 
 interface AuthResponse {
   access: string;
   refresh: string;
-  creator: {
-    id: string;
-    email: string;
-    username: string;
-    avatar_url: string;
-  };
+  creator: Creator;
   is_new: boolean;
 }
 
@@ -50,6 +46,41 @@ export const useSignup = () => {
     },
     onSuccess: (data) => {
       storeTokens(data.access, data.refresh);
+    },
+  });
+};
+
+export const ME_KEY = ['auth', 'me'] as const;
+
+export const useMe = () => {
+  return useQuery({
+    queryKey: ME_KEY,
+    queryFn: async () => {
+      const response = await api.get<Creator>('/auth/me/');
+      return response.data;
+    },
+  });
+};
+
+export const useUpdateMe = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: Partial<Creator>) => {
+      const response = await api.patch<Creator>('/auth/me/', data);
+      return response.data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ME_KEY });
+    },
+  });
+};
+
+export const useDeactivateAccount = () => {
+  return useMutation({
+    mutationFn: async () => {
+      const refresh = localStorage.getItem('refresh_token');
+      await api.post('/auth/deactivate/', { refresh });
+      clearTokens();
     },
   });
 };

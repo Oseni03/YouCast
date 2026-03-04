@@ -85,6 +85,16 @@ export interface PaginatedResponse<T> {
   results: T[];
 }
 
+export interface Creator {
+  id: string;
+  email: string;
+  username: string;
+  avatar_url: string;
+  bio: string;
+  plan_tier: 'free' | 'starter' | 'pro' | 'agency';
+  created_at: string;
+}
+
 // ── Frontend UI Types ───────────────────────────────────────────────────────
 
 export interface PodcastFeed {

@@ -44,6 +44,7 @@ class Creator(AbstractBaseUser, PermissionsMixin):
     email               = models.EmailField(unique=True)
     username            = models.CharField(max_length=255)
     avatar_url          = models.URLField(blank=True)
+    bio                 = models.TextField(blank=True)
 
     plan_tier           = models.CharField(max_length=20, choices=PlanTier.choices, default=PlanTier.FREE)
     stripe_customer_id  = models.CharField(max_length=255, blank=True)

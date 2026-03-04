@@ -146,6 +146,27 @@ class LogoutView(APIView):
         return Response({'status': 'logged_out'})
 
 
+class DeactivateAccountView(APIView):
+    """POST /api/auth/deactivate/ — deactivate the authenticated creator's account."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        creator = request.user
+        creator.is_active = False
+        creator.save(update_fields=['is_active'])
+
+        # Optional: blacklist the refresh token if provided to immediately terminate current session
+        refresh_token = request.data.get('refresh')
+        if refresh_token:
+            try:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            except Exception:
+                pass
+
+        return Response({'status': 'account_deactivated'}, status=status.HTTP_200_OK)
+
+
 class SignupView(APIView):
     """POST /api/auth/signup/ — create a new user with email and password."""
     permission_classes = [AllowAny]

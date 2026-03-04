@@ -1,14 +1,61 @@
 "use client"
 
-import { FileWarningIcon, ImageIcon, LockKeyhole, SubscriptIcon } from 'lucide-react';
-import React, { useState } from 'react';
+import { FileWarningIcon, ImageIcon, LockKeyhole, Loader2Icon } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useMe, useUpdateMe, useDeactivateAccount } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
 
 export default function SettingsPage() {
-  const [showAlert, setShowAlert] = useState(false);
+  const router = useRouter();
+  const { data: creator, isLoading } = useMe();
+  const updateMeMutation = useUpdateMe();
+  const deactivateMutation = useDeactivateAccount();
 
-  const handleSave = () => {
-    setShowAlert(true);
+  const [showAlert, setShowAlert] = useState(false);
+  const [formData, setFormData] = useState({
+    username: '',
+    email: '',
+    bio: ''
+  });
+
+  useEffect(() => {
+    if (creator) {
+      setFormData({
+        username: creator.username,
+        email: creator.email,
+        bio: creator.bio || ''
+      });
+    }
+  }, [creator]);
+
+  const handleSave = async () => {
+    try {
+      await updateMeMutation.mutateAsync({
+        username: formData.username,
+        bio: formData.bio
+      });
+      // Optionally show a success toast here
+    } catch (err) {
+      console.error('Failed to update profile:', err);
+    }
   };
+
+  const handleDeactivate = async () => {
+    try {
+      await deactivateMutation.mutateAsync();
+      router.push('/auth/login');
+    } catch (err) {
+      console.error('Failed to deactivate account:', err);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2Icon className="size-12 animate-spin text-black dark:text-white" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto relative">
@@ -23,17 +70,19 @@ export default function SettingsPage() {
               You are about to modify critical account settings. This action may affect your active podcast distribution feeds. Are you sure you want to proceed?
             </p>
             <div className="flex gap-4">
-              <button 
+               <button 
                 onClick={() => setShowAlert(false)}
                 className="flex-1 py-4 border-2 border-black dark:border-white font-black uppercase tracking-widest text-xs hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all"
+                disabled={deactivateMutation.isPending}
               >
                 Cancel
               </button>
               <button 
-                onClick={() => setShowAlert(false)}
-                className="flex-1 py-4 bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-widest text-xs hover:invert transition-all"
+                onClick={handleDeactivate}
+                className="flex-1 py-4 bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-widest text-xs hover:invert transition-all disabled:opacity-50"
+                disabled={deactivateMutation.isPending}
               >
-                Confirm
+                {deactivateMutation.isPending ? 'Processing...' : 'Confirm'}
               </button>
             </div>
           </div>
@@ -61,26 +110,43 @@ export default function SettingsPage() {
               <button className="text-xs font-black uppercase tracking-[0.2em] hover:underline">Change Photo</button>
             </div>
             <div className="flex-1 space-y-8 w-full">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
                   <label className="block text-xs font-black uppercase tracking-[0.2em] text-slate-500 mb-3">Display Name</label>
-                  <input className="w-full rounded-none border-4 border-black dark:border-white dark:bg-black focus:ring-0 focus:border-black dark:focus:border-white text-base p-5 font-bold uppercase" type="text" defaultValue="Alex Rivera" />
+                  <input 
+                    className="w-full rounded-none border-4 border-black dark:border-white dark:bg-black focus:ring-0 focus:border-black dark:focus:border-white text-base p-5 font-bold uppercase" 
+                    type="text" 
+                    value={formData.username}
+                    onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-black uppercase tracking-[0.2em] text-slate-500 mb-3">Email Address</label>
-                  <input className="w-full rounded-none border-4 border-black dark:border-white dark:bg-black focus:ring-0 focus:border-black dark:focus:border-white text-base p-5 font-bold uppercase" type="email" defaultValue="alex@example.com" />
+                  <input 
+                    className="w-full rounded-none border-4 border-black dark:border-white dark:bg-black focus:ring-0 focus:border-black dark:focus:border-white text-base p-5 font-bold uppercase opacity-50 cursor-not-allowed" 
+                    type="email" 
+                    value={formData.email}
+                    readOnly 
+                  />
                 </div>
               </div>
               <div>
                 <label className="block text-xs font-black uppercase tracking-[0.2em] text-slate-500 mb-3">Bio</label>
-                <textarea className="w-full rounded-none border-4 border-black dark:border-white dark:bg-black focus:ring-0 focus:border-black dark:focus:border-white text-base p-5 font-medium leading-relaxed" rows={4} defaultValue="Tech enthusiast and podcast host sharing insights on modern development." />
+                <textarea 
+                  className="w-full rounded-none border-4 border-black dark:border-white dark:bg-black focus:ring-0 focus:border-black dark:focus:border-white text-base p-5 font-medium leading-relaxed" 
+                  rows={4} 
+                  value={formData.bio}
+                  onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
+                  placeholder="Tell us about yourself..."
+                />
               </div>
-              <div className="pt-6">
+               <div className="pt-6">
                 <button 
                   onClick={handleSave}
-                  className="w-full md:w-auto bg-black dark:bg-white text-white dark:text-black px-12 py-5 rounded-none text-sm font-black uppercase tracking-[0.2em] hover:invert transition-all"
+                  disabled={updateMeMutation.isPending}
+                  className="w-full md:w-auto bg-black dark:bg-white text-white dark:text-black px-12 py-5 rounded-none text-sm font-black uppercase tracking-[0.2em] hover:invert transition-all disabled:opacity-50"
                 >
-                  Save Changes
+                  {updateMeMutation.isPending ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </div>
@@ -94,9 +160,11 @@ export default function SettingsPage() {
               <div className="size-16 md:size-20 shrink-0 bg-black dark:bg-white text-white dark:text-black rounded-none flex items-center justify-center">
                 <LockKeyhole className="size-6 md:size-8" />
               </div>
-              <div>
-                <p className="text-xl md:text-2xl font-black uppercase tracking-tight">Pro Plan</p>
-                <p className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mt-1 leading-relaxed">$29/month • Renews Nov 15, 2024</p>
+               <div>
+                <p className="text-xl md:text-2xl font-black uppercase tracking-tight">{creator?.plan_tier} Plan</p>
+                <p className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mt-1 leading-relaxed">
+                  {creator?.plan_tier === 'free' ? 'Basic Features Included' : 'Premium Features Enabled'}
+                </p>
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 w-full xl:w-auto mt-2 xl:mt-0">
@@ -129,10 +197,13 @@ export default function SettingsPage() {
         </section>
 
         <section className="bg-slate-50 dark:bg-slate-900/50 p-6 md:p-8 rounded-none border-4 border-slate-200 dark:border-slate-800">
-          <h3 className="text-lg md:text-xl font-black mb-4 uppercase tracking-tight text-slate-400">Danger Zone</h3>
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-6 md:mb-8 leading-relaxed">Once you delete your account, there is no going back. Please be certain.</p>
-          <button className="w-full md:w-auto px-8 py-4 border-2 border-slate-300 dark:border-slate-700 text-slate-400 hover:border-black hover:text-black dark:hover:border-white dark:hover:text-white rounded-none text-xs font-black uppercase tracking-widest transition-all">
-            Delete Account
+           <h3 className="text-lg md:text-xl font-black mb-4 uppercase tracking-tight text-slate-400">Danger Zone</h3>
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-6 md:mb-8 leading-relaxed">Deactivating your account will suspend your access. You can reach out to support to reactivate it later.</p>
+          <button 
+            onClick={() => setShowAlert(true)}
+            className="w-full md:w-auto px-8 py-4 border-2 border-slate-300 dark:border-slate-700 text-slate-400 hover:border-black hover:text-black dark:hover:border-white dark:hover:text-white rounded-none text-xs font-black uppercase tracking-widest transition-all"
+          >
+            Deactivate Account
           </button>
         </section>
       </div>
