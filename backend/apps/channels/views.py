@@ -79,6 +79,32 @@ class ChannelListCreateView(APIView):
         return Response(ChannelSerializer(channel).data, status=status.HTTP_201_CREATED)
 
 
+class YouTubeChannelListView(APIView):
+    """
+    GET /api/channels/youtube/
+    Lists all YouTube channels owned by the authenticated user.
+    Requires that the user has already connected their Google account (tokens stored).
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if not request.user.google_refresh_token:
+            return Response(
+                {'error': 'YouTube account not connected.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        yt = YouTubeService(request.user)
+        try:
+            channels = yt.list_my_channels()
+            return Response(channels)
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to fetch YouTube channels: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
 class ChannelDetailView(APIView):
     """
     GET    /api/channels/<id>/   — retrieve channel detail

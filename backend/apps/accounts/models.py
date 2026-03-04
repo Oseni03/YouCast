@@ -77,6 +77,10 @@ class Creator(AbstractBaseUser, PermissionsMixin):
         return self.tos_accepted_at is not None
 
     @property
+    def has_youtube_connected(self):
+        return bool(self.google_refresh_token)
+
+    @property
     def channel_limit(self):
         limits = {
             PlanTier.FREE:    1,

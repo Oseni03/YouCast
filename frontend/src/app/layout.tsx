@@ -18,6 +18,8 @@ export const metadata: Metadata = {
   description: "Automatically convert your YouTube uploads into high-quality podcast episodes and distribute them to Spotify, Apple, and Google.",
 };
 
+import { GoogleOAuthProvider } from "@react-oauth/google";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,9 +30,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <QueryProvider>
-          {children}
-        </QueryProvider>
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
+          <QueryProvider>
+            {children}
+          </QueryProvider>
+        </GoogleOAuthProvider>
       </body>
     </html>
   );

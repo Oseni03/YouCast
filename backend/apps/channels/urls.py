@@ -3,6 +3,7 @@ from . import views
 
 urlpatterns = [
     path('',                        views.ChannelListCreateView.as_view(),   name='channel_list_create'),
+    path('youtube/',                views.YouTubeChannelListView.as_view(),  name='youtube_channels'),
     path('<uuid:channel_id>/',      views.ChannelDetailView.as_view(),       name='channel_detail'),
     path('<uuid:channel_id>/refresh/', views.ChannelRefreshMetadataView.as_view(), name='channel_refresh'),
 

@@ -7,7 +7,7 @@ class CreatorSerializer(serializers.ModelSerializer):
         model  = Creator
         fields = [
             'id', 'email', 'username', 'avatar_url', 'bio',
-            'plan_tier', 'tos_accepted_at', 'created_at',
+            'plan_tier', 'tos_accepted_at', 'has_youtube_connected', 'created_at',
         ]
         read_only_fields = ['id', 'email', 'plan_tier', 'created_at']
 

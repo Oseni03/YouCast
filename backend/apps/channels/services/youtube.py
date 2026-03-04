@@ -2,6 +2,7 @@ from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from django.utils import timezone
+from django.conf import settings
 
 
 class YouTubeService:
@@ -43,6 +44,18 @@ class YouTubeService:
             if item['id'] == youtube_channel_id:
                 return self._parse_channel_item(item)
         return None
+
+    def list_my_channels(self):
+        """Returns all channels owned by the authenticated creator."""
+        response = self.client.channels().list(
+            part='snippet,contentDetails',
+            mine=True,
+        ).execute()
+
+        channels = []
+        for item in response.get('items', []):
+            channels.append(self._parse_channel_item(item))
+        return channels
 
     def get_channel_metadata(self, youtube_channel_id):
         response = self.client.channels().list(
