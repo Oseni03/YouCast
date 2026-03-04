@@ -1,8 +1,13 @@
+"use client";
+
 import Link from 'next/link';
-import { ArrowRight, Play, Save, WandSparkles, Rss, Activity } from "lucide-react";
+import { ArrowRight, Play, Save, WandSparkles, Rss, Activity, Loader2 } from "lucide-react";
 import Image from "next/image";
+import { useMe } from '@/hooks/useAuth';
 
 export default function Home() {
+  const { data: user, isLoading } = useMe();
+
   return (
     <div className="min-h-screen bg-white text-black selection:bg-black selection:text-white">
       <nav className="max-w-7xl mx-auto px-6 py-8 flex items-center justify-between border-b border-black">
@@ -13,21 +18,34 @@ export default function Home() {
           <span className="text-xl font-black tracking-tighter uppercase">AudioSync</span>
         </div>
         <div className="hidden md:flex items-center gap-8">
-          <a href="#" className="text-xs font-bold uppercase tracking-widest hover:underline transition-colors">Features</a>
-          <a href="#" className="text-xs font-bold uppercase tracking-widest hover:underline transition-colors">Pricing</a>
-          <a href="#" className="text-xs font-bold uppercase tracking-widest hover:underline transition-colors">Testimonials</a>
-          <Link
-            href="/login"
-            className="text-xs font-bold uppercase tracking-widest hover:underline transition-colors"
-          >
-            Login
-          </Link>
-          <Link
-            href="/signup"
-            className="text-xs font-bold uppercase tracking-widest bg-black text-white px-8 py-3 rounded-none hover:bg-slate-800 transition-all"
-          >
-            Sign Up
-          </Link>
+          <a href="#features" className="text-xs font-bold uppercase tracking-widest hover:underline transition-colors">Features</a>
+          <a href="#pricing" className="text-xs font-bold uppercase tracking-widest hover:underline transition-colors">Pricing</a>
+          <a href="#testimonials" className="text-xs font-bold uppercase tracking-widest hover:underline transition-colors">Testimonials</a>
+          {isLoading ? (
+            <div className="flex items-center justify-center px-8 py-3"><Loader2 className="size-4 animate-spin tracking-widest" /></div>
+          ) : user ? (
+            <Link
+              href="/dashboard"
+              className="text-xs font-bold uppercase tracking-widest bg-black text-white px-8 py-3 rounded-none hover:bg-slate-800 transition-all"
+            >
+              Dashboard
+            </Link>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="text-xs font-bold uppercase tracking-widest hover:underline transition-colors"
+              >
+                Login
+              </Link>
+              <Link
+                href="/signup"
+                className="text-xs font-bold uppercase tracking-widest bg-black text-white px-8 py-3 rounded-none hover:bg-slate-800 transition-all"
+              >
+                Sign Up
+              </Link>
+            </>
+          )}
         </div>
       </nav>
 
@@ -46,20 +64,34 @@ export default function Home() {
             Automatically convert your video uploads into high-quality podcast episodes and distribute them to Spotify, Apple, and Google with one click.
           </p>
           <div className="flex flex-col sm:flex-row items-center gap-4">
-            <Link
-              href="/signup"
-              className="w-full sm:w-auto px-12 py-6 bg-black text-white text-xl font-black rounded-none hover:bg-slate-800 transition-all flex items-center justify-center gap-3 uppercase tracking-tighter"
-            >
-              Start Syncing Now
-              <ArrowRight />
-            </Link>
-            <button className="w-full sm:w-auto px-12 py-6 bg-white border-2 border-black text-xl font-black rounded-none hover:bg-black hover:text-white transition-all flex items-center justify-center gap-3 uppercase tracking-tighter">
+            {isLoading ? (
+              <button disabled className="w-full sm:w-auto px-12 py-6 bg-black text-white text-xl font-black rounded-none flex items-center justify-center gap-3 uppercase tracking-tighter opacity-70">
+                <Loader2 className="size-6 animate-spin" />
+              </button>
+            ) : user ? (
+              <Link
+                href="/dashboard"
+                className="w-full sm:w-auto px-12 py-6 bg-black text-white text-xl font-black rounded-none hover:bg-slate-800 transition-all flex items-center justify-center gap-3 uppercase tracking-tighter"
+              >
+                Go to Dashboard
+                <ArrowRight />
+              </Link>
+            ) : (
+              <Link
+                href="/signup"
+                className="w-full sm:w-auto px-12 py-6 bg-black text-white text-xl font-black rounded-none hover:bg-slate-800 transition-all flex items-center justify-center gap-3 uppercase tracking-tighter"
+              >
+                Start Syncing Now
+                <ArrowRight />
+              </Link>
+            )}
+            <a href="#demo" className="w-full sm:w-auto px-12 py-6 bg-white border-2 border-black text-xl font-black rounded-none hover:bg-black hover:text-white transition-all flex items-center justify-center gap-3 uppercase tracking-tighter">
               Watch Demo
-            </button>
+            </a>
           </div>
         </div>
 
-        <div className="mt-32 relative">
+        <div id="demo" className="mt-32 relative scroll-m-20">
           <div className="relative bg-white rounded-none border-4 border-black shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] overflow-hidden aspect-video">
             <div className="absolute inset-0 flex items-center justify-center z-10">
               <div className="size-24 rounded-none bg-black border-2 border-white flex items-center justify-center cursor-pointer hover:scale-110 transition-transform group">
@@ -75,7 +107,7 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="mt-32 grid grid-cols-1 md:grid-cols-3 gap-0 border-t border-l border-black">
+        <div id="features" className="mt-32 grid grid-cols-1 md:grid-cols-3 gap-0 border-t border-l border-black scroll-m-20">
           <div className="text-left p-12 border-r border-b border-black hover:bg-black hover:text-white transition-colors group">
             <div className="size-14 rounded-none bg-black flex items-center justify-center text-white mb-8 group-hover:bg-white group-hover:text-black transition-colors">
               <WandSparkles className="size-8" strokeWidth={2.5} />

@@ -34,7 +34,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
       loginMutation.mutate(
         { email, password },
         {
-          onSuccess: () => router.push('/dashboard'),
+          onSuccess: () => router.push('/onboarding'),
           onError: (error: any) => {
             setFormError(error.response?.data?.error || 'Invalid email or password.');
           },
@@ -48,7 +48,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
       signupMutation.mutate(
         { email, password, username },
         {
-          onSuccess: () => router.push('/dashboard'),
+          onSuccess: () => router.push('/onboarding'),
           onError: (error: any) => {
             const errData = error.response?.data;
             if (errData && typeof errData === 'object') {
@@ -226,7 +226,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
               {isLogin ? "Don't have an account yet?" : 'Already have an account?'}
             </p>
             <Link
-              href={isLogin ? '/auth/signup' : '/auth/login'}
+              href={isLogin ? '/signup' : '/login'}
               className="text-white font-black uppercase tracking-widest text-xs hover:underline underline-offset-4 transition-all duration-200"
             >
               {isLogin ? 'Create a New Account →' : '← Sign In Instead'}
