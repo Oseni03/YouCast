@@ -31,5 +31,11 @@ class EpisodeListSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'thumbnail_url', 'youtube_pub_date',
             'duration_formatted', 'processing_status', 'audio_format',
-            'download_count', 'pub_date',
+            'download_count', 'pub_date', 'audio_url',
         ]
+
+
+class EpisodeCreateSerializer(serializers.Serializer):
+    """Input for manual episode creation."""
+    channel_id = serializers.UUIDField()
+    youtube_video_id = serializers.CharField(max_length=50)

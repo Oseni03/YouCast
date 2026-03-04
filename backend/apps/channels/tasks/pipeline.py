@@ -105,3 +105,93 @@ def schedule_channel_cleanup(channel_id: str):
         if episode.audio_s3_key:
             storage.delete_audio(episode.audio_s3_key)
     episodes.delete()
+
+
+def _passes_filters(channel, video_data):
+    """
+    Validates a YouTube video against the channel's filter configuration.
+    video_data is a snippet/contentDetails item from YouTube API.
+    """
+    config = channel.filter_config
+    if not config:
+        return True
+
+    # 1. Duration filter
+    min_duration = config.get('min_duration_seconds')
+    duration_str = video_data.get('contentDetails', {}).get('duration', 'PT0S')
+    # Simple ISO 8601 duration parser (e.g. PT12M45S)
+    import isodate
+    duration_seconds = isodate.parse_duration(duration_str).total_seconds()
+    if min_duration and duration_seconds < min_duration:
+        return False
+
+    title = video_data.get('snippet', {}).get('title', '').lower()
+
+    # 2. Exclude keywords (strongest filter)
+    exclude_keywords = config.get('title_exclude_keywords', [])
+    for kw in exclude_keywords:
+        if kw.lower() in title:
+            return False
+
+    # 3. Include keywords (if present, title MUST contain one)
+    include_keywords = config.get('title_include_keywords', [])
+    if include_keywords:
+        found = False
+        for kw in include_keywords:
+            if kw.lower() in title:
+                found = True
+                break
+        if not found:
+            return False
+
+    return True
+
+
+def _create_skipped_episode(channel, video_data):
+    """Logs a video that was detected but filtered out."""
+    from apps.episodes.models import Episode, ProcessingStatus
+    snippet = video_data.get('snippet', {})
+    Episode.objects.create(
+        channel=channel,
+        youtube_video_id=video_data['id'],
+        youtube_url=f"https://www.youtube.com/watch?v={video_data['id']}",
+        title=snippet.get('title', ''),
+        description=snippet.get('description', ''),
+        youtube_pub_date=snippet.get('publishedAt'),
+        thumbnail_url=snippet.get('thumbnails', {}).get('high', {}).get('url', ''),
+        processing_status=ProcessingStatus.SKIPPED,
+        pub_date=snippet.get('publishedAt'),  # Skipped episodes don't really need a pub_date, but it's required
+    )
+
+
+def _create_queued_episode(channel, video_data):
+    """Creates an Episode record and returns it, ready for audio extraction."""
+    from apps.episodes.models import Episode, ProcessingStatus
+    snippet = video_data.get('snippet', {})
+    import isodate
+    duration_seconds = isodate.parse_duration(video_data.get('contentDetails', {}).get('duration', 'PT0S')).total_seconds()
+
+    return Episode.objects.create(
+        channel=channel,
+        youtube_video_id=video_data['id'],
+        youtube_url=f"https://www.youtube.com/watch?v={video_data['id']}",
+        title=snippet.get('title', ''),
+        description=snippet.get('description', ''),
+        youtube_pub_date=snippet.get('publishedAt'),
+        duration_seconds=int(duration_seconds),
+        thumbnail_url=snippet.get('thumbnails', {}).get('high', {}).get('url', ''),
+        processing_status=ProcessingStatus.QUEUED,
+        pub_date=snippet.get('publishedAt'),
+    )
+
+
+def _build_fake_atom(video_id, youtube_channel_id):
+    """Helper for polling fallback - mimics the WebSub XML structure."""
+    return f"""<?xml version='1.0' encoding='UTF-8'?>
+    <feed xmlns:yt="http://www.youtube.com/xml/schemas/2015" xmlns="http://www.w3.org/2005/Atom">
+        <entry>
+            <yt:videoId>{video_id}</yt:videoId>
+            <yt:channelId>{youtube_channel_id}</yt:channelId>
+        </entry>
+    </feed>
+    """

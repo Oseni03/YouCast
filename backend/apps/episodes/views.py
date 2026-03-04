@@ -5,8 +5,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 
 from .models import Episode, ProcessingStatus
-from .serializers import EpisodeSerializer, EpisodeListSerializer
+from .serializers import EpisodeSerializer, EpisodeListSerializer, EpisodeCreateSerializer
 from apps.channels.models import Channel
+from apps.channels.services.youtube import YouTubeService
+from apps.channels.tasks.pipeline import _create_queued_episode, extract_audio
 
 
 class EpisodeListView(APIView):
@@ -53,6 +55,32 @@ class EpisodeListView(APIView):
             'page':    page,
             'results': EpisodeListSerializer(episodes, many=True).data,
         })
+
+    def post(self, request):
+        serializer = EpisodeCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        channel_id = serializer.validated_data['channel_id']
+        video_id = serializer.validated_data['youtube_video_id']
+
+        try:
+            channel = Channel.objects.get(id=channel_id, creator=request.user)
+        except Channel.DoesNotExist:
+            return Response({'error': 'Channel not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        if Episode.objects.filter(youtube_video_id=video_id).exists():
+            return Response({'error': 'Episode already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        yt = YouTubeService(request.user)
+        video_data = yt.get_video_details(video_id)
+        if not video_data:
+            return Response({'error': 'YouTube video not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Reuse the same logic as the automatic pipeline
+        episode = _create_queued_episode(channel, video_data)
+        extract_audio.delay(str(episode.id))
+
+        return Response(EpisodeSerializer(episode).data, status=status.HTTP_201_CREATED)
 
 
 class EpisodeDetailView(APIView):

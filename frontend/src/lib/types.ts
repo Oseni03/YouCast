@@ -1,3 +1,92 @@
+// ── Backend API Types ──────────────────────────────────────────────────────
+
+export interface Channel {
+  id: string;
+  youtube_channel_id: string;
+  channel_title: string;
+  channel_description: string;
+  channel_thumbnail_url: string;
+  podcast_title: string;
+  podcast_description: string;
+  artwork_url: string | null;
+  effective_artwork_url: string;
+  rss_slug: string;
+  rss_feed_url: string;
+  language: string;
+  category: string;
+  explicit: boolean;
+  episode_prefix: string;
+  episode_suffix: string;
+  filter_config: Record<string, unknown>;
+  monitoring_active: boolean;
+  websub_subscribed_at: string | null;
+  last_polled_at: string | null;
+  last_video_published_at: string | null;
+  episode_count: number;
+  created_at: string;
+}
+
+export interface Episode {
+  id: string;
+  channel: string;
+  channel_title: string;
+  youtube_video_id: string;
+  youtube_url: string;
+  title: string;
+  description: string;
+  youtube_pub_date: string;
+  duration_seconds: number;
+  duration_formatted: string;
+  thumbnail_url: string | null;
+  youtube_chapters: unknown[];
+  audio_url: string | null;
+  audio_size_bytes: number | null;
+  audio_format: string;
+  processing_status: 'queued' | 'processing' | 'done' | 'failed' | 'skipped';
+  processing_started_at: string | null;
+  processing_completed_at: string | null;
+  processing_error: string;
+  retry_count: number;
+  pub_date: string | null;
+  transcript_url: string | null;
+  download_count: number;
+  created_at: string;
+}
+
+export interface EpisodeListItem {
+  id: string;
+  title: string;
+  thumbnail_url: string | null;
+  youtube_pub_date: string;
+  duration_formatted: string;
+  processing_status: Episode['processing_status'];
+  audio_format: string;
+  download_count: number;
+  pub_date: string | null;
+  audio_url: string | null;
+}
+
+export interface OverviewStats {
+  total_channels: number;
+  total_episodes: number;
+  total_downloads: number;
+}
+
+export interface EpisodeStat {
+  id: string;
+  title: string;
+  pub_date: string | null;
+  download_count: number;
+}
+
+export interface PaginatedResponse<T> {
+  count: number;
+  page: number;
+  results: T[];
+}
+
+// ── Frontend UI Types ───────────────────────────────────────────────────────
+
 export interface PodcastFeed {
   id: string;
   name: string;

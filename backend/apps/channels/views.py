@@ -181,3 +181,45 @@ class WebSubCallbackView(APIView):
         process_new_video_notification.delay(request.body.decode('utf-8'))
         # Return 200 quickly — all processing happens async
         return Response(status=status.HTTP_200_OK)
+
+
+class EligibleVideoListView(APIView):
+    """
+    GET /api/channels/<id>/eligible-videos/
+    Fetch videos from the channel's YouTube uploads playlist and filter out those already processed.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, channel_id):
+        try:
+            channel = Channel.objects.get(id=channel_id, creator=request.user)
+        except Channel.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        if not channel.youtube_uploads_playlist_id:
+            return Response({'error': 'Channel upload playlist ID not found.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        yt = YouTubeService(request.user)
+        videos = yt.get_latest_videos(channel.youtube_uploads_playlist_id, max_results=50)
+
+        # Filter out videos that already have Episode records
+        video_ids = [v['contentDetails']['videoId'] for v in videos]
+        existing_video_ids = set(
+            Episode.objects.filter(youtube_video_id__in=video_ids).values_list('youtube_video_id', flat=True)
+        )
+
+        eligible_videos = []
+        for v in videos:
+            vid = v['contentDetails']['videoId']
+            if vid not in existing_video_ids:
+                snippet = v.get('snippet', {})
+                eligible_videos.append({
+                    'id': vid,
+                    'title': snippet.get('title', ''),
+                    'thumbnail': (snippet.get('thumbnails', {}).get('high') or snippet.get('thumbnails', {}).get('default') or {}).get('url', ''),
+                    'uploadedAt': snippet.get('publishedAt', ''),
+                    # Duration is not in playlistItems.list by default, would need another call to videos().list
+                    # For now, we'll keep it simple or fetch details if needed.
+                })
+
+        return Response(eligible_videos)
