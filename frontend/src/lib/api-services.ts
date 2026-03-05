@@ -7,6 +7,8 @@ import type {
   EpisodeStat,
   PaginatedResponse,
   YouTubeVideo,
+  YouTubeChannel,
+  YouTubeAuthResponse,
 } from './types';
 
 // ── Channels ────────────────────────────────────────────────────────────────
@@ -38,6 +40,16 @@ export const channelService = {
 
   getEligibleVideos: async (channelId: string): Promise<YouTubeVideo[]> => {
     const res = await api.get<YouTubeVideo[]>(`/channels/${channelId}/eligible-videos/`);
+    return res.data;
+  },
+
+  exchangeGoogleCode: async (code: string): Promise<{ status: string }> => {
+    const res = await api.post<{ status: string }>('/auth/google/token/', { code });
+    return res.data;
+  },
+
+  getYouTubeChannels: async (): Promise<YouTubeChannel[]> => {
+    const res = await api.get<YouTubeChannel[]>('/channels/youtube/');
     return res.data;
   },
 };

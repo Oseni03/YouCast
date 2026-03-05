@@ -1,7 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { channelService } from '@/lib/api-services';
+import { useMe } from './useAuth';
 
 export const CHANNELS_KEY = ['channels'] as const;
+export const YT_CHANNELS_KEY = ['youtube-channels'] as const;
 
 export const useChannels = () => {
   return useQuery({
@@ -52,5 +54,21 @@ export const useEligibleVideos = (channelId: string) => {
     queryKey: [...CHANNELS_KEY, channelId, 'eligible-videos'],
     queryFn: () => channelService.getEligibleVideos(channelId),
     enabled: !!channelId,
+  });
+};
+
+export const useExchangeGoogleCode = () => {
+  return useMutation({
+    mutationFn: channelService.exchangeGoogleCode,
+  });
+};
+
+export const useYouTubeChannels = () => {
+  const { data: user } = useMe();
+  return useQuery({
+    queryKey: YT_CHANNELS_KEY,
+    queryFn: channelService.getYouTubeChannels,
+    enabled: !!user?.has_youtube_connected,
+    retry: false,
   });
 };

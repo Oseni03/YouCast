@@ -26,6 +26,18 @@ export interface Channel {
   created_at: string;
 }
 
+export interface YouTubeChannel {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail_url: string;
+  uploads_playlist_id: string;
+}
+
+export interface YouTubeAuthResponse {
+  status: string;
+}
+
 export interface Episode {
   id: string;
   channel: string;
@@ -92,6 +104,7 @@ export interface Creator {
   avatar_url: string;
   bio: string;
   plan_tier: 'free' | 'starter' | 'pro' | 'agency';
+  has_youtube_connected: boolean;
   created_at: string;
 }
 
