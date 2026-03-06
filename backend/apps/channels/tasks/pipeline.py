@@ -34,7 +34,6 @@ def process_new_video_notification(self, atom_xml: str):
     episode = _create_queued_episode(channel, video_data)
     extract_audio.delay(str(episode.id))
 
-
 @shared_task(bind=True, max_retries=3)
 def extract_audio(self, episode_id: str):
     from apps.episodes.models import Episode, ProcessingStatus
@@ -70,7 +69,6 @@ def extract_audio(self, episode_id: str):
         episode.save(update_fields=['retry_count', 'processing_error', 'processing_status'])
         raise self.retry(exc=exc, countdown=2 ** episode.retry_count * 60)
 
-
 @shared_task
 def schedule_channel_polling(channel_id: str):
     """Fallback polling — called every 15 min by Celery Beat for all active channels."""
@@ -91,7 +89,6 @@ def schedule_channel_polling(channel_id: str):
 
     channel.last_polled_at = timezone.now()
     channel.save(update_fields=['last_polled_at'])
-
 
 @shared_task
 def schedule_channel_cleanup(channel_id: str):

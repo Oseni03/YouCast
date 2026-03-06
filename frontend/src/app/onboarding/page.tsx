@@ -23,7 +23,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { YouTubeChannel, Channel } from '@/lib/types';
-import { AlertCircleIcon, ArrowBigRightIcon, BookCheckIcon, CheckCircle2Icon, CheckIcon, LogInIcon, PodcastIcon, RefreshCcwIcon, SearchSlashIcon } from 'lucide-react';
+import { AlertCircleIcon, ArrowBigRightIcon, BookCheckIcon, CheckCircle2Icon, CheckIcon, LogInIcon, PodcastIcon, RefreshCcwIcon, SearchSlashIcon, YoutubeIcon } from 'lucide-react';
 
 export default function OnboardingPage() {
     const router = useRouter();
@@ -194,7 +194,7 @@ export default function OnboardingPage() {
                         >
                             <div className={`size-20 rounded-none border-4 flex items-center justify-center transition-all ${youtubeCompleted ? 'bg-white text-black border-white' : 'bg-transparent text-white border-white'
                                 }`}>
-                                <span className="material-symbols-outlined text-4xl">smart_display</span>
+                                <YoutubeIcon size={40} />
                             </div>
                             <div className="flex-1 text-left pt-2">
                                 <h4 className={`text-2xl font-black mb-2 uppercase tracking-tight ${youtubeCompleted ? 'text-white' : 'text-white/60'}`}>
@@ -264,14 +264,14 @@ export default function OnboardingPage() {
                             PLEASE REVIEW AND ACCEPT OUR TERMS TO PROCEED.
                         </DialogDescription>
                     </DialogHeader>
-                    
+
                     <div className="my-8 p-6 border-2 border-white/10 bg-white/5 max-h-[40vh] overflow-y-auto text-sm font-medium leading-relaxed text-slate-300">
                         <h3 className="text-white font-bold mb-4 uppercase tracking-widest">1. CONTENT OWNERSHIP</h3>
                         <p className="mb-6">YOU RETAIN ALL OWNERSHIP RIGHTS TO YOUR CONTENT. BY USING AUDIOSYNC, YOU GRANT US A LIMITED LICENSE TO PROCESS AND DISTRIBUTE YOUR CONTENT AS NECESSARY TO PROVIDE THE SERVICE.</p>
-                        
+
                         <h3 className="text-white font-bold mb-4 uppercase tracking-widest">2. USAGE LIMITS</h3>
                         <p className="mb-6">OUR SERVICE IS SUBJECT TO LIMITS BASED ON YOUR SELECTED PLAN. MISUSE OR ATTEMPTS TO CIRCUMVENT THESE LIMITS MAY RESULT IN ACCOUNT SUSPENSION.</p>
-                        
+
                         <h3 className="text-white font-bold mb-4 uppercase tracking-widest">3. DATA PRIVACY</h3>
                         <p className="mb-4">WE RESPECT YOUR PRIVACY AND HANDLE YOUR DATA IN ACCORDANCE WITH OUR PRIVACY POLICY. GOOGLE USER DATA IS ACCESSED ONLY AS REQUIRED FOR YOUTUBE INTEGRATION.</p>
                     </div>

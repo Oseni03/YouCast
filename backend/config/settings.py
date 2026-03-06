@@ -293,6 +293,10 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_URL   = "/media/"
 MEDIA_ROOT  = BASE_DIR / "mediafiles"
 
+CLOUDINARY_CLOUD_NAME=os.environ.get("CLOUDINARY_CLOUD_NAME")
+CLOUDINARY_API_KEY=os.environ.get("CLOUDINARY_API_KEY")
+CLOUDINARY_API_SECRET=os.environ.get("CLOUDINARY_API_SECRET")
+
 
 # ---------------------------------------------------------------------------
 # Logging

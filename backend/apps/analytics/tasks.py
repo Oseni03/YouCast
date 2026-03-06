@@ -1,4 +1,4 @@
-# from celery import shared_task
+from celery import shared_task
 import geoip2.database
 from .models import AnalyticsEvent
 from apps.channels.models import Channel
@@ -21,8 +21,7 @@ BOT_SIGNATURES = [
     'googlebot', 'bingbot', 'python-requests',
 ]
 
-
-# @shared_task
+@shared_task
 def log_analytics_event(slug: str, ip_hash: str, user_agent: str, bytes_served: int):
     """
     Called asynchronously by RSSAnalyticsMiddleware after each RSS feed response.
@@ -51,8 +50,7 @@ def log_analytics_event(slug: str, ip_hash: str, user_agent: str, bytes_served: 
         is_bot       = is_bot,
     )
 
-
-# @shared_task
+@shared_task
 def send_weekly_digest():
     """
     Scheduled via Celery Beat — runs every Monday at 9am UTC.
