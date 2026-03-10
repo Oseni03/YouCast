@@ -1,5 +1,8 @@
+import logging
 from django.utils import timezone
 from django.utils.text import slugify
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -12,6 +15,7 @@ from .services.websub import WebSubService
 from .tasks.pipeline import schedule_channel_polling
 
 
+@method_decorator(csrf_exempt, name='dispatch')
 class ChannelListCreateView(APIView):
     """
     GET  /api/channels/        — list all channels for the authenticated creator
@@ -24,59 +28,75 @@ class ChannelListCreateView(APIView):
         return Response(ChannelSerializer(channels, many=True).data)
 
     def post(self, request):
-        # Enforce plan channel limits
-        current_count = Channel.objects.filter(creator=request.user).count()
-        if current_count >= request.user.channel_limit:
-            return Response(
-                {'error': f'Your plan allows a maximum of {request.user.channel_limit} channels.'},
-                status=status.HTTP_403_FORBIDDEN,
+        logger = logging.getLogger('apps.channels')
+        try:
+            # Enforce plan channel limits
+            limit = request.user.channel_limit
+            current_count = Channel.objects.filter(creator=request.user).count()
+            if current_count >= limit:
+                return Response(
+                    {'error': f'Your plan allows a maximum of {limit} channels.'},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            has_tos = request.user.has_accepted_tos
+            if not has_tos:
+                return Response(
+                    {'error': 'You must accept the Terms of Service before connecting a channel.'},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+            serializer = ChannelCreateSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+
+            youtube_channel_id = serializer.validated_data['youtube_channel_id']
+
+            # Verify the creator actually owns this channel via YouTube API
+            yt = YouTubeService(request.user)
+            channel_data = yt.verify_channel_ownership(youtube_channel_id)
+            if not channel_data:
+                return Response(
+                    {'error': 'Channel not found or you do not own this channel.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Generate a unique RSS slug
+            base_slug = slugify(channel_data['title'])
+            slug      = base_slug
+            counter   = 1
+            while Channel.objects.filter(rss_slug=slug).exists():
+                slug = f'{base_slug}-{counter}'
+                counter += 1
+
+            channel = Channel.objects.create(
+                creator                      = request.user,
+                youtube_channel_id           = youtube_channel_id,
+                channel_title                = channel_data['title'],
+                channel_description          = channel_data['description'],
+                channel_thumbnail_url        = channel_data['thumbnail_url'],
+                youtube_uploads_playlist_id  = channel_data['uploads_playlist_id'],
+                rss_slug                     = slug,
             )
 
-        if not request.user.has_accepted_tos:
+            # Subscribe to WebSub for real-time new-video notifications
+            try:
+                WebSubService.subscribe(channel)
+            except Exception as e:
+                logger.warning(f"WebSub subscription failed for channel {channel.id}: {e}")
+
+            # Also schedule polling fallback
+            try:
+                schedule_channel_polling.delay(str(channel.id))
+            except Exception as e:
+                logger.error(f"Failed to schedule polling for channel {channel.id}: {e}")
+
+            return Response(ChannelSerializer(channel).data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            logger.exception(f"Unhandled error in ChannelListCreateView.post: {e}")
             return Response(
-                {'error': 'You must accept the Terms of Service before connecting a channel.'},
-                status=status.HTTP_403_FORBIDDEN,
+                {'error': 'An internal server error occurred while connecting the channel.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
-        serializer = ChannelCreateSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        youtube_channel_id = serializer.validated_data['youtube_channel_id']
-
-        # Verify the creator actually owns this channel via YouTube API
-        yt = YouTubeService(request.user)
-        channel_data = yt.verify_channel_ownership(youtube_channel_id)
-        if not channel_data:
-            return Response(
-                {'error': 'Channel not found or you do not own this channel.'},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Generate a unique RSS slug
-        base_slug = slugify(channel_data['title'])
-        slug      = base_slug
-        counter   = 1
-        while Channel.objects.filter(rss_slug=slug).exists():
-            slug = f'{base_slug}-{counter}'
-            counter += 1
-
-        channel = Channel.objects.create(
-            creator                      = request.user,
-            youtube_channel_id           = youtube_channel_id,
-            channel_title                = channel_data['title'],
-            channel_description          = channel_data['description'],
-            channel_thumbnail_url        = channel_data['thumbnail_url'],
-            youtube_uploads_playlist_id  = channel_data['uploads_playlist_id'],
-            rss_slug                     = slug,
-        )
-
-        # Subscribe to WebSub for real-time new-video notifications
-        WebSubService.subscribe(channel)
-
-        # Also schedule polling fallback
-        schedule_channel_polling.delay(str(channel.id))
-
-        return Response(ChannelSerializer(channel).data, status=status.HTTP_201_CREATED)
 
 
 class YouTubeChannelListView(APIView):
@@ -99,6 +119,8 @@ class YouTubeChannelListView(APIView):
             channels = yt.list_my_channels()
             return Response(channels)
         except Exception as e:
+            logger = logging.getLogger('django')
+            logger.error(f"Failed to fetch YouTube channels: {e}")
             return Response(
                 {'error': f'Failed to fetch YouTube channels: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

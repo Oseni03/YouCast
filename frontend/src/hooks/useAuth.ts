@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
+import { authService } from '@/lib/api-services';
 import type { Creator } from '@/lib/types';
 
 interface AuthResponse {
@@ -85,3 +86,31 @@ export const useDeactivateAccount = () => {
   });
 };
 
+export const useLogout = () => {
+  return useMutation({
+    mutationFn: async () => {
+      const refresh = typeof window !== 'undefined' ? localStorage.getItem('refresh_token') : null;
+      if (refresh) {
+        await api.post('/auth/logout/', { refresh });
+      }
+      clearTokens();
+    },
+    onSuccess: () => {
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login';
+      }
+    },
+  });
+};
+
+export const useAcceptTOS = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (accepted: boolean) => {
+      return authService.acceptTOS(accepted);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ME_KEY });
+    },
+  });
+};

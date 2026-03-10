@@ -4,38 +4,36 @@ import QueryProvider from "@/components/providers/QueryProvider";
 import "./globals.css";
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+    variable: "--font-geist-sans",
+    subsets: ["latin"],
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+    variable: "--font-geist-mono",
+    subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "AUDIOSYNC — Turn Your YouTube Into a Podcast",
-  description: "Automatically convert your YouTube uploads into high-quality podcast episodes and distribute them to Spotify, Apple, and Google.",
+    title: "AUDIOSYNC — Turn Your YouTube Into a Podcast",
+    description: "Automatically convert your YouTube uploads into high-quality podcast episodes and distribute them to Spotify, Apple, and Google.",
 };
 
-import { GoogleOAuthProvider } from "@react-oauth/google";
+
 
 export default function RootLayout({
-  children,
+    children,
 }: Readonly<{
-  children: React.ReactNode;
+    children: React.ReactNode;
 }>) {
-  return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
-          <QueryProvider>
-            {children}
-          </QueryProvider>
-        </GoogleOAuthProvider>
-      </body>
-    </html>
-  );
+    return (
+        <html lang="en">
+            <body
+                className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+            >
+                <QueryProvider>
+                    {children}
+                </QueryProvider>
+            </body>
+        </html>
+    );
 }

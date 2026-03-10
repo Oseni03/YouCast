@@ -26,11 +26,15 @@ api.interceptors.response.use(
   async (error) => {
     // Handle global errors, e.g., token refresh logic could go here
     if (error.response?.status === 401) {
-        // e.g. clear local storage and redirect to login
+        // Clear local storage and cookies on unauthorized
         if (typeof window !== 'undefined') {
             localStorage.removeItem('access_token');
             localStorage.removeItem('refresh_token');
-            // window.location.href = '/auth'; // Only if needed globally
+            document.cookie = 'access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Strict';
+            // Optional: redirect to login if not already there
+            if (window.location.pathname !== '/login') {
+                window.location.href = '/login';
+            }
         }
     }
     return Promise.reject(error);

@@ -1,7 +1,7 @@
-# from celery import shared_task, chain
+from celery import shared_task, chain
 from django.utils import timezone
 
-# @shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3)
 def process_new_video_notification(self, atom_xml: str):
     """Entry point — parses WebSub Atom payload, validates against filters, queues pipeline."""
     import xml.etree.ElementTree as ET
@@ -35,7 +35,7 @@ def process_new_video_notification(self, atom_xml: str):
     extract_audio.delay(str(episode.id))
 
 
-# @shared_task(bind=True, max_retries=3)
+@shared_task(bind=True, max_retries=3)
 def extract_audio(self, episode_id: str):
     from apps.episodes.models import Episode, ProcessingStatus
     from apps.episodes.services.extractor import AudioExtractor
@@ -71,7 +71,7 @@ def extract_audio(self, episode_id: str):
         raise self.retry(exc=exc, countdown=2 ** episode.retry_count * 60)
 
 
-# @shared_task
+@shared_task
 def schedule_channel_polling(channel_id: str):
     """Fallback polling — called every 15 min by Celery Beat for all active channels."""
     from apps.channels.models import Channel
@@ -93,7 +93,7 @@ def schedule_channel_polling(channel_id: str):
     channel.save(update_fields=['last_polled_at'])
 
 
-# @shared_task
+@shared_task
 def schedule_channel_cleanup(channel_id: str):
     """Deletes all audio files from S3 for a disconnected channel."""
     from apps.episodes.models import Episode

@@ -43,11 +43,6 @@ export const channelService = {
     return res.data;
   },
 
-  exchangeGoogleCode: async (code: string): Promise<{ status: string }> => {
-    const res = await api.post<{ status: string }>('/auth/google/token/', { code });
-    return res.data;
-  },
-
   getYouTubeChannels: async (): Promise<YouTubeChannel[]> => {
     const res = await api.get<YouTubeChannel[]>('/channels/youtube/');
     return res.data;
@@ -111,6 +106,15 @@ export const analyticsService = {
 
   getEpisodeStats: async (params: { channel?: string } = {}): Promise<EpisodeStat[]> => {
     const res = await api.get<EpisodeStat[]>('/analytics/episodes/', { params });
+    return res.data;
+  },
+};
+
+// ── Auth & Account ──────────────────────────────────────────────────────────
+
+export const authService = {
+  acceptTOS: async (accepted: boolean): Promise<{ status: string; tos_accepted_at: string }> => {
+    const res = await api.post<{ status: string; tos_accepted_at: string }>('/auth/tos/', { accepted });
     return res.data;
   },
 };

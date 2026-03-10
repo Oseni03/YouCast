@@ -18,7 +18,7 @@ class WebSubService:
         response = requests.post(cls.HUB_URL, data={
             'hub.callback':     cls.CALLBACK,
             'hub.topic':        cls._topic_url(channel.youtube_channel_id),
-            'hub.verify':       'sync',
+            'hub.verify':       'async',  # 'sync' can cause deadlocks on single-threaded dev servers
             'hub.mode':         'subscribe',
             'hub.lease_seconds': 864000,  # 10 days; we re-subscribe before expiry
         })
@@ -30,7 +30,7 @@ class WebSubService:
         requests.post(cls.HUB_URL, data={
             'hub.callback': cls.CALLBACK,
             'hub.topic':    cls._topic_url(channel.youtube_channel_id),
-            'hub.verify':   'sync',
+            'hub.verify':   'async',
             'hub.mode':     'unsubscribe',
         })
 

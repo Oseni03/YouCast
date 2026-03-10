@@ -57,11 +57,7 @@ export const useEligibleVideos = (channelId: string) => {
   });
 };
 
-export const useExchangeGoogleCode = () => {
-  return useMutation({
-    mutationFn: channelService.exchangeGoogleCode,
-  });
-};
+
 
 export const useYouTubeChannels = () => {
   const { data: user } = useMe();

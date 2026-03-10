@@ -10,8 +10,8 @@ urlpatterns = [
     path('deactivate/',      views.DeactivateAccountView.as_view(),         name='deactivate'),
 
     # OAuth flow
-    path('google/callback/', views.GoogleOAuthCallbackView.as_view(),      name='google_callback'),
-    path('google/token/',    views.GoogleOAuthTokenExchangeView.as_view(),  name='google_token'),
+    path('google/authorize/', views.GoogleOAuthAuthorizeView.as_view(),     name='google_authorize'),
+    path('google/callback/',  views.GoogleOAuthCallbackView.as_view(),      name='google_callback'),
 
     # Session management
     path('refresh/',         TokenRefreshView.as_view(),                    name='token_refresh'),

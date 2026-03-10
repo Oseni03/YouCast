@@ -1,8 +1,11 @@
+import logging
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 from google.auth.transport.requests import Request
 from django.utils import timezone
 from django.conf import settings
+
+logger = logging.getLogger('apps.channels')
 
 
 class YouTubeService:
@@ -17,45 +20,71 @@ class YouTubeService:
     @property
     def client(self):
         if self._client is None:
-            creds = Credentials(
-                token         = self.creator.google_access_token,
-                refresh_token = self.creator.google_refresh_token,
-                token_uri     = 'https://oauth2.googleapis.com/token',
-                client_id     = settings.GOOGLE_OAUTH_CLIENT_ID,
-                client_secret = settings.GOOGLE_OAUTH_CLIENT_SECRET,
-            )
-            if creds.expired:
-                creds.refresh(Request())
-                self.creator.google_access_token = creds.token
-                self.creator.token_expiry        = creds.expiry
-                self.creator.save(update_fields=['google_access_token', 'token_expiry'])
+            logger.debug(f"Initializing YouTube client for creator {self.creator.email}")
+            try:
+                creds = Credentials(
+                    token         = self.creator.google_access_token,
+                    refresh_token = self.creator.google_refresh_token,
+                    token_uri     = 'https://oauth2.googleapis.com/token',
+                    client_id     = settings.GOOGLE_OAUTH_CLIENT_ID,
+                    client_secret = settings.GOOGLE_OAUTH_CLIENT_SECRET,
+                )
+                if not creds.token:
+                    logger.warning(f"No access token for creator {self.creator.email}")
 
-            self._client = build('youtube', 'v3', credentials=creds)
+                if creds.expired:
+                    logger.info(f"Token expired for creator {self.creator.email}, attempting refresh")
+                    if not creds.refresh_token:
+                        logger.error(f"Cannot refresh token for {self.creator.email}: missing refresh token")
+                    creds.refresh(Request())
+                    self.creator.google_access_token = creds.token
+                    self.creator.token_expiry        = creds.expiry
+                    self.creator.save(update_fields=['google_access_token', 'token_expiry'])
+                    logger.info(f"Token refreshed successfully for {self.creator.email}")
+
+                self._client = build('youtube', 'v3', credentials=creds)
+            except Exception as e:
+                logger.exception(f"Failed to initialize YouTube client for {self.creator.email}: {e}")
+                raise
         return self._client
 
     def verify_channel_ownership(self, youtube_channel_id):
         """Returns channel metadata only if the authenticated creator owns the channel."""
-        response = self.client.channels().list(
-            part='snippet,contentDetails',
-            mine=True,
-        ).execute()
+        logger.debug(f"Verifying ownership for channel {youtube_channel_id}")
+        try:
+            response = self.client.channels().list(
+                part='snippet,contentDetails',
+                mine=True,
+            ).execute()
 
-        for item in response.get('items', []):
-            if item['id'] == youtube_channel_id:
-                return self._parse_channel_item(item)
-        return None
+            for item in response.get('items', []):
+                if item['id'] == youtube_channel_id:
+                    logger.info(f"Ownership verified for channel {youtube_channel_id}")
+                    return self._parse_channel_item(item)
+            
+            logger.warning(f"Ownership NOT verified for channel {youtube_channel_id}. Channel not in user's list.")
+            return None
+        except Exception as e:
+            logger.exception(f"YouTube API error during verify_channel_ownership: {e}")
+            raise
 
     def list_my_channels(self):
         """Returns all channels owned by the authenticated creator."""
-        response = self.client.channels().list(
-            part='snippet,contentDetails',
-            mine=True,
-        ).execute()
+        logger.debug(f"Listing channels for creator {self.creator.email}")
+        try:
+            response = self.client.channels().list(
+                part='snippet,contentDetails',
+                mine=True,
+            ).execute()
 
-        channels = []
-        for item in response.get('items', []):
-            channels.append(self._parse_channel_item(item))
-        return channels
+            channels = []
+            for item in response.get('items', []):
+                channels.append(self._parse_channel_item(item))
+            logger.info(f"Retrieved {len(channels)} channels for {self.creator.email}")
+            return channels
+        except Exception as e:
+            logger.exception(f"YouTube API error during list_my_channels for {self.creator.email}: {e}")
+            raise
 
     def get_channel_metadata(self, youtube_channel_id):
         response = self.client.channels().list(

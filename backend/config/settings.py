@@ -118,8 +118,29 @@ CACHES = {
     }
 }
 
+# ---------------------------------------------------------------------------
+# Internationalisation
+# ---------------------------------------------------------------------------
+LANGUAGE_CODE = "en-us"
+TIME_ZONE     = "UTC"
+USE_I18N      = True
+USE_TZ        = True
+
+
+# ---------------------------------------------------------------------------
+# Celery
+# ---------------------------------------------------------------------------
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/1")
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "redis://localhost:6379/2")
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = TIME_ZONE
+
 # Sessions — database backend (default)
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
+SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
 
 
 # ---------------------------------------------------------------------------
@@ -157,8 +178,8 @@ REST_FRAMEWORK = {
 # JWT — Simple JWT
 # ---------------------------------------------------------------------------
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME":          timedelta(minutes=30),
-    "REFRESH_TOKEN_LIFETIME":         timedelta(days=7),
+    "ACCESS_TOKEN_LIFETIME":          timedelta(days=7),
+    "REFRESH_TOKEN_LIFETIME":         timedelta(days=14),
     "ROTATE_REFRESH_TOKENS":          True,    # issues new refresh token on every refresh
     "BLACKLIST_AFTER_ROTATION":       True,    # old refresh token is blacklisted
     "UPDATE_LAST_LOGIN":              True,
@@ -261,15 +282,6 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
-
-
-# ---------------------------------------------------------------------------
-# Internationalisation
-# ---------------------------------------------------------------------------
-LANGUAGE_CODE = "en-us"
-TIME_ZONE     = "UTC"
-USE_I18N      = True
-USE_TZ        = True
 
 
 # ---------------------------------------------------------------------------

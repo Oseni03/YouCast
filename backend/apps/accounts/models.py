@@ -78,7 +78,7 @@ class Creator(AbstractBaseUser, PermissionsMixin):
 
     @property
     def has_youtube_connected(self):
-        return bool(self.google_refresh_token)
+        return bool(self.google_access_token or self.google_refresh_token)
 
     @property
     def channel_limit(self):

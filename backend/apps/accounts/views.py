@@ -1,11 +1,16 @@
+import os
+import logging
 from django.conf import settings
 from django.utils import timezone
+from django.shortcuts import redirect
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from rest_framework_simplejwt.tokens import RefreshToken
-from google.oauth2 import id_token
+from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+from google.auth.transport import requests as google_requests
+from google_auth_oauthlib.flow import Flow
+from google.oauth2 import id_token as google_id_token
 from google.auth.transport import requests as google_requests
 from django.contrib.auth import authenticate
 
@@ -13,91 +18,149 @@ from .models import Creator
 from .serializers import CreatorSerializer, CreatorUpdateSerializer, TOSAcceptSerializer, SignupSerializer
 
 
-class GoogleOAuthCallbackView(APIView):
+class GoogleOAuthAuthorizeView(APIView):
     """
-    POST /api/auth/google/callback/
-    Receives the Google ID token from the frontend after the OAuth consent
-    screen redirect. Verifies the token, creates or retrieves the Creator
-    record, then returns a JWT pair for all subsequent API calls.
+    GET /api/auth/google/authorize/
+    Generates the Google OAuth consent URL and returns it to the frontend.
+    Frontend redirects the browser to this URL.
     """
     permission_classes = [AllowAny]
 
-    def post(self, request):
-        id_token_str = request.data.get('id_token')
-        if not id_token_str:
-            return Response({'error': 'id_token is required'}, status=400)
-
-        try:
-            payload = id_token.verify_oauth2_token(
-                id_token_str,
-                google_requests.Request(),
-                settings.GOOGLE_OAUTH_CLIENT_ID,
-            )
-        except ValueError as e:
-            return Response({'error': f'Invalid token: {str(e)}'}, status=401)
-
-        google_user_id = payload['sub']
-        email          = payload['email']
-        username       = email.split('@')[0]
-        avatar_url     = payload.get('picture', '')
-
-        creator, created = Creator.objects.get_or_create(
-            google_user_id=google_user_id,
-            defaults={
-                'email':        email,
-                'username':     username,
-                'avatar_url':   avatar_url,
-            }
-        )
-
-        # Update profile fields on every login
-        if not created:
-            creator.username     = username
-            creator.avatar_url   = avatar_url
-            creator.save(update_fields=['username', 'avatar_url'])
-
-        refresh = RefreshToken.for_user(creator)
-        return Response({
-            'access':  str(refresh.access_token),
-            'refresh': str(refresh),
-            'creator': CreatorSerializer(creator).data,
-            'is_new':  created,
-        }, status=201 if created else 200)
-
-
-class GoogleOAuthTokenExchangeView(APIView):
-    """
-    POST /api/auth/google/token/
-    Exchanges a one-time authorization code for access + refresh tokens.
-    Stores encrypted tokens on the Creator for server-side YouTube API calls
-    (channel monitoring, video metadata fetching).
-    """
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        auth_code = request.data.get('code')
-        if not auth_code:
-            return Response({'error': 'code is required'}, status=400)
-
-        # Exchange code for tokens using google-auth-oauthlib
-        from google_auth_oauthlib.flow import Flow
+    def get(self, request):
         flow = Flow.from_client_config(
             settings.GOOGLE_OAUTH_CLIENT_CONFIG,
-            scopes=['https://www.googleapis.com/auth/youtube.readonly'],
+            scopes=[
+                'https://www.googleapis.com/auth/youtube.readonly',
+                'openid',
+                'email',
+                'profile',
+            ],
         )
         flow.redirect_uri = settings.GOOGLE_OAUTH_REDIRECT_URI
-        flow.fetch_token(code=auth_code)
+
+        authorization_url, state = flow.authorization_url(
+            access_type='offline',      # gets a refresh token
+            include_granted_scopes='true',
+            prompt='consent',           # forces refresh token on every login
+        )
+
+        # Store state, PKCE verifier, and optional token in session to verify on callback
+        request.session['oauth_state'] = state
+        request.session['code_verifier'] = getattr(flow, 'code_verifier', None)
+        
+        token = request.query_params.get('token')
+        if token:
+            request.session['auth_token'] = token
+
+        return redirect(authorization_url)
+
+
+class GoogleOAuthCallbackView(APIView):
+    """
+    GET /api/auth/google/callback/
+    Google redirects here with ?code=...&state=...
+    Backend exchanges the code for tokens, creates/retrieves the Creator,
+    issues JWTs, then redirects the browser back to the frontend.
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        logger = logging.getLogger('django')
+        code  = request.query_params.get('code')
+        state = request.query_params.get('state')
+
+        # Verify state to prevent CSRF
+        if state != request.session.get('oauth_state'):
+            return Response({'error': 'Invalid state'}, status=400)
+
+        flow = Flow.from_client_config(
+            settings.GOOGLE_OAUTH_CLIENT_CONFIG,
+            scopes=[
+                'https://www.googleapis.com/auth/youtube.readonly',
+                'openid',
+                'email',
+                'profile',
+            ],
+            state=state,
+        )
+        flow.redirect_uri = settings.GOOGLE_OAUTH_REDIRECT_URI
+
+        # Allow Google to return different scopes than requested (e.g. if the user previously granted more scopes)
+        os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
+
+        try:
+            code_verifier = request.session.get('code_verifier')
+            if code_verifier:
+                flow.fetch_token(code=code, code_verifier=code_verifier)
+            else:
+                flow.fetch_token(code=code)
+        except Exception as e:
+            logger.error(f"Token exchange failed: {e}")
+            return redirect(f'{settings.FRONTEND_URL}/auth/error?message=token_exchange_failed')
 
         creds = flow.credentials
-        creator = request.user
+
+        # Decode the ID token to get user profile info
+        id_info = google_id_token.verify_oauth2_token(
+            creds.id_token,
+            google_requests.Request(),
+            settings.GOOGLE_OAUTH_CLIENT_ID,
+        )
+
+        google_user_id = id_info['sub']
+        email          = id_info['email']
+        username       = email.split('@')[0]
+        avatar_url     = id_info.get('picture', '')
+
+        # 1. Resolve Creator mapping: Link Account flow vs Login flow
+        creator = None
+        created = False
+        
+        if auth_token := request.session.pop('auth_token', None):
+            try:
+                user_id = AccessToken(auth_token)['user_id']
+                creator = Creator.objects.get(id=user_id)
+                
+                # Verify this Google account isn't already assigned to another creator
+                existing = Creator.objects.filter(google_user_id=google_user_id).exclude(id=creator.id).first()
+                if existing:
+                    logger.warning(f"Google ID {google_user_id} is already linked to creator {existing.id}")
+                    return redirect(f'{settings.FRONTEND_URL}/auth/error?message=already_linked')
+
+                creator.google_user_id = google_user_id
+                logger.info(f"Linking Google ID {google_user_id} to creator {creator.id}")
+            except Exception as e:
+                logger.warning(f"Account linking failed: {e}")
+
+        if not creator:
+            creator, created = Creator.objects.get_or_create(
+                google_user_id=google_user_id,
+                defaults={
+                    'email':      email,
+                    'username':   username,
+                    'avatar_url': avatar_url,
+                }
+            )
+
+        # 2. Sync profile and store tokens
+        creator.username             = username
+        creator.avatar_url           = avatar_url
         creator.google_access_token  = creds.token
         creator.google_refresh_token = creds.refresh_token or creator.google_refresh_token
         creator.token_expiry         = creds.expiry
-        creator.save(update_fields=[
-            'google_access_token', 'google_refresh_token', 'token_expiry'
-        ])
+        creator.save()
 
-        return Response({'status': 'tokens_stored'})
+        # 3. Generate tokens and redirect to frontend
+        refresh = RefreshToken.for_user(creator)
+        access  = str(refresh.access_token)
+
+        frontend_redirect = (
+            f'{settings.FRONTEND_URL}/auth/callback'
+            f'?access={access}'
+            f'&refresh={str(refresh)}'
+            f'&is_new={str(created).lower()}'
+        )
+        return redirect(frontend_redirect)
 
 
 class MeView(APIView):
