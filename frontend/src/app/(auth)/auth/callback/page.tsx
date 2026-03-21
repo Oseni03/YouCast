@@ -35,7 +35,7 @@ function AuthCallbackContent() {
             localStorage.removeItem('auth_return_to');
             router.replace(returnTo);
         } else {
-            router.replace(isNew ? '/onboarding' : '/dashboard');
+            router.replace(isNew ? '/onboarding' : '/projects');
         }
     }, [params, router, queryClient]);
 

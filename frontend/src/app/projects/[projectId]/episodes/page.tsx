@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { PlayIcon, MoreVerticalIcon, PlusIcon, SearchIcon, Mic2Icon, LayoutDashboardIcon, X, RefreshCwIcon } from 'lucide-react';
@@ -37,6 +38,7 @@ function SkeletonRow() {
 }
 
 export default function EpisodesPage() {
+  const { projectId } = useParams() as { projectId: string };
   const [selectedEpisode, setSelectedEpisode] = useState<EpisodeListItem | null>(null);
   const [searchInput, setSearchInput] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -48,7 +50,7 @@ export default function EpisodesPage() {
   }, [searchInput]);
 
   const { data, isLoading, isError } = useEpisodes(
-    debouncedSearch ? { search: debouncedSearch } : {}
+    debouncedSearch ? { search: debouncedSearch, channel: projectId } : { channel: projectId }
   );
   const retryMutation = useRetryEpisode();
 
@@ -141,7 +143,7 @@ export default function EpisodesPage() {
             asChild
             className="w-full sm:w-auto h-auto px-6 lg:px-8 py-3 lg:py-4 bg-black dark:bg-white text-white dark:text-black hover:invert transition-all rounded-none text-[10px] lg:text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 flex-1"
           >
-            <Link href="/dashboard/episodes/new">
+            <Link href={`/projects/${projectId}/episodes/new`}>
               <PlusIcon className="size-4 md:size-5" />
               New Episode
             </Link>

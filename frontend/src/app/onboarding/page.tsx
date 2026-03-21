@@ -245,7 +245,7 @@ export default function OnboardingPage() {
 
                     {allCompleted && (
                         <button
-                            onClick={() => router.push('/dashboard')}
+                            onClick={() => router.push('/projects')}
                             className="w-full py-8 bg-white text-black text-2xl font-black rounded-none hover:invert transition-all flex items-center justify-center gap-6 uppercase tracking-tighter animate-in fade-in slide-in-from-bottom-4 duration-500"
                         >
                             Continue to Dashboard

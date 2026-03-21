@@ -1,9 +1,9 @@
 "use client"
 
-import { MicIcon, LayoutDashboardIcon, RssIcon, BarChartIcon, SettingsIcon, LogOutIcon, MapPinCheckIcon } from 'lucide-react';
+import { MicIcon, LayoutDashboardIcon, RssIcon, BarChartIcon, SettingsIcon, LogOutIcon, MapPinCheckIcon, FolderIcon } from 'lucide-react';
 import React from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useParams } from 'next/navigation';
 import { useMe, clearTokens } from '@/hooks/useAuth';
 
 import {
@@ -21,13 +21,24 @@ import {
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const navItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboardIcon, href: '/dashboard' },
-    { id: 'episodes', label: 'Episodes', icon: MicIcon, href: '/dashboard/episodes' },
-    { id: 'rss', label: 'RSS', icon: RssIcon, href: '/dashboard/rss' },
-    { id: 'analytics', label: 'Analytics', icon: BarChartIcon, href: '/dashboard/analytics' },
-    { id: 'settings', label: 'Settings', icon: SettingsIcon, href: '/dashboard/settings' },
+  const params = useParams();
+  const projectId = params?.projectId as string | undefined;
+
+  const navItems = projectId ? [
+    { id: 'dashboard', label: 'Project Dashboard', icon: LayoutDashboardIcon, href: `/projects/${projectId}` },
+    { id: 'episodes', label: 'Episodes', icon: MicIcon, href: `/projects/${projectId}/episodes` },
+    { id: 'rss', label: 'RSS', icon: RssIcon, href: `/projects/${projectId}/rss` },
+    { id: 'analytics', label: 'Analytics', icon: BarChartIcon, href: `/projects/${projectId}/analytics` },
+    { id: 'settings', label: 'Settings', icon: SettingsIcon, href: `/projects/${projectId}/settings` },
+  ] : [
+    { id: 'projects', label: 'All Projects', icon: FolderIcon, href: `/projects` },
   ];
+
+  // If we are in the project view, we might also want a global link back, or we just rely on breadcrumbs. 
+  // We can add "All Projects" at the top of the sidebar.
+  const allNavItems = projectId 
+    ? [{ id: 'projects', label: 'All Projects', icon: FolderIcon, href: `/projects` }, ...navItems] 
+    : navItems;
 
   const { data: user } = useMe();
   const router = useRouter();
@@ -54,9 +65,9 @@ export default function Sidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="px-4 space-y-2 mt-4">
-              {navItems.map((item) => {
-                const isActive = item.href === '/dashboard' 
-                  ? pathname === '/dashboard' 
+              {allNavItems.map((item) => {
+                const isActive = item.href === `/projects/${projectId}` || item.href === '/projects'
+                  ? pathname === item.href 
                   : pathname?.startsWith(item.href);
 
                 return (

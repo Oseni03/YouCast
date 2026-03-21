@@ -18,6 +18,7 @@ Unlike audio-ripping tools, PodcastifyYT operates entirely within YouTube's Term
 - [Environment Variables](#environment-variables)
 - [Running with Docker](#running-with-docker)
 - [Running Locally (without Docker)](#running-locally-without-docker)
+- [Celery Setup](#celery-setup)
 - [API Overview](#api-overview)
 - [Background Tasks](#background-tasks)
 - [Deployment](#deployment)
@@ -44,7 +45,8 @@ Unlike audio-ripping tools, PodcastifyYT operates entirely within YouTube's Term
 | Frontend | Next.js 14, TypeScript, Tailwind CSS, shadcn/ui |
 | Backend | Django 5, Django REST Framework |
 | Auth | Google OAuth 2.0, JWT (SimpleJWT) |
-| Task queue | Celery + Redis |
+| Task queue | Celery + django-celery-beat |
+| Message broker | Redis |
 | Database | PostgreSQL 15 |
 | Cache | Redis |
 | Audio processing | yt-dlp, FFmpeg |
@@ -128,13 +130,14 @@ Open `.env` and fill in the required values. See [Environment Variables](#enviro
 docker-compose up --build
 ```
 
-The first run will build images, run Django migrations, and start all services.
+The first run will build images, run Django migrations, and start all services — including the Celery worker, beat scheduler, and Flower monitor.
 
 | Service | URL |
 |---|---|
 | Frontend | http://localhost:3000 |
 | Backend API | http://localhost:8000/api |
 | Django Admin | http://localhost:8000/admin |
+| Flower (task monitor) | http://localhost:5555 |
 
 ---
 
@@ -157,7 +160,7 @@ DB_HOST=db          # use 'localhost' when running without Docker
 DB_PORT=5432
 
 # Redis
-REDIS_URL=redis://redis:6379/0
+REDIS_URL=redis://redis:6379/0        # use redis://localhost:6379/0 without Docker
 CELERY_BROKER_URL=redis://redis:6379/1
 CELERY_RESULT_BACKEND=redis://redis:6379/2
 
@@ -187,9 +190,94 @@ CORS_ALLOWED_ORIGINS=http://localhost:3000
 NEXT_PUBLIC_API_URL=http://localhost:8000/api
 ```
 
+> ⚠️ When running **without Docker**, change `DB_HOST` to `localhost` and all Redis URLs from `redis://redis:...` to `redis://localhost:...`.
+
 ---
 
 ## Running with Docker
+
+The Docker Compose setup runs the full stack: Django, Next.js, PostgreSQL, Redis, Celery worker, Celery Beat scheduler, and Flower — all wired together automatically.
+
+### `docker-compose.yml`
+
+```yaml
+services:
+  backend:
+    build: ./backend
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+
+  frontend:
+    build: ./frontend
+    command: npm run dev
+    volumes:
+      - ./frontend:/app
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    depends_on:
+      - backend
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: podcastifyyt
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  celery_worker:
+    build: ./backend
+    command: celery -A config worker --loglevel=info --concurrency=2
+    volumes:
+      - ./backend:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - db
+
+  celery_beat:
+    build: ./backend
+    command: celery -A config beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - ./backend:/app
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - db
+
+  flower:
+    build: ./backend
+    command: celery -A config flower --port=5555
+    ports:
+      - "5555:5555"
+    env_file:
+      - .env
+    depends_on:
+      - redis
+
+volumes:
+  postgres_data:
+```
 
 ### Start all services
 
@@ -223,7 +311,8 @@ docker-compose exec backend python manage.py shell
 
 ```bash
 docker-compose logs -f backend
-docker-compose logs -f worker
+docker-compose logs -f celery_worker
+docker-compose logs -f celery_beat
 ```
 
 ### Stop everything
@@ -239,6 +328,17 @@ docker-compose down -v
 
 ## Running Locally (without Docker)
 
+Make sure PostgreSQL and Redis are running locally before starting any of the services below.
+
+Update these values in your `.env`:
+
+```env
+DB_HOST=localhost
+REDIS_URL=redis://localhost:6379/0
+CELERY_BROKER_URL=redis://localhost:6379/1
+CELERY_RESULT_BACKEND=redis://localhost:6379/2
+```
+
 ### Backend
 
 ```bash
@@ -247,20 +347,9 @@ python -m venv venv
 source venv/bin/activate          # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
-# Make sure PostgreSQL and Redis are running locally,
-# then update DB_HOST=localhost and REDIS_URL=redis://localhost:6379/0 in .env
-
 python manage.py migrate
 python manage.py createsuperuser
 python manage.py runserver
-```
-
-### Celery worker and beat (separate terminals)
-
-```bash
-cd backend
-celery -A config worker --loglevel=info
-celery -A config beat --loglevel=info
 ```
 
 ### Frontend
@@ -269,6 +358,133 @@ celery -A config beat --loglevel=info
 cd frontend
 npm install
 npm run dev
+```
+
+For Celery setup, see the [Celery Setup](#celery-setup) section below.
+
+---
+
+## Celery Setup
+
+PodcastifyYT uses Celery for all async background processing — audio extraction, WebSub handling, feed polling, and scheduled digest emails.
+
+### Celery Configuration Reference
+
+`config/celery.py`:
+
+```python
+import os
+from celery import Celery
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+
+app = Celery("config")
+app.config_from_object("django.conf:settings", namespace="CELERY")
+app.autodiscover_tasks()
+```
+
+`config/__init__.py`:
+
+```python
+from .celery import app as celery_app
+
+__all__ = ("celery_app",)
+```
+
+`config/settings.py`:
+
+```python
+CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/1")
+CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://localhost:6379/2")
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "UTC"
+```
+
+---
+
+### Running Celery Locally (without Docker)
+
+Make sure Redis is running (`redis-server`) and your virtual environment is active. Open a separate terminal for each process.
+
+#### Terminal 1 — Celery Worker
+
+```bash
+cd backend
+celery -A config worker --loglevel=info
+```
+
+For a quieter dev environment with a single thread:
+
+```bash
+celery -A config worker --loglevel=info --concurrency=1
+```
+
+#### Terminal 2 — Celery Beat (Scheduled Tasks)
+
+Runs periodic tasks like the 15-minute channel poller, daily WebSub renewal, and weekly digest emails:
+
+```bash
+cd backend
+celery -A config beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+```
+
+#### Dev Shortcut — Worker + Beat in One Process
+
+> ⚠️ Convenient for local dev but **not safe for production** — use separate processes there.
+
+```bash
+cd backend
+celery -A config worker --beat --loglevel=info
+```
+
+#### Flower — Task Monitor (Optional)
+
+Flower gives you a real-time web UI to inspect tasks, workers, and queues:
+
+```bash
+pip install flower
+celery -A config flower --port=5555
+```
+
+Then open: [http://localhost:5555](http://localhost:5555)
+
+---
+
+### Running Celery with Docker
+
+All Celery services (`celery_worker`, `celery_beat`, `flower`) are defined in `docker-compose.yml` and start automatically with `docker-compose up`.
+
+#### Start only the Celery services
+
+```bash
+docker-compose up celery_worker celery_beat flower
+```
+
+#### Restart a single service after code changes
+
+```bash
+docker-compose restart celery_worker
+```
+
+#### View live task logs
+
+```bash
+docker-compose logs -f celery_worker
+docker-compose logs -f celery_beat
+```
+
+#### Trigger a one-off task inside the worker container
+
+```bash
+docker-compose exec celery_worker celery -A config call tasks.extract_audio --args='[<episode_id>]'
+```
+
+#### Inspect active workers
+
+```bash
+docker-compose exec celery_worker celery -A config inspect active
 ```
 
 ---
@@ -318,8 +534,11 @@ Celery handles all async processing. Key tasks:
 - [ ] Set `GOOGLE_OAUTH_REDIRECT_URI` to your live domain
 - [ ] Register your Polar webhook endpoint in the Polar dashboard
 - [ ] Run `python manage.py collectstatic`
-- [ ] Use Gunicorn instead of the Django dev server (`gunicorn config.wsgi:application`)
+- [ ] Use Gunicorn instead of the Django dev server
 - [ ] Put Nginx in front of Gunicorn for static file serving and SSL termination
+- [ ] Run `celery_worker` and `celery_beat` as separate supervised containers
+- [ ] Set `CELERY_TASK_ALWAYS_EAGER=False` in production settings
+- [ ] Monitor tasks via Flower or forward Celery logs to your observability stack
 
 ### Swap the backend command in production
 
@@ -327,6 +546,9 @@ Celery handles all async processing. Key tasks:
 # docker-compose.yml
 backend:
   command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 4
+
+celery_worker:
+  command: celery -A config worker --loglevel=warning --concurrency=4
 ```
 
 ---

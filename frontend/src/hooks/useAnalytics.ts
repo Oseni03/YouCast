@@ -3,10 +3,10 @@ import { analyticsService, TimeseriesParams } from '@/lib/api-services';
 
 export const ANALYTICS_KEY = ['analytics'] as const;
 
-export const useOverviewStats = () => {
+export const useOverviewStats = (params: { channel?: string } = {}) => {
   return useQuery({
-    queryKey: [...ANALYTICS_KEY, 'overview'],
-    queryFn: analyticsService.getOverviewStats,
+    queryKey: [...ANALYTICS_KEY, 'overview', params],
+    queryFn: () => analyticsService.getOverviewStats(params),
   });
 };
 

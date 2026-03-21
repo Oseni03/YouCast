@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { CheckCircle2Icon, CircleHelpIcon, InfoIcon, ListVideoIcon, PlayIcon, SendIcon, SignalHigh, Loader2Icon } from 'lucide-react';
@@ -10,8 +10,10 @@ import type { YouTubeVideo } from '@/lib/types';
 
 export default function NewEpisodePage() {
   const router = useRouter();
+  const { projectId } = useParams() as { projectId: string };
+  const selectedChannelId = projectId;
+  
   const { data: channels, isLoading: channelsLoading } = useChannels();
-  const [selectedChannelId, setSelectedChannelId] = useState<string>('');
   const [selectedVideo, setSelectedVideo] = useState<YouTubeVideo | null>(null);
 
   const { data: eligibleVideos, isLoading: videosLoading } = useEligibleVideos(selectedChannelId);
@@ -22,13 +24,6 @@ export default function NewEpisodePage() {
     setSelectedVideo(null);
   }, [selectedChannelId]);
 
-  // Set default channel if available
-  useEffect(() => {
-    if (channels && channels.length > 0 && !selectedChannelId) {
-      setSelectedChannelId(channels[0].id);
-    }
-  }, [channels, selectedChannelId]);
-
   const handlePublish = async () => {
     if (!selectedChannelId || !selectedVideo) return;
 
@@ -37,7 +32,7 @@ export default function NewEpisodePage() {
         channelId: selectedChannelId,
         videoId: selectedVideo.id
       });
-      router.push('/dashboard/episodes');
+      router.push(`/projects/${projectId}/episodes`);
     } catch (err) {
       console.error('Failed to create episode:', err);
     }
@@ -56,7 +51,7 @@ export default function NewEpisodePage() {
             variant="outline"
             className="flex-1 md:flex-none h-auto bg-white dark:bg-black border-2 border-black dark:border-white px-6 py-3 rounded-none text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all"
           >
-            <Link href="/dashboard/episodes">
+            <Link href={`/projects/${projectId}/episodes`}>
               Cancel
             </Link>
           </Button>
@@ -77,20 +72,12 @@ export default function NewEpisodePage() {
               </h3>
               
               <div className="w-full md:w-64">
-                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Select Channel</label>
-                <select 
-                  value={selectedChannelId}
-                  onChange={(e) => setSelectedChannelId(e.target.value)}
-                  className="w-full bg-white dark:bg-black border-2 border-black dark:border-white p-3 text-xs font-black uppercase tracking-widest rounded-none focus:ring-0"
-                >
-                  {channelsLoading ? (
-                    <option>Loading channels...</option>
-                  ) : (
-                    channels?.map(c => (
-                      <option key={c.id} value={c.id}>{c.channel_title}</option>
-                    ))
-                  )}
-                </select>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Selected Channel</label>
+                <input 
+                  value={channels?.find(c => c.id === selectedChannelId)?.channel_title || 'Loading...'}
+                  readOnly
+                  className="w-full bg-slate-100 dark:bg-slate-900 border-2 border-black dark:border-white p-3 text-xs font-black uppercase tracking-widest rounded-none focus:ring-0 text-slate-500"
+                />
               </div>
             </div>
 

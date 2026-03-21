@@ -1,8 +1,9 @@
 'use client';
 
 import React from 'react';
+import { useParams } from 'next/navigation';
 import { CopyIcon, Settings2, Rss } from 'lucide-react';
-import { useChannels } from '@/hooks/useChannels';
+import { useChannel } from '@/hooks/useChannels';
 
 function SkeletonFeedItem() {
   return (
@@ -16,7 +17,9 @@ function SkeletonFeedItem() {
 }
 
 export default function RSSPage() {
-  const { data: channels, isLoading, isError } = useChannels();
+  const { projectId } = useParams() as { projectId: string };
+  const { data: channel, isLoading, isError } = useChannel(projectId);
+  const channels = channel ? [channel] : [];
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text).catch(() => {});
@@ -25,9 +28,9 @@ export default function RSSPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <header className="mb-8 md:mb-12 border-b-4 border-black dark:border-white pb-8">
-        <h2 className="text-4xl font-black text-black dark:text-white tracking-tighter uppercase leading-none">RSS Feeds</h2>
+        <h2 className="text-4xl font-black text-black dark:text-white tracking-tighter uppercase leading-none">RSS Feed</h2>
         <p className="text-slate-500 dark:text-slate-400 mt-4 font-bold uppercase text-[10px] md:text-xs tracking-widest">
-          {isLoading ? 'Loading…' : `${channels?.length ?? 0} channel${(channels?.length ?? 0) !== 1 ? 's' : ''} connected`}
+          {isLoading ? 'Loading…' : channel ? '1 Project Feed' : 'Feed not found'}
         </p>
       </header>
 

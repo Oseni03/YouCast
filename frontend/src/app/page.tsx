@@ -24,7 +24,7 @@ export default function Home() {
             <a href="#testimonials" className="text-xs font-bold uppercase tracking-widest hover:line-through transition-all decoration-2">Testimonials</a>
             {user ? (
               <Link
-                href="/dashboard"
+                href="/projects"
                 className="text-xs font-bold uppercase tracking-widest bg-black text-white px-8 py-3 rounded-none hover:translate-x-1 hover:-translate-y-1 hover:brutalist-shadow-sm transition-all"
               >
                 Dashboard
@@ -63,7 +63,7 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row items-center gap-4">
             {user ? (
               <Link
-                href="/dashboard"
+                href="/projects"
                 className="w-full sm:w-auto px-12 py-6 bg-black text-white text-xl font-black rounded-none hover:translate-x-2 hover:-translate-y-2 hover:brutalist-shadow transition-all flex items-center justify-center gap-3 uppercase tracking-tighter"
               >
                 Go to Dashboard

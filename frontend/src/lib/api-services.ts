@@ -94,8 +94,8 @@ export interface TimeseriesPoint {
 }
 
 export const analyticsService = {
-  getOverviewStats: async (): Promise<OverviewStats> => {
-    const res = await api.get<OverviewStats>('/analytics/overview/');
+  getOverviewStats: async (params: { channel?: string } = {}): Promise<OverviewStats> => {
+    const res = await api.get<OverviewStats>('/analytics/overview/', { params });
     return res.data;
   },
 

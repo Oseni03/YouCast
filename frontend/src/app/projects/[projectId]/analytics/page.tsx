@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { CalendarCheck2Icon, ExpandIcon, PlayCircleIcon, TrendingDownIcon, TrendingUpIcon } from 'lucide-react';
+import { useParams } from 'next/navigation';
 import { useOverviewStats, useEpisodeStats } from '@/hooks/useAnalytics';
 
 // Stat card skeleton
@@ -33,8 +34,9 @@ interface MetricCard {
 }
 
 export default function AnalyticsPage() {
-  const { data: stats, isLoading: statsLoading } = useOverviewStats();
-  const { data: episodeStats, isLoading: episodesLoading, isError: episodesError } = useEpisodeStats();
+  const { projectId } = useParams() as { projectId: string };
+  const { data: stats, isLoading: statsLoading } = useOverviewStats({ channel: projectId });
+  const { data: episodeStats, isLoading: episodesLoading, isError: episodesError } = useEpisodeStats({ channel: projectId });
 
   const metricCards: MetricCard[] = [
     {
@@ -47,13 +49,8 @@ export default function AnalyticsPage() {
       icon: <TrendingUpIcon />,
     },
     {
-      label: 'Total Episodes',
+      label: 'Project Episodes',
       value: stats?.total_episodes ?? '—',
-      icon: <TrendingUpIcon />,
-    },
-    {
-      label: 'Connected Channels',
-      value: stats?.total_channels ?? '—',
       icon: <TrendingUpIcon />,
     },
   ];

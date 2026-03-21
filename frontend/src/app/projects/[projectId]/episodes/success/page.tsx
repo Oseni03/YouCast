@@ -1,9 +1,11 @@
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import React from 'react';
 import { CheckCircle2Icon, FileMusicIcon, PodcastIcon, SearchIcon } from 'lucide-react';
 
 export default function SuccessPage() {
+  const { projectId } = useParams() as { projectId: string };
   return (
     <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center p-6">
       <div className="max-w-md w-full text-center">
@@ -23,7 +25,7 @@ export default function SuccessPage() {
             asChild
             className="h-auto w-full py-5 bg-black dark:bg-white text-white dark:text-black font-black rounded-none hover:invert transition-all uppercase tracking-tighter text-lg"
           >
-            <Link href="/dashboard">
+            <Link href={`/projects/${projectId}`}>
               Back to Dashboard
             </Link>
           </Button>

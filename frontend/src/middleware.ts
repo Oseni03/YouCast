@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // Routes that require authentication
-const PROTECTED_PREFIXES = ['/dashboard', '/onboarding'];
+const PROTECTED_PREFIXES = ['/projects', '/onboarding'];
 
 // Routes accessible only to unauthenticated users
 const AUTH_ROUTES = ['/login', '/signup'];
@@ -22,10 +22,10 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Authenticated user trying to access an auth page → send to dashboard
+  // Authenticated user trying to access an auth page → send to projects
   if (isAuthRoute && isAuthenticated) {
     const url = request.nextUrl.clone();
-    url.pathname = '/dashboard';
+    url.pathname = '/projects';
     return NextResponse.redirect(url);
   }
 
@@ -33,6 +33,6 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Run middleware on dashboard, onboarding, and all /auth/* routes
-  matcher: ['/dashboard/:path*', '/onboarding/:path*', '/login', '/signup'],
+  // Run middleware on projects, onboarding, and all /auth/* routes
+  matcher: ['/projects/:path*', '/onboarding/:path*', '/login', '/signup'],
 };
