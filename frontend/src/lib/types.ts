@@ -104,6 +104,7 @@ export interface Creator {
   avatar_url: string;
   bio: string;
   plan_tier: 'free' | 'starter' | 'pro' | 'agency';
+  channel_limit: number;
   tos_accepted_at: string | null;
   has_youtube_connected: boolean;
   created_at: string;

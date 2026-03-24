@@ -40,15 +40,18 @@ function AuthCallbackContent() {
     }, [params, router, queryClient]);
 
     return (
-        <div className="min-h-screen bg-black flex items-center justify-center p-6">
-            <p className="text-white text-2xl font-black uppercase tracking-widest">Connecting YouTube...</p>
+        <div className="min-h-screen bg-surface-container-lowest flex items-center justify-center p-6">
+            <div className="flex flex-col items-center gap-4">
+                <div className="w-12 h-12 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+                <p className="text-primary text-base font-semibold font-manrope tracking-wide">Connecting YouTube...</p>
+            </div>
         </div>
     );
 }
 
 export default function AuthCallbackPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen bg-black flex items-center justify-center p-6"><p className="text-white text-2xl font-black uppercase tracking-widest">Loading...</p></div>}>
+        <Suspense fallback={<div className="min-h-screen bg-surface-container-lowest flex items-center justify-center p-6"><div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin" /></div>}>
             <AuthCallbackContent />
         </Suspense>
     );

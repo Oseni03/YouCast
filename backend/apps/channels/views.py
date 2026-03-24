@@ -14,6 +14,8 @@ from .services.youtube import YouTubeService
 from .services.websub import WebSubService
 from .tasks.pipeline import schedule_channel_polling
 
+from apps.episodes.models import Episode
+
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ChannelListCreateView(APIView):
@@ -166,7 +168,7 @@ class ChannelDetailView(APIView):
         WebSubService.unsubscribe(channel)
 
         # Schedule audio file deletion (within 30 days per ToS)
-        from tasks.pipeline import schedule_channel_cleanup
+        from .tasks.pipeline import schedule_channel_cleanup
         schedule_channel_cleanup.apply_async(
             args=[str(channel.id)], countdown=60 * 60 * 24 * 30  # 30 days
         )
@@ -225,7 +227,7 @@ class WebSubCallbackView(APIView):
 
     def post(self, request):
         """YouTube pushes an Atom feed entry when a new video is published."""
-        from tasks.pipeline import process_new_video_notification
+        from .tasks.pipeline import process_new_video_notification
         process_new_video_notification.delay(request.body.decode('utf-8'))
         # Return 200 quickly — all processing happens async
         return Response(status=status.HTTP_200_OK)

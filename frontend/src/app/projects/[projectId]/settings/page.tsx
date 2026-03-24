@@ -1,212 +1,284 @@
 "use client"
 
-import { FileWarningIcon, ImageIcon, LockKeyhole, Loader2Icon } from 'lucide-react';
+import { FileWarningIcon, Trash2Icon, Loader2Icon, Settings2Icon, GlobeIcon, Mic2Icon, SaveIcon } from 'lucide-react';
 import React, { useState, useEffect } from 'react';
-import { useMe, useUpdateMe, useDeactivateAccount } from '@/hooks/useAuth';
-import { useRouter } from 'next/navigation';
+import { useChannel, useUpdateChannel, useDeleteChannel } from '@/hooks/useChannels';
+import { useRouter, useParams } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 
-export default function SettingsPage() {
-  const router = useRouter();
-  const { data: creator, isLoading } = useMe();
-  const updateMeMutation = useUpdateMe();
-  const deactivateMutation = useDeactivateAccount();
+export default function ProjectSettingsPage() {
+    const router = useRouter();
+    const params = useParams();
+    const projectId = params.projectId as string;
 
-  const [showAlert, setShowAlert] = useState(false);
-  const [formData, setFormData] = useState({
-    username: '',
-    email: '',
-    bio: ''
-  });
+    const { data: channel, isLoading } = useChannel(projectId);
+    const updateChannelMutation = useUpdateChannel();
+    const deleteChannelMutation = useDeleteChannel();
 
-  useEffect(() => {
-    if (creator) {
-      setFormData({
-        username: creator.username,
-        email: creator.email,
-        bio: creator.bio || ''
-      });
+    const [showDeleteAlert, setShowDeleteAlert] = useState(false);
+    const [formData, setFormData] = useState({
+        podcast_title: '',
+        podcast_description: '',
+        rss_slug: '',
+        language: 'en-us',
+        category: 'Leisure',
+        explicit: false,
+        episode_prefix: '',
+        episode_suffix: ''
+    });
+
+    useEffect(() => {
+        if (channel) {
+            setFormData({
+                podcast_title: channel.podcast_title || '',
+                podcast_description: channel.podcast_description || '',
+                rss_slug: channel.rss_slug || '',
+                language: channel.language || 'en-us',
+                category: channel.category || 'Leisure',
+                explicit: channel.explicit || false,
+                episode_prefix: channel.episode_prefix || '',
+                episode_suffix: channel.episode_suffix || ''
+            });
+        }
+    }, [channel]);
+
+    const handleSave = async () => {
+        try {
+            await updateChannelMutation.mutateAsync({
+                id: projectId,
+                data: formData
+            });
+            // Optionally show a success toast here
+        } catch (err) {
+            console.error('Failed to update project settings:', err);
+        }
+    };
+
+    const handleDelete = async () => {
+        try {
+            await deleteChannelMutation.mutateAsync(projectId);
+            router.push('/projects');
+        } catch (err) {
+            console.error('Failed to delete project:', err);
+        }
+    };
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <Loader2Icon className="size-12 animate-spin text-black dark:text-white" />
+            </div>
+        );
     }
-  }, [creator]);
 
-  const handleSave = async () => {
-    try {
-      await updateMeMutation.mutateAsync({
-        username: formData.username,
-        bio: formData.bio
-      });
-      // Optionally show a success toast here
-    } catch (err) {
-      console.error('Failed to update profile:', err);
-    }
-  };
-
-  const handleDeactivate = async () => {
-    try {
-      await deactivateMutation.mutateAsync();
-      router.push('/auth/login');
-    } catch (err) {
-      console.error('Failed to deactivate account:', err);
-    }
-  };
-
-  if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2Icon className="size-12 animate-spin text-black dark:text-white" />
-      </div>
-    );
-  }
+        <div className="max-w-4xl mx-auto relative">
+            {showDeleteAlert && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm">
+                    <div className="bg-surface-container-lowest rounded-3xl p-8 max-w-md w-full shadow-[0px_24px_48px_rgba(25,28,30,0.06)] border border-border">
+                        <div className="flex items-center gap-4 mb-6 text-destructive">
+                            <FileWarningIcon className="w-6 h-6" />
+                            <h4 className="text-2xl font-manrope font-bold tracking-tight">Delete Project</h4>
+                        </div>
+                        <p className="text-muted-foreground text-sm font-medium mb-8 leading-relaxed">
+                            Are you sure you want to delete <strong>{channel?.podcast_title || channel?.channel_title}</strong>? This action is permanent and will delete all associated episodes and the RSS feed.
+                        </p>
+                        <div className="flex gap-4">
+                            <button
+                                onClick={() => setShowDeleteAlert(false)}
+                                className="flex-1 py-3 bg-surface-container-low hover:bg-surface-container-high rounded-xl text-primary font-semibold text-sm transition-colors duration-200"
+                                disabled={deleteChannelMutation.isPending}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleDelete}
+                                className="flex-1 py-3 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-xl font-semibold text-sm transition-colors duration-200 disabled:opacity-50"
+                                disabled={deleteChannelMutation.isPending}
+                            >
+                                {deleteChannelMutation.isPending ? 'Deleting...' : 'Confirm'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
-  return (
-    <div className="max-w-4xl mx-auto relative">
-      {showAlert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-black border-4 border-black dark:border-white p-8 max-w-md w-full shadow-[24px_24px_0px_0px_rgba(0,0,0,1)] dark:shadow-[24px_24px_0px_0px_rgba(255,255,255,1)]">
-            <div className="flex items-center gap-4 mb-6 text-red-600 dark:text-red-400">
-              <FileWarningIcon/>
-              <h4 className="text-2xl font-black uppercase tracking-tighter">Danger Alert</h4>
+            <header className="mb-6 md:mb-8 pb-4">
+                <h2 className="text-3xl font-manrope font-bold text-primary tracking-tight">Project Settings</h2>
+                <p className="text-muted-foreground mt-2 font-medium text-sm">Configure your podcast feed and channel preferences</p>
+            </header>
+
+            <div className="h-px bg-border mb-10 md:mb-12 hidden md:block" />
+
+            <div className="space-y-8 md:space-y-10">
+                {/* General Settings */}
+                <section className="bg-surface-container-lowest border border-border p-6 md:p-10 rounded-3xl shadow-[0px_12px_24px_rgba(25,28,30,0.04)]">
+                    <div className="flex items-center gap-3 mb-8">
+                        <Settings2Icon className="size-6 text-primary" />
+                        <h3 className="text-2xl md:text-3xl font-manrope font-bold text-primary tracking-tight">General</h3>
+                    </div>
+
+                    <div className="space-y-6">
+                        <div className="space-y-2">
+                            <label className="block text-sm font-semibold text-muted-foreground ml-1">Podcast Title</label>
+                            <input
+                                className="w-full bg-surface-container-low border-none rounded-xl px-4 py-3 text-primary font-medium focus:ring-1 focus:ring-primary outline-none transition-colors duration-200 text-sm"
+                                type="text"
+                                value={formData.podcast_title}
+                                onChange={(e) => setFormData(prev => ({ ...prev, podcast_title: e.target.value }))}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="block text-sm font-semibold text-muted-foreground ml-1">Podcast Description</label>
+                            <textarea
+                                className="w-full bg-surface-container-low border-none rounded-xl px-4 py-3 text-primary font-medium focus:ring-1 focus:ring-primary outline-none transition-colors duration-200 text-sm leading-relaxed"
+                                rows={4}
+                                value={formData.podcast_description}
+                                onChange={(e) => setFormData(prev => ({ ...prev, podcast_description: e.target.value }))}
+                                placeholder="What is your podcast about?"
+                            />
+                        </div>
+                    </div>
+                </section>
+
+                {/* Feed Configuration */}
+                <section className="bg-surface-container-lowest border border-border p-6 md:p-10 rounded-3xl shadow-[0px_12px_24px_rgba(25,28,30,0.04)]">
+                    <div className="flex items-center gap-3 mb-8">
+                        <GlobeIcon className="size-6 text-primary" />
+                        <h3 className="text-2xl md:text-3xl font-manrope font-bold text-primary tracking-tight">Feed Configuration</h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-2">
+                            <label className="block text-sm font-semibold text-muted-foreground ml-1">RSS Slug</label>
+                            <div className="relative">
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/60 text-sm">/rss/</span>
+                                <input
+                                    className="w-full bg-surface-container-low border-none rounded-xl pl-12 pr-4 py-3 text-primary font-medium focus:ring-1 focus:ring-primary outline-none transition-colors duration-200 text-sm"
+                                    type="text"
+                                    value={formData.rss_slug}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, rss_slug: e.target.value }))}
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="block text-sm font-semibold text-muted-foreground ml-1">Language</label>
+                            <select
+                                className="w-full bg-surface-container-low border-none rounded-xl px-4 py-3 text-primary font-medium focus:ring-1 focus:ring-primary outline-none transition-colors duration-200 text-sm"
+                                value={formData.language}
+                                onChange={(e) => setFormData(prev => ({ ...prev, language: e.target.value }))}
+                            >
+                                <option value="en-us">English (US)</option>
+                                <option value="en-gb">English (UK)</option>
+                                <option value="es">Spanish</option>
+                                <option value="fr">French</option>
+                                <option value="de">German</option>
+                            </select>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="block text-sm font-semibold text-muted-foreground ml-1">Category</label>
+                            <select
+                                className="w-full bg-surface-container-low border-none rounded-xl px-4 py-3 text-primary font-medium focus:ring-1 focus:ring-primary outline-none transition-colors duration-200 text-sm"
+                                value={formData.category}
+                                onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                            >
+                                <option value="Leisure">Leisure</option>
+                                <option value="Technology">Technology</option>
+                                <option value="Business">Business</option>
+                                <option value="Society & Culture">Society & Culture</option>
+                                <option value="Comedy">Comedy</option>
+                            </select>
+                        </div>
+                        <div className="flex items-center justify-between p-4 bg-surface-container-low rounded-xl">
+                            <div className="space-y-0.5">
+                                <label className="text-sm font-semibold text-primary">Explicit Content</label>
+                                <p className="text-xs text-muted-foreground">Contains mature language or themes</p>
+                            </div>
+                            <label className="relative inline-flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    className="sr-only peer"
+                                    checked={formData.explicit}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, explicit: e.target.checked }))}
+                                />
+                                <div className="w-11 h-6 bg-surface-container-high peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                            </label>
+                        </div>
+                    </div>
+                </section>
+
+                {/* Episode Settings */}
+                <section className="bg-surface-container-lowest border border-border p-6 md:p-10 rounded-3xl shadow-[0px_12px_24px_rgba(25,28,30,0.04)]">
+                    <div className="flex items-center gap-3 mb-8">
+                        <Mic2Icon className="size-6 text-primary" />
+                        <h3 className="text-2xl md:text-3xl font-manrope font-bold text-primary tracking-tight">Episode Formatting</h3>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-2">
+                            <label className="block text-sm font-semibold text-muted-foreground ml-1">Title Prefix</label>
+                            <input
+                                className="w-full bg-surface-container-low border-none rounded-xl px-4 py-3 text-primary font-medium focus:ring-1 focus:ring-primary outline-none transition-colors duration-200 text-sm"
+                                type="text"
+                                placeholder="e.g. [S1] "
+                                value={formData.episode_prefix}
+                                onChange={(e) => setFormData(prev => ({ ...prev, episode_prefix: e.target.value }))}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="block text-sm font-semibold text-muted-foreground ml-1">Title Suffix</label>
+                            <input
+                                className="w-full bg-surface-container-low border-none rounded-xl px-4 py-3 text-primary font-medium focus:ring-1 focus:ring-primary outline-none transition-colors duration-200 text-sm"
+                                type="text"
+                                placeholder="e.g. - Trailer"
+                                value={formData.episode_suffix}
+                                onChange={(e) => setFormData(prev => ({ ...prev, episode_suffix: e.target.value }))}
+                            />
+                        </div>
+                    </div>
+                    <p className="mt-6 text-xs text-muted-foreground italic">
+                        These will be automatically added to the title of every episode synced to this project.
+                    </p>
+                </section>
+
+                {/* Save Button */}
+                <div className="flex justify-end pt-4">
+                    <Button
+                        onClick={handleSave}
+                        disabled={updateChannelMutation.isPending}
+                        className="bg-linear-to-br from-primary to-primary-container text-primary-foreground px-10 py-6 rounded-2xl text-base font-bold hover:shadow-xl hover:-translate-y-1 transition-all duration-200 shadow-lg"
+                    >
+                        {updateChannelMutation.isPending ? (
+                            <>
+                                <Loader2Icon className="size-5 mr-2 animate-spin" />
+                                Saving Changes...
+                            </>
+                        ) : (
+                            <>
+                                <SaveIcon className="size-5 mr-2" />
+                                Save Project Settings
+                            </>
+                        )}
+                    </Button>
+                </div>
+
+                {/* Danger Zone */}
+                <section className="bg-destructive/5 p-6 md:p-8 rounded-3xl border border-destructive/20 mt-12">
+                    <div className="flex items-center gap-3 mb-4 text-destructive">
+                        <Trash2Icon className="size-5" />
+                        <h3 className="text-lg md:text-xl font-manrope font-bold tracking-tight">Danger Zone</h3>
+                    </div>
+                    <p className="text-sm font-medium text-destructive/80 mb-6 leading-relaxed">
+                        Deleting this project will permanently remove the RSS feed and all associated episode data. This action cannot be undone.
+                    </p>
+                    <button
+                        onClick={() => setShowDeleteAlert(true)}
+                        className="w-full md:w-auto px-6 py-3 border border-destructive/30 text-destructive hover:bg-destructive hover:text-destructive-foreground rounded-xl text-sm font-semibold transition-all duration-200"
+                    >
+                        Delete Project
+                    </button>
+                </section>
             </div>
-            <p className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-widest mb-8 leading-relaxed">
-              You are about to modify critical account settings. This action may affect your active podcast distribution feeds. Are you sure you want to proceed?
-            </p>
-            <div className="flex gap-4">
-               <button 
-                onClick={() => setShowAlert(false)}
-                className="flex-1 py-4 border-2 border-black dark:border-white font-black uppercase tracking-widest text-xs hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all"
-                disabled={deactivateMutation.isPending}
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={handleDeactivate}
-                className="flex-1 py-4 bg-black dark:bg-white text-white dark:text-black font-black uppercase tracking-widest text-xs hover:invert transition-all disabled:opacity-50"
-                disabled={deactivateMutation.isPending}
-              >
-                {deactivateMutation.isPending ? 'Processing...' : 'Confirm'}
-              </button>
-            </div>
-          </div>
         </div>
-      )}
-
-      <header className="mb-6 md:mb-8">
-        <h2 className="text-4xl font-black text-black dark:text-white tracking-tighter uppercase leading-none">Settings</h2>
-        <p className="text-slate-500 dark:text-slate-400 mt-4 font-bold uppercase text-[10px] md:text-sm tracking-[0.2em]">Manage your account and preferences</p>
-      </header>
-
-      <div className="h-1 bg-black dark:bg-white mb-10 md:mb-16 hidden md:block" />
-
-      <div className="space-y-10 md:space-y-16">
-        <section className="bg-white dark:bg-black p-6 md:p-12 rounded-none border-4 border-black dark:border-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] md:shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] dark:md:shadow-[16px_16px_0px_0px_rgba(255,255,255,1)]">
-          <h3 className="text-2xl md:text-4xl font-black mb-8 md:mb-12 uppercase tracking-tight">Profile</h3>
-          <div className="flex flex-col md:flex-row gap-8 md:gap-16">
-            <div className="flex flex-col items-center md:items-start gap-6">
-              <div className="size-32 md:size-48 shrink-0 rounded-none bg-slate-100 dark:bg-slate-900 border-4 border-black dark:border-white flex items-center justify-center overflow-hidden relative group">
-                <img src="https://picsum.photos/seed/user123/400/400?grayscale" alt="Profile" className="grayscale w-full h-full object-cover" referrerPolicy="no-referrer" />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
-                  <ImageIcon/>
-                </div>
-              </div>
-              <button className="text-xs font-black uppercase tracking-[0.2em] hover:underline">Change Photo</button>
-            </div>
-            <div className="flex-1 space-y-8 w-full">
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <label className="block text-xs font-black uppercase tracking-[0.2em] text-slate-500 mb-3">Display Name</label>
-                  <input 
-                    className="w-full rounded-none border-4 border-black dark:border-white dark:bg-black focus:ring-0 focus:border-black dark:focus:border-white text-base p-5 font-bold uppercase" 
-                    type="text" 
-                    value={formData.username}
-                    onChange={(e) => setFormData(prev => ({ ...prev, username: e.target.value }))}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-black uppercase tracking-[0.2em] text-slate-500 mb-3">Email Address</label>
-                  <input 
-                    className="w-full rounded-none border-4 border-black dark:border-white dark:bg-black focus:ring-0 focus:border-black dark:focus:border-white text-base p-5 font-bold uppercase opacity-50 cursor-not-allowed" 
-                    type="email" 
-                    value={formData.email}
-                    readOnly 
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-black uppercase tracking-[0.2em] text-slate-500 mb-3">Bio</label>
-                <textarea 
-                  className="w-full rounded-none border-4 border-black dark:border-white dark:bg-black focus:ring-0 focus:border-black dark:focus:border-white text-base p-5 font-medium leading-relaxed" 
-                  rows={4} 
-                  value={formData.bio}
-                  onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-                  placeholder="Tell us about yourself..."
-                />
-              </div>
-               <div className="pt-6">
-                <button 
-                  onClick={handleSave}
-                  disabled={updateMeMutation.isPending}
-                  className="w-full md:w-auto bg-black dark:bg-white text-white dark:text-black px-12 py-5 rounded-none text-sm font-black uppercase tracking-[0.2em] hover:invert transition-all disabled:opacity-50"
-                >
-                  {updateMeMutation.isPending ? 'Saving...' : 'Save Changes'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="bg-white dark:bg-black p-6 md:p-12 rounded-none border-4 border-black dark:border-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] md:shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] dark:md:shadow-[16px_16px_0px_0px_rgba(255,255,255,1)]">
-          <h3 className="text-2xl md:text-4xl font-black mb-8 md:mb-12 uppercase tracking-tight">Subscription</h3>
-          <div className="p-6 md:p-10 bg-slate-100 dark:bg-slate-900 border-4 border-black dark:border-white rounded-none flex flex-col xl:flex-row xl:justify-between items-start xl:items-center gap-8 xl:gap-10">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 md:gap-8 w-full">
-              <div className="size-16 md:size-20 shrink-0 bg-black dark:bg-white text-white dark:text-black rounded-none flex items-center justify-center">
-                <LockKeyhole className="size-6 md:size-8" />
-              </div>
-               <div>
-                <p className="text-xl md:text-2xl font-black uppercase tracking-tight">{creator?.plan_tier} Plan</p>
-                <p className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em] mt-1 leading-relaxed">
-                  {creator?.plan_tier === 'free' ? 'Basic Features Included' : 'Premium Features Enabled'}
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 w-full xl:w-auto mt-2 xl:mt-0">
-              <button className="w-full sm:w-auto px-8 py-4 border-4 border-black dark:border-white rounded-none text-xs font-black uppercase tracking-[0.2em] hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all">Manage Billing</button>
-              <button className="w-full sm:w-auto px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-none text-xs font-black uppercase tracking-[0.2em] hover:invert transition-all">Upgrade Plan</button>
-            </div>
-          </div>
-        </section>
-
-        <section className="bg-white dark:bg-black p-6 md:p-12 rounded-none border-4 border-black dark:border-white shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] md:shadow-[16px_16px_0px_0px_rgba(0,0,0,1)] dark:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] dark:md:shadow-[16px_16px_0px_0px_rgba(255,255,255,1)]">
-          <h3 className="text-2xl md:text-4xl font-black mb-8 md:mb-12 uppercase tracking-tight">Notifications</h3>
-          <div className="space-y-8 md:space-y-10">
-            {[
-              { title: 'Email Notifications', desc: 'Receive weekly performance reports', checked: true },
-              { title: 'Push Notifications', desc: 'Alerts when episodes are published', checked: true },
-              { title: 'Marketing Emails', desc: 'News about new features and tools', checked: false },
-            ].map((item, i) => (
-              <div key={i} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b-2 border-slate-100 dark:border-slate-900 pb-6 md:pb-8 last:border-0 last:pb-0">
-                <div className="space-y-2 max-w-xs md:max-w-none">
-                  <p className="text-base md:text-lg font-black uppercase tracking-tight">{item.title}</p>
-                  <p className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-[0.15em]">{item.desc}</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                  <input type="checkbox" className="sr-only peer" defaultChecked={item.checked} />
-                  <div className="w-14 md:w-16 h-7 md:h-8 bg-slate-200 peer-focus:outline-none rounded-none peer dark:bg-slate-800 peer-checked:after:translate-x-full peer-checked:after:border-black after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-black after:border-2 after:rounded-none after:h-5 after:w-5 md:after:h-6 md:after:w-6 after:transition-all peer-checked:bg-black dark:peer-checked:bg-white"></div>
-                </label>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="bg-slate-50 dark:bg-slate-900/50 p-6 md:p-8 rounded-none border-4 border-slate-200 dark:border-slate-800">
-           <h3 className="text-lg md:text-xl font-black mb-4 uppercase tracking-tight text-slate-400">Danger Zone</h3>
-          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-6 md:mb-8 leading-relaxed">Deactivating your account will suspend your access. You can reach out to support to reactivate it later.</p>
-          <button 
-            onClick={() => setShowAlert(true)}
-            className="w-full md:w-auto px-8 py-4 border-2 border-slate-300 dark:border-slate-700 text-slate-400 hover:border-black hover:text-black dark:hover:border-white dark:hover:text-white rounded-none text-xs font-black uppercase tracking-widest transition-all"
-          >
-            Deactivate Account
-          </button>
-        </section>
-      </div>
-    </div>
-  );
+    );
 }

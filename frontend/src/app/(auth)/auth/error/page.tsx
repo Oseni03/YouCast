@@ -25,25 +25,25 @@ function AuthErrorContent() {
     }
 
     return (
-        <div className="min-h-screen bg-black flex items-center justify-center p-6">
-            <div className="max-w-md w-full bg-black rounded-none border-4 border-white shadow-[16px_16px_0px_0px_rgba(255,255,255,0.1)] p-12 flex flex-col items-center text-center">
-                <div className="size-20 rounded-full border-4 border-white flex items-center justify-center mb-8 bg-red-500/10 text-red-500">
+        <div className="min-h-screen bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(var(--primary)/0.07),rgba(255,255,255,0))] bg-surface-container-lowest flex items-center justify-center p-6">
+            <div className="max-w-md w-full bg-surface-container-lowest rounded-3xl border border-border shadow-[0px_24px_48px_rgba(25,28,30,0.06)] p-12 flex flex-col items-center text-center">
+                <div className="size-20 rounded-2xl bg-destructive/10 text-destructive flex items-center justify-center mb-8 shadow-sm">
                     <AlertCircleIcon className="size-10" />
                 </div>
                 
-                <h1 className="text-3xl font-black text-white uppercase tracking-tighter mb-4">
+                <h1 className="text-3xl font-manrope font-bold text-primary tracking-tight mb-4">
                     {displayTitle}
                 </h1>
                 
-                <p className="text-sm font-bold text-slate-400 uppercase tracking-wider leading-relaxed mb-12">
+                <p className="text-sm font-medium text-muted-foreground leading-relaxed mb-12">
                     {displayMessage}
                 </p>
 
                 <Button
                     onClick={() => router.replace('/onboarding')}
-                    className="w-full h-16 bg-white text-black text-xl font-black rounded-none hover:invert transition-all flex items-center justify-center gap-4 uppercase tracking-tighter"
+                    className="w-full h-14 bg-gradient-to-br from-primary to-primary-container text-primary-foreground text-base font-semibold rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-3"
                 >
-                    <ArrowLeftIcon />
+                    <ArrowLeftIcon className="w-5 h-5" />
                     Return to Onboarding
                 </Button>
             </div>
@@ -54,8 +54,8 @@ function AuthErrorContent() {
 export default function AuthErrorPage() {
     return (
         <Suspense fallback={
-            <div className="min-h-screen bg-black flex items-center justify-center p-6">
-                <p className="text-white text-2xl font-black uppercase tracking-widest">Loading...</p>
+            <div className="min-h-screen bg-surface-container-lowest flex items-center justify-center p-6">
+                <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin" />
             </div>
         }>
             <AuthErrorContent />

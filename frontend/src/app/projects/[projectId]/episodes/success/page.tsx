@@ -7,42 +7,43 @@ import { CheckCircle2Icon, FileMusicIcon, PodcastIcon, SearchIcon } from 'lucide
 export default function SuccessPage() {
   const { projectId } = useParams() as { projectId: string };
   return (
-    <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center p-6">
+    <div className="min-h-screen bg-surface-container-lowest flex items-center justify-center p-6">
       <div className="max-w-md w-full text-center">
-        <div className="mb-12 relative inline-block">
-          <div className="size-32 bg-black dark:bg-white text-white dark:text-black rounded-none flex items-center justify-center border-4 border-black dark:border-white shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] dark:shadow-[12px_12px_0px_0px_rgba(255,255,255,1)] mx-auto">
-            <CheckCircle2Icon/>
+        <div className="mb-10 relative inline-block">
+          <div className="size-28 bg-gradient-to-br from-primary to-primary-container text-primary-foreground rounded-3xl flex items-center justify-center shadow-[0px_24px_48px_rgba(25,28,30,0.12)] mx-auto ring-4 ring-primary/10">
+            <CheckCircle2Icon className="w-14 h-14" />
           </div>
+          <span className="absolute -top-2 -right-2 size-6 bg-primary rounded-full ring-4 ring-surface-container-lowest block" />
         </div>
         
-        <h1 className="text-4xl font-black text-black dark:text-white mb-4 uppercase tracking-tighter leading-none">Well Done!</h1>
-        <p className="text-slate-500 dark:text-slate-400 mb-12 mt-4 font-bold uppercase text-[10px] md:text-xs tracking-widest leading-relaxed">
+        <h1 className="text-4xl font-manrope font-bold text-primary tracking-tight mb-4">Well Done!</h1>
+        <p className="text-muted-foreground mb-12 mt-3 font-medium text-sm leading-relaxed">
           Your episode is being processed and will be live on all platforms within the next few minutes.
         </p>
         
-        <div className="space-y-6">
+        <div className="space-y-4">
           <Button 
             asChild
-            className="h-auto w-full py-5 bg-black dark:bg-white text-white dark:text-black font-black rounded-none hover:invert transition-all uppercase tracking-tighter text-lg"
+            className="h-auto w-full py-4 bg-gradient-to-br from-primary to-primary-container text-primary-foreground font-semibold rounded-xl hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 text-base"
           >
             <Link href={`/projects/${projectId}`}>
               Back to Dashboard
             </Link>
           </Button>
-          <button className="w-full py-5 bg-white dark:bg-black border-4 border-black dark:border-white text-black dark:text-white font-black rounded-none hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black transition-all uppercase tracking-tighter text-lg">
+          <button className="w-full py-4 bg-surface-container-low hover:bg-surface-container-high text-primary font-semibold rounded-xl transition-colors duration-200 text-base">
             View Details
           </button>
         </div>
         
-        <div className="mt-16 pt-8 border-t-4 border-black dark:border-white">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8">Distribution Status</p>
-          <div className="flex justify-center flex-wrap gap-4 md:gap-8">
+        <div className="mt-14 pt-8 border-t border-border">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-8">Distribution Status</p>
+          <div className="flex justify-center flex-wrap gap-6 md:gap-10">
             {[PodcastIcon, FileMusicIcon, SearchIcon].map((Icon, i) => (
               <div key={i} className="flex flex-col items-center gap-3">
-                <div className="size-12 rounded-none bg-slate-100 dark:bg-slate-900 border-2 border-black dark:border-white flex items-center justify-center">
-                  <Icon />
+                <div className="size-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shadow-sm border border-primary/10">
+                  <Icon className="w-5 h-5" />
                 </div>
-                <span className="text-[8px] font-black uppercase tracking-widest">Live</span>
+                <span className="text-xs font-semibold text-primary/70">Live</span>
               </div>
             ))}
           </div>
