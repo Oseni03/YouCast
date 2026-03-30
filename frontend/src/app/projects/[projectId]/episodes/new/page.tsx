@@ -9,6 +9,7 @@ import { useChannels } from '@/hooks/useChannels';
 import { useEligibleVideos } from '@/hooks/useChannels';
 import { useCreateEpisode } from '@/hooks/useEpisodes';
 import type { YouTubeVideo } from '@/lib/types';
+import { toast } from 'sonner';
 
 export default function NewEpisodePage() {
     const router = useRouter();
@@ -34,6 +35,7 @@ export default function NewEpisodePage() {
                 channelId: selectedChannelId,
                 videoId: selectedVideo.id
             });
+            toast.success("Episode created successfully")
             router.push(`/projects/${projectId}/episodes`);
         } catch (err) {
             console.error('Failed to create episode:', err);

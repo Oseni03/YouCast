@@ -55,7 +55,7 @@ class ChannelUpdateSerializer(serializers.ModelSerializer):
         model  = Channel
         fields = [
             'podcast_title', 'podcast_description', 'artwork_url',
-            'language', 'category', 'explicit',
+            'language', 'category', 'explicit', 'rss_slug',
             'episode_prefix', 'episode_suffix',
             'filter_config', 'monitoring_active',
         ]

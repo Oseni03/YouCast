@@ -5,6 +5,8 @@ import React, { useState, useEffect } from 'react';
 import { useChannel, useUpdateChannel, useDeleteChannel } from '@/hooks/useChannels';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogHeader, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
 
 export default function ProjectSettingsPage() {
     const router = useRouter();
@@ -15,7 +17,6 @@ export default function ProjectSettingsPage() {
     const updateChannelMutation = useUpdateChannel();
     const deleteChannelMutation = useDeleteChannel();
 
-    const [showDeleteAlert, setShowDeleteAlert] = useState(false);
     const [formData, setFormData] = useState({
         podcast_title: '',
         podcast_description: '',
@@ -48,7 +49,7 @@ export default function ProjectSettingsPage() {
                 id: projectId,
                 data: formData
             });
-            // Optionally show a success toast here
+            toast.success("Project updated successfully")
         } catch (err) {
             console.error('Failed to update project settings:', err);
         }
@@ -57,6 +58,7 @@ export default function ProjectSettingsPage() {
     const handleDelete = async () => {
         try {
             await deleteChannelMutation.mutateAsync(projectId);
+            toast.success("Project deleted successfully")
             router.push('/projects');
         } catch (err) {
             console.error('Failed to delete project:', err);
@@ -73,36 +75,6 @@ export default function ProjectSettingsPage() {
 
     return (
         <div className="max-w-4xl mx-auto relative">
-            {showDeleteAlert && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm">
-                    <div className="bg-surface-container-lowest rounded-3xl p-8 max-w-md w-full shadow-[0px_24px_48px_rgba(25,28,30,0.06)] border border-border">
-                        <div className="flex items-center gap-4 mb-6 text-destructive">
-                            <FileWarningIcon className="w-6 h-6" />
-                            <h4 className="text-2xl font-manrope font-bold tracking-tight">Delete Project</h4>
-                        </div>
-                        <p className="text-muted-foreground text-sm font-medium mb-8 leading-relaxed">
-                            Are you sure you want to delete <strong>{channel?.podcast_title || channel?.channel_title}</strong>? This action is permanent and will delete all associated episodes and the RSS feed.
-                        </p>
-                        <div className="flex gap-4">
-                            <button
-                                onClick={() => setShowDeleteAlert(false)}
-                                className="flex-1 py-3 bg-surface-container-low hover:bg-surface-container-high rounded-xl text-primary font-semibold text-sm transition-colors duration-200"
-                                disabled={deleteChannelMutation.isPending}
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                onClick={handleDelete}
-                                className="flex-1 py-3 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-xl font-semibold text-sm transition-colors duration-200 disabled:opacity-50"
-                                disabled={deleteChannelMutation.isPending}
-                            >
-                                {deleteChannelMutation.isPending ? 'Deleting...' : 'Confirm'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             <header className="mb-6 md:mb-8 pb-4">
                 <h2 className="text-3xl font-manrope font-bold text-primary tracking-tight">Project Settings</h2>
                 <p className="text-muted-foreground mt-2 font-medium text-sm">Configure your podcast feed and channel preferences</p>
@@ -263,21 +235,51 @@ export default function ProjectSettingsPage() {
                 </div>
 
                 {/* Danger Zone */}
-                <section className="bg-destructive/5 p-6 md:p-8 rounded-3xl border border-destructive/20 mt-12">
-                    <div className="flex items-center gap-3 mb-4 text-destructive">
-                        <Trash2Icon className="size-5" />
-                        <h3 className="text-lg md:text-xl font-manrope font-bold tracking-tight">Danger Zone</h3>
-                    </div>
-                    <p className="text-sm font-medium text-destructive/80 mb-6 leading-relaxed">
-                        Deleting this project will permanently remove the RSS feed and all associated episode data. This action cannot be undone.
-                    </p>
-                    <button
-                        onClick={() => setShowDeleteAlert(true)}
-                        className="w-full md:w-auto px-6 py-3 border border-destructive/30 text-destructive hover:bg-destructive hover:text-destructive-foreground rounded-xl text-sm font-semibold transition-all duration-200"
-                    >
-                        Delete Project
-                    </button>
-                </section>
+                <AlertDialog>
+                    <section className="bg-destructive/5 p-6 md:p-8 rounded-3xl border border-destructive/20 mt-12">
+                        <div className="flex items-center gap-3 mb-4 text-destructive">
+                            <Trash2Icon className="size-5" />
+                            <h3 className="text-lg md:text-xl font-manrope font-bold tracking-tight">Danger Zone</h3>
+                        </div>
+                        <p className="text-sm font-medium text-destructive/80 mb-6 leading-relaxed">
+                            Deleting this project will permanently remove the RSS feed and all associated episode data. This action cannot be undone.
+                        </p>
+                        <AlertDialogTrigger
+                            className="w-full md:w-auto px-6 py-3 border border-destructive/30 text-destructive hover:bg-destructive hover:text-white hover:text-destructive-foreground rounded-xl text-sm font-semibold transition-all duration-200"
+                        >
+
+                            Delete Project
+                        </AlertDialogTrigger>
+                    </section>
+                    <AlertDialogContent>
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm">
+                            <div className="bg-surface-container-lowest rounded-3xl p-8 max-w-md w-full shadow-[0px_24px_48px_rgba(25,28,30,0.06)] border border-border">
+                                <div className="flex items-center gap-4 mb-6 text-destructive">
+                                    <FileWarningIcon className="w-6 h-6" />
+                                    <h4 className="text-2xl font-manrope font-bold tracking-tight">Delete Project</h4>
+                                </div>
+                                <p className="text-muted-foreground text-sm font-medium mb-8 leading-relaxed">
+                                    Are you sure you want to delete <strong>{channel?.podcast_title || channel?.channel_title}</strong>? This action is permanent and will delete all associated episodes and the RSS feed.
+                                </p>
+                                <div className="flex gap-4">
+                                    <AlertDialogCancel
+                                        className="flex-1 py-3 bg-surface-container-low hover:bg-surface-container-high rounded-xl text-primary font-semibold text-sm transition-colors duration-200"
+                                        disabled={deleteChannelMutation.isPending}
+                                    >
+                                        Cancel
+                                    </AlertDialogCancel>
+                                    <AlertDialogAction
+                                        onClick={handleDelete}
+                                        className="flex-1 py-3 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-xl font-semibold text-sm transition-colors duration-200 disabled:opacity-50"
+                                        disabled={deleteChannelMutation.isPending}
+                                    >
+                                        {deleteChannelMutation.isPending ? 'Deleting...' : 'Confirm'}
+                                    </AlertDialogAction>
+                                </div>
+                            </div>
+                        </div>
+                    </AlertDialogContent>
+                </AlertDialog>
             </div>
         </div>
     );
