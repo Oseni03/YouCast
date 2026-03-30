@@ -4,6 +4,11 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 
+from django.shortcuts import redirect
+import hashlib
+import inngest
+from django_inngest.client import inngest_client
+
 from .models import Episode, ProcessingStatus
 from .serializers import EpisodeSerializer, EpisodeListSerializer, EpisodeCreateSerializer
 from apps.channels.models import Channel
@@ -157,3 +162,40 @@ class ChannelEpisodeListView(APIView):
             'page':    page,
             'results': EpisodeListSerializer(episodes[start:end], many=True).data,
         })
+
+
+class EpisodeAudioRedirectView(APIView):
+    """
+    GET /audio/<episode_id>/
+    Public endpoint — records a download event and redirects to the signed audio URL.
+    """
+    permission_classes = []  # Publicly accessible
+
+    def get(self, request, episode_id):
+        try:
+            episode = Episode.objects.get(id=episode_id)
+        except Episode.DoesNotExist:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+
+        if not episode.audio_url:
+            return Response({'error': 'Audio not ready yet.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Hash the IP immediately — never log the raw value
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        raw_ip = x_forwarded_for.split(',')[0].strip() if x_forwarded_for else request.META.get('REMOTE_ADDR', '')
+        ip_hash = hashlib.sha256(raw_ip.encode()).hexdigest()
+
+        # Send analytics event
+        inngest_client.send_sync(
+            inngest.Event(
+                name="analytics/episode.downloaded",
+                data={
+                    "episode_id":  str(episode.id),
+                    "channel_id":  str(episode.channel_id),
+                    "ip_hash":     ip_hash,
+                    "user_agent":  request.META.get('HTTP_USER_AGENT', ''),
+                }
+            )
+        )
+
+        return redirect(episode.audio_url)

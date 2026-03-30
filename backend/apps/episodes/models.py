@@ -71,3 +71,13 @@ class Episode(models.Model):
         m = (self.duration_seconds % 3600) // 60
         s = self.duration_seconds % 60
         return f'{h:02}:{m:02}:{s:02}'
+
+    @property
+    def audio_redirect_url(self):
+        """
+        Returns the backend URL that tracks the download and then redirects to S3.
+        Used in the RSS feed enclosure tag.
+        """
+        if self.channel.custom_domain:
+            return f'https://{self.channel.custom_domain}/audio/{self.id}/'
+        return f'https://podcastifyyt.com/audio/{self.id}/'

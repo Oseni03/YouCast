@@ -1,6 +1,7 @@
 import inngest
 from django_inngest.client import inngest_client
 from django.utils import timezone
+from django.db.models import F
 from .models import AnalyticsEvent
 from apps.channels.models import Channel
 from apps.episodes.models import Episode
@@ -89,3 +90,36 @@ def send_weekly_digest_workflow(ctx: inngest.Context):
             from_email     = 'hello@podcastifyyt.com',
             recipient_list = [creator.email],
         )
+
+
+@inngest_client.create_function(
+    id="log-episode-download",
+    trigger=inngest.TriggerEvent(event="analytics/episode.downloaded"),
+)
+def log_episode_download_workflow(ctx: inngest.Context):
+    episode_id = ctx.event.data["episode_id"]
+    channel_id = ctx.event.data["channel_id"]
+    ip_hash    = ctx.event.data["ip_hash"]
+    user_agent = ctx.event.data["user_agent"]
+
+    # 1. Increment the denormalized download_count on the Episode model
+    Episode.objects.filter(id=episode_id).update(download_count=F('download_count') + 1)
+
+    # 2. Extract metadata and log the detailed event
+    ua_lower = user_agent.lower()
+    is_bot   = any(sig in ua_lower for sig in BOT_SIGNATURES)
+
+    podcast_app = ''
+    for signature, app_name in KNOWN_PODCAST_APPS.items():
+        if signature.lower() in ua_lower:
+            podcast_app = app_name
+            break
+
+    AnalyticsEvent.objects.create(
+        episode_id  = episode_id,
+        channel_id  = channel_id,
+        ip_hash     = ip_hash,
+        user_agent  = user_agent[:500],
+        podcast_app = podcast_app,
+        is_bot      = is_bot,
+    )

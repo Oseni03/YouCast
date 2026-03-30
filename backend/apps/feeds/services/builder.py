@@ -42,7 +42,7 @@ class RSSFeedBuilder:
             fe.description(self._build_description(channel, episode))
             fe.published(episode.pub_date)
             fe.updated(episode.pub_date)
-            fe.enclosure(episode.audio_url, str(episode.audio_size_bytes), 'audio/mpeg')
+            fe.enclosure(episode.audio_redirect_url, str(episode.audio_size_bytes), 'audio/mpeg')
             fe.podcast.itunes_duration(episode.duration_formatted)
             fe.podcast.itunes_image(episode.thumbnail_url or channel.effective_artwork_url)
             fe.podcast.itunes_explicit('yes' if channel.explicit else 'no')
