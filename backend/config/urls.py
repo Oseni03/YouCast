@@ -26,4 +26,5 @@ urlpatterns = [
     path('api/episodes/', include('apps.episodes.urls')),
     path('api/billing/', include('apps.billing.urls')),
     path('api/analytics/', include('apps.analytics.urls')),
+    path('', include('django_inngest.urls')),
 ]

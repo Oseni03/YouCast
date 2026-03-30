@@ -1,6 +1,8 @@
 import hashlib
 from django.utils.deprecation import MiddlewareMixin
-from .tasks import log_analytics_event
+import inngest
+from django_inngest.client import inngest_client
+# from .tasks import log_analytics_event
 
 
 class RSSAnalyticsMiddleware(MiddlewareMixin):
@@ -22,11 +24,16 @@ class RSSAnalyticsMiddleware(MiddlewareMixin):
         raw_ip  = self._get_client_ip(request)
         ip_hash = hashlib.sha256(raw_ip.encode()).hexdigest()
 
-        log_analytics_event.delay(
-            slug        = slug,
-            ip_hash     = ip_hash,
-            user_agent  = request.META.get('HTTP_USER_AGENT', ''),
-            bytes_served= len(response.content),
+        inngest_client.send_sync(
+            inngest.Event(
+                name="analytics/event.logged",
+                data={
+                    "slug": slug,
+                    "ip_hash": ip_hash,
+                    "user_agent": request.META.get('HTTP_USER_AGENT', ''),
+                    "bytes_served": len(response.content),
+                }
+            )
         )
 
         return response

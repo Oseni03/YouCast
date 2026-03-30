@@ -1,9 +1,9 @@
-from celery import shared_task
-import geoip2.database
+import inngest
+from django_inngest.client import inngest_client
+from django.utils import timezone
 from .models import AnalyticsEvent
 from apps.channels.models import Channel
 from apps.episodes.models import Episode
-
 
 KNOWN_PODCAST_APPS = {
     'AppleCoreMedia':      'Apple Podcasts',
@@ -21,19 +21,23 @@ BOT_SIGNATURES = [
     'googlebot', 'bingbot', 'python-requests',
 ]
 
-@shared_task
-def log_analytics_event(slug: str, ip_hash: str, user_agent: str, bytes_served: int):
-    """
-    Called asynchronously by RSSAnalyticsMiddleware after each RSS feed response.
-    Parses user agent, resolves country, determines if bot, saves AnalyticsEvent.
-    """
+@inngest_client.create_function(
+    id="log-analytics-event",
+    trigger=inngest.TriggerEvent(event="analytics/event.logged"),
+)
+def log_analytics_event_workflow(ctx: inngest.Context):
+    slug = ctx.event.data["slug"]
+    ip_hash = ctx.event.data["ip_hash"]
+    user_agent = ctx.event.data["user_agent"]
+    bytes_served = ctx.event.data["bytes_served"]
+
     try:
         channel = Channel.objects.get(rss_slug=slug)
     except Channel.DoesNotExist:
         return
 
-    ua_lower   = user_agent.lower()
-    is_bot     = any(sig in ua_lower for sig in BOT_SIGNATURES)
+    ua_lower = user_agent.lower()
+    is_bot = any(sig in ua_lower for sig in BOT_SIGNATURES)
     podcast_app = ''
     for signature, app_name in KNOWN_PODCAST_APPS.items():
         if signature.lower() in ua_lower:
@@ -41,21 +45,20 @@ def log_analytics_event(slug: str, ip_hash: str, user_agent: str, bytes_served: 
             break
 
     AnalyticsEvent.objects.create(
-        episode_id   = None,  # Feed-level event; episode attribution requires byte-range analysis
-        channel      = channel,
-        ip_hash      = ip_hash,
-        user_agent   = user_agent[:500],
-        podcast_app  = podcast_app,
-        bytes_served = bytes_served,
-        is_bot       = is_bot,
+        episode_id=None,
+        channel=channel,
+        ip_hash=ip_hash,
+        user_agent=user_agent[:500],
+        podcast_app=podcast_app,
+        bytes_served=bytes_served,
+        is_bot=is_bot,
     )
 
-@shared_task
-def send_weekly_digest():
-    """
-    Scheduled via Celery Beat — runs every Monday at 9am UTC.
-    Sends each creator a summary email with last week's download stats.
-    """
+@inngest_client.create_function(
+    id="send-weekly-digest",
+    trigger=inngest.TriggerCron(cron="0 9 * * 1"), # Monday at 9am UTC
+)
+def send_weekly_digest_workflow(ctx: inngest.Context):
     from django.core.mail import send_mail
     from apps.accounts.models import Creator
     from django.template.loader import render_to_string

@@ -3,8 +3,8 @@
 Backend API for AudioSync built with **Django + Django REST Framework**, using:
 
 * PostgreSQL (Database)
-* Redis (Cache + Sessions + Celery Broker)
-* Celery (Async task queue)
+* PostgreSQL (Database)
+* Inngest (Background jobs & Durable execution)
 * JWT Authentication (SimpleJWT with refresh rotation)
 * Google OAuth
 * WebSub (PubSubHubbub)
@@ -58,12 +58,10 @@ DB_PASSWORD=postgres
 DB_HOST=localhost
 DB_PORT=5432
 
-# Redis
-REDIS_URL=redis://localhost:6379/0
-
-# Celery
-CELERY_BROKER_URL=redis://localhost:6379/0
-CELERY_RESULT_BACKEND=redis://localhost:6379/1
+# Inngest
+INNGEST_EVENT_KEY=local
+INNGEST_SIGNING_KEY=
+INNGEST_APP_ID=YouCast
 
 # Frontend
 FRONTEND_URL=http://localhost:3000
@@ -112,70 +110,27 @@ python manage.py createsuperuser
 
 ---
 
-# 🔴 Redis Setup
+# ⚡ Inngest Setup
 
-Ensure Redis is installed and running:
-
-```bash
-redis-server
-```
-
-Redis is used for:
-
-* Caching
-* Session storage
-* Celery broker & result backend
+AudioSync uses Inngest for background jobs such as audio processing, WebSub notifications, feed generation, and analytics aggregation. Inngest provides durable execution and automatic retries.
 
 ---
 
-# ⚡ Celery Setup
+## 🖥 Running Inngest Locally
 
-AudioSync uses Celery for background tasks such as audio processing, WebSub notifications, feed generation, and analytics aggregation.
+Make sure your virtual environment is active and the backend is running.
 
----
-
-## 🖥 Running Celery Locally (Without Docker)
-
-Make sure Redis is already running (`redis-server`) and your virtual environment is active.
-
-### Start the Celery Worker
+### Start the Inngest Dev Server
 
 ```bash
-celery -A config worker --loglevel=info
+npx inngest-cli@latest dev
 ```
 
-For development, you can run a single worker with one concurrency thread to keep logs clean:
+The Dev Server provides a UI at [http://localhost:8288](http://localhost:8288) where you can inspect events and function runs.
 
-```bash
-celery -A config worker --loglevel=info --concurrency=1
-```
+### Environment Variable
 
-### Start Celery Beat (Scheduled Tasks)
-
-If your project uses periodic tasks, run Celery Beat alongside the worker:
-
-```bash
-celery -A config beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-```
-
-### Run Worker + Beat Together (Dev Shortcut)
-
-> ⚠️ Not recommended for production — use separate processes there.
-
-```bash
-celery -A config worker --beat --loglevel=info
-```
-
-### Monitor Tasks with Flower (Optional)
-
-Flower is a real-time Celery monitoring UI:
-
-```bash
-pip install flower
-celery -A config flower --port=5555
-```
-
-Then open: [http://localhost:5555](http://localhost:5555)
+Set `INNGEST_DEV=1` in your `.env` so the SDK connects to the local Dev Server.
 
 ---
 
@@ -209,113 +164,14 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  redis:
-    image: redis:7-alpine
+  inngest:
+    image: inngest/inngest
     ports:
-      - "6379:6379"
-
-  celery_worker:
-    build: .
-    command: celery -A config worker --loglevel=info --concurrency=2
-    volumes:
-      - .:/app
-    env_file:
-      - .env
-    depends_on:
-      - redis
-      - db
-
-  celery_beat:
-    build: .
-    command: celery -A config beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-    volumes:
-      - .:/app
-    env_file:
-      - .env
-    depends_on:
-      - redis
-      - db
-
-  flower:
-    build: .
-    command: celery -A config flower --port=5555
-    ports:
-      - "5555:5555"
-    env_file:
-      - .env
-    depends_on:
-      - redis
+      - "8288:8288"
+    command: -u http://web:8000/api/inngest/
 
 volumes:
   postgres_data:
-```
-
-> Update `CELERY_BROKER_URL` and `CELERY_RESULT_BACKEND` in your `.env` to use the Docker Redis service name:
->
-> ```env
-> CELERY_BROKER_URL=redis://redis:6379/0
-> CELERY_RESULT_BACKEND=redis://redis:6379/1
-> REDIS_URL=redis://redis:6379/0
-> ```
-
-### Start All Services
-
-```bash
-docker compose up --build
-```
-
-### Start Only Celery Services
-
-```bash
-docker compose up celery_worker celery_beat
-```
-
-### View Celery Worker Logs
-
-```bash
-docker compose logs -f celery_worker
-```
-
-### Run a One-Off Celery Task Inside Docker
-
-```bash
-docker compose exec celery_worker celery -A config call myapp.tasks.my_task
-```
-
----
-
-## 🗂 Celery Configuration Reference
-
-Your `config/celery.py` should look like this:
-
-```python
-import os
-from celery import Celery
-
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
-
-app = Celery("config")
-app.config_from_object("django.conf:settings", namespace="CELERY")
-app.autodiscover_tasks()
-```
-
-And in `config/__init__.py`:
-
-```python
-from .celery import app as celery_app
-
-__all__ = ("celery_app",)
-```
-
-In `settings.py`:
-
-```python
-CELERY_BROKER_URL = env("CELERY_BROKER_URL", default="redis://localhost:6379/0")
-CELERY_RESULT_BACKEND = env("CELERY_RESULT_BACKEND", default="redis://localhost:6379/1")
-CELERY_ACCEPT_CONTENT = ["json"]
-CELERY_TASK_SERIALIZER = "json"
-CELERY_RESULT_SERIALIZER = "json"
-CELERY_TIMEZONE = "UTC"
 ```
 
 ---
@@ -474,7 +330,6 @@ Before deploying:
 * Django
 * Django REST Framework
 * SimpleJWT
-* Celery + django-celery-beat
+* Inngest + django-inngest
 * PostgreSQL
-* Redis
 * CORS Headers

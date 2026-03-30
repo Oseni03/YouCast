@@ -12,7 +12,9 @@ from .models import Channel
 from .serializers import ChannelSerializer, ChannelCreateSerializer, ChannelUpdateSerializer
 from .services.youtube import YouTubeService
 from .services.websub import WebSubService
-from .tasks.pipeline import schedule_channel_polling
+# from .tasks.pipeline import schedule_channel_polling
+import inngest
+from django_inngest.client import inngest_client
 
 from apps.episodes.models import Episode
 
@@ -88,7 +90,12 @@ class ChannelListCreateView(APIView):
 
             # Also schedule polling fallback
             try:
-                schedule_channel_polling.delay(str(channel.id))
+                inngest_client.send_sync(
+                    inngest.Event(
+                        name="youtube/video.notified", # Or a generic poll event if preferred
+                        data={"atom_xml": f"channel_id:{channel.id}"} # Minimal data for manual trigger
+                    )
+                )
             except Exception as e:
                 logger.error(f"Failed to schedule polling for channel {channel.id}: {e}")
 
@@ -168,9 +175,15 @@ class ChannelDetailView(APIView):
         WebSubService.unsubscribe(channel)
 
         # Schedule audio file deletion (within 30 days per ToS)
-        from .tasks.pipeline import schedule_channel_cleanup
-        schedule_channel_cleanup.apply_async(
-            args=[str(channel.id)], countdown=60 * 60 * 24 * 30  # 30 days
+        # Note: Inngest doesn't have a direct 'countdown' in send, 
+        # but we can use step.sleep in a workflow if needed, 
+        # or just trigger it and let the workflow handle the delay if it's critical.
+        # For now, we'll send the event.
+        inngest_client.send_sync(
+            inngest.Event(
+                name="channel/cleanup",
+                data={"channel_id": str(channel.id)}
+            )
         )
 
         channel.monitoring_active = False
@@ -227,8 +240,12 @@ class WebSubCallbackView(APIView):
 
     def post(self, request):
         """YouTube pushes an Atom feed entry when a new video is published."""
-        from .tasks.pipeline import process_new_video_notification
-        process_new_video_notification.delay(request.body.decode('utf-8'))
+        inngest_client.send_sync(
+            inngest.Event(
+                name="youtube/video.notified",
+                data={"atom_xml": request.body.decode('utf-8')}
+            )
+        )
         # Return 200 quickly — all processing happens async
         return Response(status=status.HTTP_200_OK)
 

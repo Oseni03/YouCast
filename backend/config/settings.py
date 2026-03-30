@@ -128,14 +128,15 @@ USE_TZ        = True
 
 
 # ---------------------------------------------------------------------------
-# Celery
+# Inngest
 # ---------------------------------------------------------------------------
-CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/1")
-CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "redis://localhost:6379/2")
-CELERY_ACCEPT_CONTENT = ["json"]
-CELERY_TASK_SERIALIZER = "json"
-CELERY_RESULT_SERIALIZER = "json"
-CELERY_TIMEZONE = TIME_ZONE
+INNGEST_EVENT_KEY = os.environ.get("INNGEST_EVENT_KEY", "local")
+INNGEST_SIGNING_KEY = os.environ.get("INNGEST_SIGNING_KEY", "")
+INNGEST_APP_ID = "YouCast"
+
+DJANGO_INNGEST_APP_ID = INNGEST_APP_ID
+DJANGO_INNGEST_IS_PRODUCTION = not DEBUG
+DJANGO_INNGEST_SERVE_PATH = "api/inngest/"
 
 # Sessions — database backend (default)
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
