@@ -2,6 +2,7 @@ import inngest
 from django_inngest.client import inngest_client
 from django.utils import timezone
 from django.db.models import F
+from django.conf import settings
 from .models import AnalyticsEvent
 from apps.channels.models import Channel
 from apps.episodes.models import Episode
@@ -87,7 +88,7 @@ def send_weekly_digest_workflow(ctx: inngest.Context):
         send_mail(
             subject        = f'Your PodcastifyYT weekly stats: {total_downloads} downloads',
             message        = body,
-            from_email     = 'hello@podcastifyyt.com',
+            from_email     = f'hello@{settings.APP_DOMAIN}',
             recipient_list = [creator.email],
         )
 

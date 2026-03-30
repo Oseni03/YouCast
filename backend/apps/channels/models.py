@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 import uuid
 
@@ -74,4 +75,4 @@ class Channel(models.Model):
     def rss_feed_url(self):
         if self.custom_domain:
             return f'https://{self.custom_domain}/feed'
-        return f'https://podcastifyyt.com/feed/{self.rss_slug}'
+        return f'https://{settings.APP_DOMAIN}/feed/{self.rss_slug}'

@@ -257,6 +257,8 @@ WEBSUB_CALLBACK_URL = os.environ.get(
 # Frontend
 # ---------------------------------------------------------------------------
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000")
+APP_NAME = os.environ.get("APP_NAME", "Podcastify")
+APP_DOMAIN = os.environ.get("APP_DOMAIN", "podcastifyyt.com")
 
 
 # ---------------------------------------------------------------------------

@@ -1,4 +1,5 @@
 from django.db import models
+from django.conf import settings
 import uuid
 
 
@@ -79,5 +80,5 @@ class Episode(models.Model):
         Used in the RSS feed enclosure tag.
         """
         if self.channel.custom_domain:
-            return f'https://{self.channel.custom_domain}/audio/{self.id}/'
-        return f'https://podcastifyyt.com/audio/{self.id}/'
+            return f'https://{self.channel.custom_domain}/episodes/audio/{self.id}/'
+        return f'https://{settings.APP_DOMAIN}/episodes/audio/{self.id}/'
