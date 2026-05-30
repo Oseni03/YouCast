@@ -1,7 +1,7 @@
 import hashlib
 from django.utils.deprecation import MiddlewareMixin
 import inngest
-from django_inngest.client import inngest_client
+from inngest_django.client import inngest_client
 # from .tasks import log_analytics_event
 
 
