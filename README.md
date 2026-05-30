@@ -1,10 +1,10 @@
-# 🎙️ PodcastifyYT
+# 🎙️ Opticast
 
 > **Turn any YouTube channel into a podcast — automatically.**
 
-PodcastifyYT is a creator-permissioned SaaS platform that converts YouTube video content into podcast-quality audio episodes distributed via RSS feeds to Spotify, Apple Podcasts, Amazon Music, and every other major platform.
+Opticast is a creator-permissioned SaaS platform that converts YouTube video content into podcast-quality audio episodes distributed via RSS feeds to Spotify, Apple Podcasts, Amazon Music, and every other major platform.
 
-Unlike audio-ripping tools, PodcastifyYT operates entirely within YouTube's Terms of Service — every channel is processed only after the creator explicitly authorises it via Google OAuth.
+Unlike audio-ripping tools, Opticast operates entirely within YouTube's Terms of Service — every channel is processed only after the creator explicitly authorises it via Google OAuth.
 
 ---
 
@@ -40,26 +40,26 @@ Unlike audio-ripping tools, PodcastifyYT operates entirely within YouTube's Term
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | Next.js 14, TypeScript, Tailwind CSS, shadcn/ui |
-| Backend | Django 5, Django REST Framework |
-| Auth | Google OAuth 2.0, JWT (SimpleJWT) |
-| Task queue | Celery + django-celery-beat |
-| Message broker | Redis |
-| Database | PostgreSQL 15 |
-| Cache | Redis |
-| Audio processing | yt-dlp, FFmpeg |
-| Storage | Cloudinary |
-| Billing | Polar.sh |
-| Containerisation | Docker, Docker Compose |
+| Layer            | Technology                                      |
+| ---------------- | ----------------------------------------------- |
+| Frontend         | Next.js 14, TypeScript, Tailwind CSS, shadcn/ui |
+| Backend          | Django 5, Django REST Framework                 |
+| Auth             | Google OAuth 2.0, JWT (SimpleJWT)               |
+| Task queue       | Celery + django-celery-beat                     |
+| Message broker   | Redis                                           |
+| Database         | PostgreSQL 15                                   |
+| Cache            | Redis                                           |
+| Audio processing | yt-dlp, FFmpeg                                  |
+| Storage          | Cloudinary                                      |
+| Billing          | Polar.sh                                        |
+| Containerisation | Docker, Docker Compose                          |
 
 ---
 
 ## Project Structure
-
+``
 ```
-podcastifyyt/
+opticast/
 ├── docker-compose.yml
 ├── .env.example
 ├── .gitignore
@@ -99,11 +99,11 @@ podcastifyyt/
 
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (recommended)
 - Or, for local development without Docker:
-  - Python 3.11+
-  - Node.js 18+
-  - PostgreSQL 15
-  - Redis 7
-  - FFmpeg (`brew install ffmpeg` / `apt install ffmpeg`)
+    - Python 3.11+
+    - Node.js 18+
+    - PostgreSQL 15
+    - Redis 7
+    - FFmpeg (`brew install ffmpeg` / `apt install ffmpeg`)
 
 ---
 
@@ -112,8 +112,8 @@ podcastifyyt/
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/Oseni03/podcastifyyt.git
-cd podcastifyyt
+git clone https://github.com/Oseni03/opticast.git
+cd opticast
 ```
 
 ### 2. Set up environment variables
@@ -132,12 +132,12 @@ docker-compose up --build
 
 The first run will build images, run Django migrations, and start all services — including the Celery worker, beat scheduler, and Flower monitor.
 
-| Service | URL |
-|---|---|
-| Frontend | http://localhost:3000 |
-| Backend API | http://localhost:8000/api |
-| Django Admin | http://localhost:8000/admin |
-| Flower (task monitor) | http://localhost:5555 |
+| Service               | URL                         |
+| --------------------- | --------------------------- |
+| Frontend              | http://localhost:3000       |
+| Backend API           | http://localhost:8000/api   |
+| Django Admin          | http://localhost:8000/admin |
+| Flower (task monitor) | http://localhost:5555       |
 
 ---
 
@@ -153,7 +153,7 @@ ALLOWED_HOSTS=localhost 127.0.0.1
 DJANGO_SETTINGS_MODULE=config.settings
 
 # PostgreSQL
-DB_NAME=podcastifyyt
+DB_NAME=opticast
 DB_USER=postgres
 DB_PASSWORD=postgres
 DB_HOST=db          # use 'localhost' when running without Docker
@@ -202,81 +202,81 @@ The Docker Compose setup runs the full stack: Django, Next.js, PostgreSQL, Redis
 
 ```yaml
 services:
-  backend:
-    build: ./backend
-    command: python manage.py runserver 0.0.0.0:8000
-    volumes:
-      - ./backend:/app
-    ports:
-      - "8000:8000"
-    env_file:
-      - .env
-    depends_on:
-      - db
-      - redis
+    backend:
+        build: ./backend
+        command: python manage.py runserver 0.0.0.0:8000
+        volumes:
+            - ./backend:/app
+        ports:
+            - "8000:8000"
+        env_file:
+            - .env
+        depends_on:
+            - db
+            - redis
 
-  frontend:
-    build: ./frontend
-    command: npm run dev
-    volumes:
-      - ./frontend:/app
-    ports:
-      - "3000:3000"
-    env_file:
-      - .env
-    depends_on:
-      - backend
+    frontend:
+        build: ./frontend
+        command: npm run dev
+        volumes:
+            - ./frontend:/app
+        ports:
+            - "3000:3000"
+        env_file:
+            - .env
+        depends_on:
+            - backend
 
-  db:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: podcastifyyt
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+    db:
+        image: postgres:15
+        environment:
+            POSTGRES_DB: opticast
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+        ports:
+            - "5432:5432"
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
 
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
+    redis:
+        image: redis:7-alpine
+        ports:
+            - "6379:6379"
 
-  celery_worker:
-    build: ./backend
-    command: celery -A config worker --loglevel=info --concurrency=2
-    volumes:
-      - ./backend:/app
-    env_file:
-      - .env
-    depends_on:
-      - redis
-      - db
+    celery_worker:
+        build: ./backend
+        command: celery -A config worker --loglevel=info --concurrency=2
+        volumes:
+            - ./backend:/app
+        env_file:
+            - .env
+        depends_on:
+            - redis
+            - db
 
-  celery_beat:
-    build: ./backend
-    command: celery -A config beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-    volumes:
-      - ./backend:/app
-    env_file:
-      - .env
-    depends_on:
-      - redis
-      - db
+    celery_beat:
+        build: ./backend
+        command: celery -A config beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+        volumes:
+            - ./backend:/app
+        env_file:
+            - .env
+        depends_on:
+            - redis
+            - db
 
-  flower:
-    build: ./backend
-    command: celery -A config flower --port=5555
-    ports:
-      - "5555:5555"
-    env_file:
-      - .env
-    depends_on:
-      - redis
+    flower:
+        build: ./backend
+        command: celery -A config flower --port=5555
+        ports:
+            - "5555:5555"
+        env_file:
+            - .env
+        depends_on:
+            - redis
 
 volumes:
-  postgres_data:
+    postgres_data:
 ```
 
 ### Start all services
@@ -366,7 +366,7 @@ For Celery setup, see the [Celery Setup](#celery-setup) section below.
 
 ## Celery Setup
 
-PodcastifyYT uses Celery for all async background processing — audio extraction, WebSub handling, feed polling, and scheduled digest emails.
+Opticast uses Celery for all async background processing — audio extraction, WebSub handling, feed polling, and scheduled digest emails.
 
 ### Celery Configuration Reference
 
@@ -493,15 +493,15 @@ docker-compose exec celery_worker celery -A config inspect active
 
 All API routes are prefixed with `/api/`.
 
-| Prefix | App | Description |
-|---|---|---|
-| `/api/auth/` | accounts | Google OAuth, JWT, creator profile |
-| `/api/channels/` | channels | YouTube channel management, WebSub |
-| `/api/episodes/` | episodes | Episode list, detail, retry |
-| `/api/feeds/` | feeds | RSS preview, directory submissions |
-| `/api/analytics/` | analytics | Download stats, geo, app breakdown |
-| `/api/billing/` | billing | Polar checkout, portal, subscription |
-| `/feed/<slug>/` | feeds | **Public** RSS feed (no `/api/` prefix) |
+| Prefix            | App       | Description                             |
+| ----------------- | --------- | --------------------------------------- |
+| `/api/auth/`      | accounts  | Google OAuth, JWT, creator profile      |
+| `/api/channels/`  | channels  | YouTube channel management, WebSub      |
+| `/api/episodes/`  | episodes  | Episode list, detail, retry             |
+| `/api/feeds/`     | feeds     | RSS preview, directory submissions      |
+| `/api/analytics/` | analytics | Download stats, geo, app breakdown      |
+| `/api/billing/`   | billing   | Polar checkout, portal, subscription    |
+| `/feed/<slug>/`   | feeds     | **Public** RSS feed (no `/api/` prefix) |
 
 Full model, view, and route documentation is in [`backend/BACKEND.md`](./backend/BACKEND.md).
 
@@ -511,14 +511,14 @@ Full model, view, and route documentation is in [`backend/BACKEND.md`](./backend
 
 Celery handles all async processing. Key tasks:
 
-| Task | Trigger | Description |
-|---|---|---|
-| `process_new_video_notification` | WebSub push / polling | Parses new video, applies creator filters, queues pipeline |
-| `extract_audio` | After video detected | yt-dlp download → FFmpeg normalisation → Cloudinary upload |
-| `poll_all_active_channels` | Every 15 min (Beat) | Polling fallback for missed WebSub pings |
-| `renew_expiring_websub_subscriptions` | Daily (Beat) | Re-subscribes channels whose WebSub lease is expiring |
-| `send_weekly_digest` | Every Monday 9am UTC (Beat) | Sends download summary email to each creator |
-| `schedule_channel_cleanup` | 30 days after channel disconnect | Deletes audio files from Cloudinary |
+| Task                                  | Trigger                          | Description                                                |
+| ------------------------------------- | -------------------------------- | ---------------------------------------------------------- |
+| `process_new_video_notification`      | WebSub push / polling            | Parses new video, applies creator filters, queues pipeline |
+| `extract_audio`                       | After video detected             | yt-dlp download → FFmpeg normalisation → Cloudinary upload |
+| `poll_all_active_channels`            | Every 15 min (Beat)              | Polling fallback for missed WebSub pings                   |
+| `renew_expiring_websub_subscriptions` | Daily (Beat)                     | Re-subscribes channels whose WebSub lease is expiring      |
+| `send_weekly_digest`                  | Every Monday 9am UTC (Beat)      | Sends download summary email to each creator               |
+| `schedule_channel_cleanup`            | 30 days after channel disconnect | Deletes audio files from Cloudinary                        |
 
 ---
 
@@ -545,10 +545,10 @@ Celery handles all async processing. Key tasks:
 ```yaml
 # docker-compose.yml
 backend:
-  command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 4
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 4
 
 celery_worker:
-  command: celery -A config worker --loglevel=warning --concurrency=4
+    command: celery -A config worker --loglevel=warning --concurrency=4
 ```
 
 ---

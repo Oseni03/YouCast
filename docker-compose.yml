@@ -1,119 +1,123 @@
 services:
-  db:
-    image: postgres:15-alpine
-    container_name: youcast_db
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_DB=${DB_NAME:-audiosync}
-      - POSTGRES_USER=${DB_USER:-postgres}
-      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
-    ports:
-      - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-audiosync}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+    db:
+        image: postgres:15-alpine
+        container_name: opticast_db
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        environment:
+            - POSTGRES_DB=${DB_NAME:-audiosync}
+            - POSTGRES_USER=${DB_USER:-postgres}
+            - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
+        ports:
+            - "5432:5432"
+        healthcheck:
+            test:
+                [
+                    "CMD-SHELL",
+                    "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-audiosync}",
+                ]
+            interval: 5s
+            timeout: 5s
+            retries: 5
 
-  redis:
-    image: redis:7-alpine
-    container_name: youcast_redis
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+    redis:
+        image: redis:7-alpine
+        container_name: opticast_redis
+        ports:
+            - "6379:6379"
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 5s
+            timeout: 5s
+            retries: 5
 
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: youcast_backend
-    # explicit startup command — add this if your Dockerfile doesn't already set CMD
-    command: python manage.py runserver 0.0.0.0:8000
-    volumes:
-      - ./backend:/app
-      - static_volume:/app/staticfiles
-      - media_volume:/app/mediafiles
-    env_file:
-      - .env                          # single source of truth
-    environment:
-      # these override .env values specific to the Docker network
-      - DB_HOST=db                    # service name, not localhost
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis:6379/2
-    depends_on:
-      db:
-        condition: service_healthy    # waits until postgres is actually ready
-      redis:
-        condition: service_healthy
-    ports:
-      - "8000:8000"
-    restart: on-failure
+    backend:
+        build:
+            context: ./backend
+            dockerfile: Dockerfile
+        container_name: opticast_backend
+        # explicit startup command — add this if your Dockerfile doesn't already set CMD
+        command: python manage.py runserver 0.0.0.0:8000
+        volumes:
+            - ./backend:/app
+            - static_volume:/app/staticfiles
+            - media_volume:/app/mediafiles
+        env_file:
+            - .env # single source of truth
+        environment:
+            # these override .env values specific to the Docker network
+            - DB_HOST=db # service name, not localhost
+            - REDIS_URL=redis://redis:6379/0
+            - CELERY_BROKER_URL=redis://redis:6379/1
+            - CELERY_RESULT_BACKEND=redis://redis:6379/2
+        depends_on:
+            db:
+                condition: service_healthy # waits until postgres is actually ready
+            redis:
+                condition: service_healthy
+        ports:
+            - "8000:8000"
+        restart: on-failure
 
-  worker:
-    build:
-      context: ./backend
-    container_name: youcast_worker
-    command: celery -A config worker --loglevel=info
-    volumes:
-      - ./backend:/app
-    env_file:
-      - .env                          # worker needs Django settings too
-    environment:
-      - DB_HOST=db
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis:6379/2
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    restart: on-failure
+    worker:
+        build:
+            context: ./backend
+        container_name: opticast_worker
+        command: celery -A config worker --loglevel=info
+        volumes:
+            - ./backend:/app
+        env_file:
+            - .env # worker needs Django settings too
+        environment:
+            - DB_HOST=db
+            - REDIS_URL=redis://redis:6379/0
+            - CELERY_BROKER_URL=redis://redis:6379/1
+            - CELERY_RESULT_BACKEND=redis://redis:6379/2
+        depends_on:
+            db:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+        restart: on-failure
 
-  beat:
-    build:
-      context: ./backend
-    container_name: youcast_beat
-    command: celery -A config beat --loglevel=info
-    volumes:
-      - ./backend:/app
-    env_file:
-      - .env
-    environment:
-      - DB_HOST=db
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis:6379/2
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    restart: on-failure
+    beat:
+        build:
+            context: ./backend
+        container_name: opticast_beat
+        command: celery -A config beat --loglevel=info
+        volumes:
+            - ./backend:/app
+        env_file:
+            - .env
+        environment:
+            - DB_HOST=db
+            - REDIS_URL=redis://redis:6379/0
+            - CELERY_BROKER_URL=redis://redis:6379/1
+            - CELERY_RESULT_BACKEND=redis://redis:6379/2
+        depends_on:
+            db:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+        restart: on-failure
 
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: youcast_frontend
-    environment:
-      # For server-side rendering — container talks to backend via service name
-      - API_URL=http://backend:8000/api
-      # For browser/client-side — must go through your machine's localhost
-      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
-    ports:
-      - "3000:3000"
-    depends_on:
-      - backend
-    restart: on-failure
+    frontend:
+        build:
+            context: ./frontend
+            dockerfile: Dockerfile
+        container_name: opticast_frontend
+        environment:
+            # For server-side rendering — container talks to backend via service name
+            - API_URL=http://backend:8000/api
+            # For browser/client-side — must go through your machine's localhost
+            - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+        ports:
+            - "3000:3000"
+        depends_on:
+            - backend
+        restart: on-failure
 
 volumes:
-  postgres_data:
-  static_volume:
-  media_volume:
+    postgres_data:
+    static_volume:
+    media_volume:

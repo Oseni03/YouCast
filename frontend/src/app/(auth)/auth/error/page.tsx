@@ -17,7 +17,7 @@ function AuthErrorContent() {
         displayMessage = 'We could not securely complete your YouTube connection. This usually happens if you try to use an expired link or hit the back button during the process.';
         displayTitle = 'Connection Expired';
     } else if (message === 'already_linked') {
-        displayMessage = 'This Google account is already connected to another YouCast account. Please use a different Google account or log in to that account directly.';
+        displayMessage = 'This Google account is already connected to another Opticast account. Please use a different Google account or log in to that account directly.';
         displayTitle = 'Account Already Linked';
     } else if (message === 'auth_failed') {
         displayMessage = 'We could not authenticate your account. Please check your credentials and try again.';

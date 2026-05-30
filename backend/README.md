@@ -2,13 +2,13 @@
 
 Backend API for AudioSync built with **Django + Django REST Framework**, using:
 
-* PostgreSQL (Database)
-* PostgreSQL (Database)
-* Inngest (Background jobs & Durable execution)
-* JWT Authentication (SimpleJWT with refresh rotation)
-* Google OAuth
-* WebSub (PubSubHubbub)
-* CORS support for Next.js frontend
+- PostgreSQL (Database)
+- PostgreSQL (Database)
+- Inngest (Background jobs & Durable execution)
+- JWT Authentication (SimpleJWT with refresh rotation)
+- Google OAuth
+- WebSub (PubSubHubbub)
+- CORS support for Next.js frontend
 
 ---
 
@@ -61,7 +61,7 @@ DB_PORT=5432
 # Inngest
 INNGEST_EVENT_KEY=local
 INNGEST_SIGNING_KEY=
-INNGEST_APP_ID=YouCast
+INNGEST_APP_ID=Opticast
 
 # Frontend
 FRONTEND_URL=http://localhost:3000
@@ -140,38 +140,38 @@ The project includes Docker Compose services for the full stack. Make sure your 
 
 ```yaml
 services:
-  web:
-    build: .
-    command: python manage.py runserver 0.0.0.0:8000
-    volumes:
-      - .:/app
-    ports:
-      - "8000:8000"
-    env_file:
-      - .env
-    depends_on:
-      - db
-      - redis
+    web:
+        build: .
+        command: python manage.py runserver 0.0.0.0:8000
+        volumes:
+            - .:/app
+        ports:
+            - "8000:8000"
+        env_file:
+            - .env
+        depends_on:
+            - db
+            - redis
 
-  db:
-    image: postgres:15
-    environment:
-      POSTGRES_DB: audiosync
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+    db:
+        image: postgres:15
+        environment:
+            POSTGRES_DB: audiosync
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+        ports:
+            - "5432:5432"
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
 
-  inngest:
-    image: inngest/inngest
-    ports:
-      - "8288:8288"
-    command: -u http://web:8000/api/inngest/
+    inngest:
+        image: inngest/inngest
+        ports:
+            - "8288:8288"
+        command: -u http://web:8000/api/inngest/
 
 volumes:
-  postgres_data:
+    postgres_data:
 ```
 
 ---
@@ -204,8 +204,8 @@ Returns:
 
 ```json
 {
-  "access": "...",
-  "refresh": "..."
+	"access": "...",
+	"refresh": "..."
 }
 ```
 
@@ -215,8 +215,8 @@ Returns:
 POST /api/auth/token/refresh/
 ```
 
-* Refresh tokens rotate
-* Old tokens are blacklisted automatically
+- Refresh tokens rotate
+- Old tokens are blacklisted automatically
 
 All protected routes require:
 
@@ -294,8 +294,8 @@ AUTH_USER_MODEL = "accounts.Creator"
 
 Configured in DRF:
 
-* Anonymous: `60/minute`
-* Authenticated: `300/minute`
+- Anonymous: `60/minute`
+- Authenticated: `300/minute`
 
 ---
 
@@ -311,25 +311,25 @@ python manage.py test
 
 Before deploying:
 
-* Set `DEBUG=False`
-* Set a strong `SECRET_KEY`
-* Configure proper `ALLOWED_HOSTS`
-* Use a production Redis instance
-* Use a production PostgreSQL database
-* Switch email backend from console to SMTP
-* Serve static files properly (e.g., with WhiteNoise or S3)
-* Use HTTPS (required for OAuth + secure cookies)
-* Run Celery worker and beat as separate systemd services or supervised Docker containers
-* Set `CELERY_TASK_ALWAYS_EAGER=False` in production
-* Monitor tasks via Flower or integrate with a logging/alerting service
+- Set `DEBUG=False`
+- Set a strong `SECRET_KEY`
+- Configure proper `ALLOWED_HOSTS`
+- Use a production Redis instance
+- Use a production PostgreSQL database
+- Switch email backend from console to SMTP
+- Serve static files properly (e.g., with WhiteNoise or S3)
+- Use HTTPS (required for OAuth + secure cookies)
+- Run Celery worker and beat as separate systemd services or supervised Docker containers
+- Set `CELERY_TASK_ALWAYS_EAGER=False` in production
+- Monitor tasks via Flower or integrate with a logging/alerting service
 
 ---
 
 # 🧠 Tech Stack
 
-* Django
-* Django REST Framework
-* SimpleJWT
-* Inngest + django-inngest
-* PostgreSQL
-* CORS Headers
+- Django
+- Django REST Framework
+- SimpleJWT
+- Inngest + django-inngest
+- PostgreSQL
+- CORS Headers

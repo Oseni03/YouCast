@@ -132,7 +132,7 @@ USE_TZ        = True
 # ---------------------------------------------------------------------------
 INNGEST_EVENT_KEY = os.environ.get("INNGEST_EVENT_KEY", "local")
 INNGEST_SIGNING_KEY = os.environ.get("INNGEST_SIGNING_KEY", "")
-INNGEST_APP_ID = "YouCast"
+INNGEST_APP_ID = "Opticast"
 
 DJANGO_INNGEST_APP_ID = INNGEST_APP_ID
 DJANGO_INNGEST_IS_PRODUCTION = not DEBUG
