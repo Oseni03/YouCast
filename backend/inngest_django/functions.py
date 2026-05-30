@@ -1,11 +1,138 @@
 import inngest
-from django_inngest.client import inngest_client
+import inngest.django
+
+from .client import inngest_client
+
+from django.db.models import F
+from django.conf import settings
+from apps.analytics.models import AnalyticsEvent
+from apps.channels.models import Channel
+from apps.episodes.models import Episode
+
+KNOWN_PODCAST_APPS = {
+    'AppleCoreMedia':      'Apple Podcasts',
+    'Spotify':             'Spotify',
+    'Overcast':            'Overcast',
+    'PocketCasts':         'Pocket Casts',
+    'Castro':              'Castro',
+    'Downcast':            'Downcast',
+    'AntennaPod':          'AntennaPod',
+    'Amazon Music':        'Amazon Music',
+}
+
+BOT_SIGNATURES = [
+    'bot', 'crawler', 'spider', 'feedfetcher',
+    'googlebot', 'bingbot', 'python-requests',
+]
+
+@inngest_client.create_function(
+    fn_id="log-analytics-event",
+    trigger=inngest.TriggerEvent(event="analytics/event.logged"),
+)
+def log_analytics_event_workflow(ctx: inngest.Context):
+    slug = ctx.event.data["slug"]
+    ip_hash = ctx.event.data["ip_hash"]
+    user_agent = ctx.event.data["user_agent"]
+    bytes_served = ctx.event.data["bytes_served"]
+
+    try:
+        channel = Channel.objects.get(rss_slug=slug)
+    except Channel.DoesNotExist:
+        return
+
+    ua_lower = user_agent.lower()
+    is_bot = any(sig in ua_lower for sig in BOT_SIGNATURES)
+    podcast_app = ''
+    for signature, app_name in KNOWN_PODCAST_APPS.items():
+        if signature.lower() in ua_lower:
+            podcast_app = app_name
+            break
+
+    AnalyticsEvent.objects.create(
+        episode_id=None,
+        channel=channel,
+        ip_hash=ip_hash,
+        user_agent=user_agent[:500],
+        podcast_app=podcast_app,
+        bytes_served=bytes_served,
+        is_bot=is_bot,
+    )
+
+@inngest_client.create_function(
+    fn_id="send-weekly-digest",
+    trigger=inngest.TriggerCron(cron="0 9 * * 1"), # Monday at 9am UTC
+)
+def send_weekly_digest_workflow(ctx: inngest.Context):
+    from django.core.mail import send_mail
+    from apps.accounts.models import Creator
+    from django.template.loader import render_to_string
+    from datetime import date, timedelta
+
+    week_ago = date.today() - timedelta(days=7)
+
+    for creator in Creator.objects.filter(is_active=True):
+        channels = Channel.objects.filter(creator=creator)
+        total_downloads = AnalyticsEvent.objects.filter(
+            channel__in=channels,
+            timestamp__date__gte=week_ago,
+            is_bot=False,
+        ).count()
+
+        if total_downloads == 0:
+            continue
+
+        body = render_to_string('analytics/weekly_digest_email.txt', {
+            'creator':         creator,
+            'total_downloads': total_downloads,
+            'week_start':      week_ago,
+        })
+
+        send_mail(
+            subject        = f'Your PodcastifyYT weekly stats: {total_downloads} downloads',
+            message        = body,
+            from_email     = f'hello@{settings.APP_DOMAIN}',
+            recipient_list = [creator.email],
+        )
+
+
+@inngest_client.create_function(
+    fn_id="log-episode-download",
+    trigger=inngest.TriggerEvent(event="analytics/episode.downloaded"),
+)
+def log_episode_download_workflow(ctx: inngest.Context):
+    episode_id = ctx.event.data["episode_id"]
+    channel_id = ctx.event.data["channel_id"]
+    ip_hash    = ctx.event.data["ip_hash"]
+    user_agent = ctx.event.data["user_agent"]
+
+    # 1. Increment the denormalized download_count on the Episode model
+    Episode.objects.filter(id=episode_id).update(download_count=F('download_count') + 1)
+
+    # 2. Extract metadata and log the detailed event
+    ua_lower = user_agent.lower()
+    is_bot   = any(sig in ua_lower for sig in BOT_SIGNATURES)
+
+    podcast_app = ''
+    for signature, app_name in KNOWN_PODCAST_APPS.items():
+        if signature.lower() in ua_lower:
+            podcast_app = app_name
+            break
+
+    AnalyticsEvent.objects.create(
+        episode_id  = episode_id,
+        channel_id  = channel_id,
+        ip_hash     = ip_hash,
+        user_agent  = user_agent[:500],
+        podcast_app = podcast_app,
+        is_bot      = is_bot,
+    )
+
 from django.utils import timezone
 import xml.etree.ElementTree as ET
 import isodate
 
 @inngest_client.create_function(
-    id="process-new-video-notification",
+    fn_id="process-new-video-notification",
     trigger=inngest.TriggerEvent(event="youtube/video.notified"),
 )
 def process_new_video_notification(ctx: inngest.Context):
@@ -31,8 +158,6 @@ def process_new_video_notification(ctx: inngest.Context):
     video_data = yt.get_video_details(video_id)
     if not video_data:
         return
-
-    from .tasks.pipeline import _passes_filters, _create_skipped_episode, _create_queued_episode
 
     if not _passes_filters(channel, video_data):
         _create_skipped_episode(channel, video_data)
@@ -138,7 +263,7 @@ def _build_fake_atom(video_id, youtube_channel_id):
 
 
 @inngest_client.create_function(
-    id="extract-audio",
+    fn_id="extract-audio",
     trigger=inngest.TriggerEvent(event="youtube/audio.extract"),
 )
 def extract_audio_workflow(ctx: inngest.Context):
@@ -191,14 +316,13 @@ def extract_audio_workflow(ctx: inngest.Context):
         raise exc
 
 @inngest_client.create_function(
-    id="schedule-channel-polling",
+    fn_id="schedule-channel-polling",
     trigger=inngest.TriggerCron(cron="*/15 * * * *"),
 )
 def schedule_channel_polling_workflow(ctx: inngest.Context):
     from apps.channels.models import Channel
     from apps.episodes.models import Episode
     from apps.channels.services.youtube import YouTubeService
-    from .tasks.pipeline import _build_fake_atom
 
     channels = Channel.objects.filter(monitoring_active=True)
     for channel in channels:
@@ -219,7 +343,7 @@ def schedule_channel_polling_workflow(ctx: inngest.Context):
         channel.save(update_fields=['last_polled_at'])
 
 @inngest_client.create_function(
-    id="schedule-channel-cleanup",
+    fn_id="schedule-channel-cleanup",
     trigger=inngest.TriggerEvent(event="channel/cleanup"),
 )
 def schedule_channel_cleanup_workflow(ctx: inngest.Context):

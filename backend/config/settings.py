@@ -95,7 +95,7 @@ TEMPLATES = [
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME":     os.environ.get("DB_NAME",     "audiosync"),
+        "NAME":     os.environ.get("DB_NAME",     "opticast"),
         "USER":     os.environ.get("DB_USER",     "postgres"),
         "PASSWORD": os.environ.get("DB_PASSWORD", "postgres"),
         "HOST":     os.environ.get("DB_HOST",     "localhost"),
@@ -127,16 +127,16 @@ USE_I18N      = True
 USE_TZ        = True
 
 
-# ---------------------------------------------------------------------------
-# Inngest
-# ---------------------------------------------------------------------------
-INNGEST_EVENT_KEY = os.environ.get("INNGEST_EVENT_KEY", "local")
-INNGEST_SIGNING_KEY = os.environ.get("INNGEST_SIGNING_KEY", "")
-INNGEST_APP_ID = "Opticast"
+# # ---------------------------------------------------------------------------
+# # Inngest
+# # ---------------------------------------------------------------------------
+# INNGEST_EVENT_KEY = os.environ.get("INNGEST_EVENT_KEY", "local")
+# INNGEST_SIGNING_KEY = os.environ.get("INNGEST_SIGNING_KEY", "")
+# INNGEST_APP_ID = "Opticast"
 
-DJANGO_INNGEST_APP_ID = INNGEST_APP_ID
-DJANGO_INNGEST_IS_PRODUCTION = not DEBUG
-DJANGO_INNGEST_SERVE_PATH = "api/inngest/"
+# DJANGO_INNGEST_APP_ID = INNGEST_APP_ID
+# DJANGO_INNGEST_IS_PRODUCTION = not DEBUG
+# DJANGO_INNGEST_SERVE_PATH = "api/inngest/"
 
 # Sessions — database backend (default)
 SESSION_ENGINE = "django.contrib.sessions.backends.db"

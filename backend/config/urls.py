@@ -16,6 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from inngest_django.views import inngest_view_path
 
 urlpatterns = [
     path('', include('apps.feeds.urls_rss')),
@@ -26,5 +27,6 @@ urlpatterns = [
     path('api/episodes/', include('apps.episodes.urls')),
     path('api/billing/', include('apps.billing.urls')),
     path('api/analytics/', include('apps.analytics.urls')),
-    path('', include('django_inngest.urls')),
 ]
+
+urlpatterns += [inngest_view_path]

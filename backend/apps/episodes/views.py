@@ -7,13 +7,13 @@ from rest_framework import status
 from django.shortcuts import redirect
 import hashlib
 import inngest
-from django_inngest.client import inngest_client
+from inngest_django.client import inngest_client
 
 from .models import Episode, ProcessingStatus
 from .serializers import EpisodeSerializer, EpisodeListSerializer, EpisodeCreateSerializer
 from apps.channels.models import Channel
 from apps.channels.services.youtube import YouTubeService
-from apps.channels.tasks.pipeline import _create_queued_episode, extract_audio
+from inngest_django.functions import _create_queued_episode
 
 
 class EpisodeListView(APIView):
@@ -83,7 +83,12 @@ class EpisodeListView(APIView):
 
         # Reuse the same logic as the automatic pipeline
         episode = _create_queued_episode(channel, video_data)
-        extract_audio.delay(str(episode.id))
+        inngest_client.send_sync(
+            inngest.Event(
+                name="youtube/audio.extract",
+                data={"episode_id": str(episode.id)}
+            )
+        )
 
         return Response(EpisodeSerializer(episode).data, status=status.HTTP_201_CREATED)
 
@@ -131,12 +136,16 @@ class EpisodeRetryView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        from tasks.pipeline import extract_audio
         episode.processing_status = ProcessingStatus.QUEUED
         episode.processing_error  = ''
         episode.save(update_fields=['processing_status', 'processing_error'])
 
-        extract_audio.delay(str(episode.id))
+        inngest_client.send_sync(
+            inngest.Event(
+                name="youtube/audio.extract",
+                data={"episode_id": str(episode.id)}
+            )
+        )
         return Response({'status': 'queued'})
 
 

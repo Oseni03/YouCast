@@ -14,7 +14,7 @@ from .services.youtube import YouTubeService
 from .services.websub import WebSubService
 # from .tasks.pipeline import schedule_channel_polling
 import inngest
-from django_inngest.client import inngest_client
+from inngest_django.client import inngest_client
 
 from apps.episodes.models import Episode
 
@@ -92,8 +92,8 @@ class ChannelListCreateView(APIView):
             try:
                 inngest_client.send_sync(
                     inngest.Event(
-                        name="youtube/video.notified", # Or a generic poll event if preferred
-                        data={"atom_xml": f"channel_id:{channel.id}"} # Minimal data for manual trigger
+                        name="channel/poll",
+                        data={"channel_id": str(channel.id)}
                     )
                 )
             except Exception as e:
