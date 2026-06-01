@@ -1,6 +1,7 @@
 from feedgen.feed import FeedGenerator
 from django.utils import timezone
 from apps.episodes.models import Episode, ProcessingStatus
+from apps.channels.models import Channel
 
 
 class RSSFeedBuilder:
@@ -12,7 +13,7 @@ class RSSFeedBuilder:
     ITUNES_NS  = 'http://www.itunes.com/dtds/podcast-1.0.dtd'
     PODCAST_NS = 'https://podcastindex.org/namespace/1.0'
 
-    def build(self, channel) -> bytes:
+    def build(self, channel: Channel) -> bytes:
         fg = FeedGenerator()
         fg.load_extension('podcast')  # loads the podcast/itunes extension
 
@@ -23,7 +24,7 @@ class RSSFeedBuilder:
         fg.link(href=channel.rss_feed_url, rel='self')
         fg.language(channel.language)
         fg.image(channel.effective_artwork_url)
-        fg.podcast.itunes_author(channel.creator.display_name)
+        fg.podcast.itunes_author(channel.creator.username)
         fg.podcast.itunes_explicit('yes' if channel.explicit else 'no')
         fg.podcast.itunes_category(channel.category)
         fg.podcast.itunes_image(channel.effective_artwork_url)
