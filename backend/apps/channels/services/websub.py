@@ -7,7 +7,7 @@ from datetime import timedelta
 
 class WebSubService:
     HUB_URL   = 'https://pubsubhubbub.appspot.com/subscribe'
-    CALLBACK  = settings.WEBSUB_CALLBACK_URL  # e.g. https://podcastifyyt.com/api/channels/websub/callback/
+    CALLBACK  = settings.WEBSUB_CALLBACK_URL  # e.g. http://localhost:8000/api/channels/websub/callback/
 
     @classmethod
     def _topic_url(cls, youtube_channel_id):

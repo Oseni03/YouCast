@@ -15,7 +15,7 @@ cloudinary.config(
 class AudioStorageService:
     """Handles upload and URL generation for audio files via Cloudinary."""
 
-    FOLDER = "podcastifyyt/audio"
+    FOLDER = "opticast/audio"
 
     def upload_audio(self, filepath: str, s3_key: str, content_type: str = "audio/mpeg") -> str:
         """
@@ -76,7 +76,7 @@ class AudioStorageService:
     def _key_to_public_id(self, s3_key: str) -> str:
         """
         Converts an S3-style key (audio/channel-id/episode-id.mp3) into a
-        Cloudinary public_id (podcastifyyt/audio/channel-id/episode-id).
+        Cloudinary public_id (opticast/audio/channel-id/episode-id).
         Cloudinary derives the format from the file itself, so the extension
         is stripped from the public_id.
         """

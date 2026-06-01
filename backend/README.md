@@ -93,7 +93,7 @@ Make sure PostgreSQL is running.
 Create database:
 
 ```sql
-CREATE DATABASE podcastifyyt;
+CREATE DATABASE opticast;
 ```
 
 Then run:

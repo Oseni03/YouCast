@@ -257,8 +257,8 @@ WEBSUB_CALLBACK_URL = os.environ.get(
 # Frontend
 # ---------------------------------------------------------------------------
 FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000")
-APP_NAME = os.environ.get("APP_NAME", "Podcastify")
-APP_DOMAIN = os.environ.get("APP_DOMAIN", "podcastifyyt.com")
+APP_NAME = os.environ.get("APP_NAME", "Opticast")
+APP_DOMAIN = os.environ.get("APP_DOMAIN", "opticast.com")
 
 
 # ---------------------------------------------------------------------------
@@ -273,7 +273,7 @@ EMAIL_PORT          = int(os.environ.get("EMAIL_PORT", 587))
 EMAIL_USE_TLS       = True
 EMAIL_HOST_USER     = os.environ.get("EMAIL_HOST_USER", "apikey")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
-DEFAULT_FROM_EMAIL  = os.environ.get("DEFAULT_FROM_EMAIL", "hello@podcastifyyt.com")
+DEFAULT_FROM_EMAIL  = os.environ.get("DEFAULT_FROM_EMAIL", "hello@opticast.com")
 
 
 # ---------------------------------------------------------------------------
