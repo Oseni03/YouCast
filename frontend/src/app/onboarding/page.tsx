@@ -31,6 +31,7 @@ export default function OnboardingPage() {
 
 	const tosCompleted = !!user?.tos_accepted_at;
 	const youtubeConnected = !!user?.has_youtube_connected;
+	const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
 
 	const handleGoogleLogin = () => {
 		if (!tosCompleted) {
@@ -41,7 +42,8 @@ export default function OnboardingPage() {
 		try {
 			localStorage.setItem("auth_return_to", "/onboarding");
 			const token = localStorage.getItem("access_token");
-			window.location.href = `http://localhost:8000/api/auth/google/authorize/?token=${token || ""}`;
+			const authUrl = `${apiUrl}/auth/google/authorize/?token=${token || ""}`;
+			window.location.href = authUrl;
 		} catch (err) {
 			toast.error("Failed to initiate Google login");
 			console.error(err);
