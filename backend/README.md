@@ -1,6 +1,6 @@
-# 🎙 AudioSync – Backend (Django API)
+# 🎙 Opticast – Backend (Django API)
 
-Backend API for AudioSync built with **Django + Django REST Framework**, using:
+Backend API for Opticast built with **Django + Django REST Framework**, using:
 
 - PostgreSQL (Database)
 - PostgreSQL (Database)
@@ -52,7 +52,7 @@ DEBUG=True
 ALLOWED_HOSTS=localhost 127.0.0.1
 
 # Database (PostgreSQL)
-DB_NAME=audiosync
+DB_NAME=opticast
 DB_USER=postgres
 DB_PASSWORD=postgres
 DB_HOST=localhost
@@ -81,7 +81,7 @@ EMAIL_HOST=smtp.sendgrid.net
 EMAIL_PORT=587
 EMAIL_HOST_USER=apikey
 EMAIL_HOST_PASSWORD=
-DEFAULT_FROM_EMAIL=hello@audiosync.com
+DEFAULT_FROM_EMAIL=hello@opticast.com
 ```
 
 ---
@@ -112,7 +112,7 @@ python manage.py createsuperuser
 
 # ⚡ Inngest Setup
 
-AudioSync uses Inngest for background jobs such as audio processing, WebSub notifications, feed generation, and analytics aggregation. Inngest provides durable execution and automatic retries.
+Opticast uses Inngest for background jobs such as audio processing, WebSub notifications, feed generation, and analytics aggregation. Inngest provides durable execution and automatic retries.
 
 ---
 
@@ -156,7 +156,7 @@ services:
     db:
         image: postgres:15
         environment:
-            POSTGRES_DB: audiosync
+            POSTGRES_DB: opticast
             POSTGRES_USER: postgres
             POSTGRES_PASSWORD: postgres
         ports:

@@ -16,7 +16,7 @@ export default function Home() {
                         <div className="size-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground shadow-md transition-transform group-hover:rotate-12">
                             <Save />
                         </div>
-                        <span className="text-xl font-manrope font-bold tracking-tight">AudioSync</span>
+                        <span className="text-xl font-manrope font-bold tracking-tight">Opticast</span>
                     </div>
                     <div className="hidden md:flex items-center gap-8 font-medium">
                         <a href="#features" className="text-sm hover:text-primary transition-all">Features</a>
@@ -141,14 +141,14 @@ export default function Home() {
                         <div className="size-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground">
                             <Save className="size-5" />
                         </div>
-                        <span className="text-lg font-manrope font-bold tracking-tight">AudioSync</span>
+                        <span className="text-lg font-manrope font-bold tracking-tight">Opticast</span>
                     </div>
                     <div className="flex gap-8 text-sm font-medium text-muted-foreground">
                         <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>
                         <a href="#" className="hover:text-primary transition-colors">Terms of Service</a>
                         <a href="#" className="hover:text-primary transition-colors">Contact Us</a>
                     </div>
-                    <p className="text-sm text-muted-foreground">© 2024 AudioSync Inc. All rights reserved.</p>
+                    <p className="text-sm text-muted-foreground">© 2024 Opticast Inc. All rights reserved.</p>
                 </div>
             </footer>
         </div>

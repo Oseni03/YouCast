@@ -20,12 +20,14 @@ djangorestframework_simplejwt==5.5.1
 feedgen==1.0.0
 frozenlist==1.8.0
 geoip2==5.2.0
+git-filter-repo==2.47.0
 google-api-core==2.30.0
 google-api-python-client==2.190.0
 google-auth==2.48.0
 google-auth-httplib2==0.3.0
 google-auth-oauthlib==1.4.0
 googleapis-common-protos==1.72.0
+gunicorn==21.2.0
 h11==0.16.0
 httpcore==1.0.9
 httplib2==0.31.2
@@ -67,5 +69,6 @@ typing_extensions==4.15.0
 tzdata==2025.3
 uritemplate==4.2.0
 urllib3==2.6.3
+uv==0.11.16
 wrapt==2.1.1
 yarl==1.23.0

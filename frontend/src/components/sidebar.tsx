@@ -54,7 +54,7 @@ export default function Sidebar() {
                         <MapPinCheckIcon className="w-5 h-5" />
                     </div>
                     <div>
-                        <h1 className="text-lg font-manrope font-bold leading-none tracking-tight text-primary">AudioSync</h1>
+                        <h1 className="text-lg font-manrope font-bold leading-none tracking-tight text-primary">Opticast</h1>
                         <p className="text-[11px] font-semibold text-muted-foreground mt-0.5">Creator Studio</p>
                     </div>
                 </div>

@@ -5,7 +5,7 @@ services:
         volumes:
             - postgres_data:/var/lib/postgresql/data
         environment:
-            - POSTGRES_DB=${DB_NAME:-audiosync}
+            - POSTGRES_DB=${DB_NAME:-opticast}
             - POSTGRES_USER=${DB_USER:-postgres}
             - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
         ports:
@@ -14,7 +14,7 @@ services:
             test:
                 [
                     "CMD-SHELL",
-                    "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-audiosync}",
+                    "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-opticast}",
                 ]
             interval: 5s
             timeout: 5s
