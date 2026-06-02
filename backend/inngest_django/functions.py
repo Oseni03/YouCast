@@ -1,3 +1,4 @@
+import logging
 import inngest
 import inngest.django
 
@@ -8,6 +9,8 @@ from django.conf import settings
 from apps.analytics.models import AnalyticsEvent
 from apps.channels.models import Channel
 from apps.episodes.models import Episode
+
+logger = logging.getLogger('tasks.inngest')
 
 KNOWN_PODCAST_APPS = {
     'AppleCoreMedia':      'Apple Podcasts',
@@ -38,8 +41,10 @@ def log_analytics_event_workflow(ctx: inngest.Context):
     try:
         channel = Channel.objects.get(rss_slug=slug)
     except Channel.DoesNotExist:
+        logger.warning('Analytics event received for unknown slug=%s', slug)
         return
 
+    logger.debug('Logging analytics event for slug=%s bytes_served=%s user_agent=%s', slug, bytes_served, user_agent[:200])
     ua_lower = user_agent.lower()
     is_bot = any(sig in ua_lower for sig in BOT_SIGNATURES)
     podcast_app = ''
@@ -70,6 +75,7 @@ def send_weekly_digest_workflow(ctx: inngest.Context):
 
     week_ago = date.today() - timedelta(days=7)
 
+    logger.info('Starting weekly digest job for week starting %s', week_ago)
     for creator in Creator.objects.filter(is_active=True):
         channels = Channel.objects.filter(creator=creator)
         total_downloads = AnalyticsEvent.objects.filter(
@@ -79,7 +85,10 @@ def send_weekly_digest_workflow(ctx: inngest.Context):
         ).count()
 
         if total_downloads == 0:
+            logger.debug('Skipping weekly digest for creator %s because download count is zero', creator.id)
             continue
+
+        logger.info('Sending weekly digest to creator %s with %s downloads', creator.id, total_downloads)
 
         body = render_to_string('analytics/weekly_digest_email.txt', {
             'creator':         creator,
@@ -137,19 +146,23 @@ import isodate
 )
 def process_new_video_notification(ctx: inngest.Context):
     atom_xml = ctx.event.data["atom_xml"]
+    logger.info('Processing new video notification')
     root = ET.fromstring(atom_xml)
     ns = {'yt': 'http://www.youtube.com/xml/schemas/2015', 'atom': 'http://www.w3.org/2005/Atom'}
     video_id = root.find('.//yt:videoId', ns).text
     channel_id = root.find('.//yt:channelId', ns).text
+    logger.debug('Parsed video notification video_id=%s channel_id=%s', video_id, channel_id)
 
     from apps.channels.models import Channel
     from apps.episodes.models import Episode
     try:
         channel = Channel.objects.get(youtube_channel_id=channel_id, monitoring_active=True)
     except Channel.DoesNotExist:
+        logger.warning('Received notification for inactive or unknown channel_id=%s', channel_id)
         return
 
     if Episode.objects.filter(youtube_video_id=video_id).exists():
+        logger.debug('Video %s already processed for channel %s', video_id, channel_id)
         return  # Already processed
 
     # Apply creator filters
@@ -157,14 +170,16 @@ def process_new_video_notification(ctx: inngest.Context):
     yt = YouTubeService(channel.creator)
     video_data = yt.get_video_details(video_id)
     if not video_data:
+        logger.warning('YouTube API returned no details for video_id=%s', video_id)
         return
 
     if not _passes_filters(channel, video_data):
+        logger.info('Video %s failed channel filters and will be skipped', video_id)
         _create_skipped_episode(channel, video_data)
         return
 
     episode = _create_queued_episode(channel, video_data)
-    
+    logger.info('Queued episode %s for audio extraction from video %s', episode.id, video_id)
     inngest_client.send_sync(
         inngest.Event(
             name="youtube/audio.extract",
@@ -188,6 +203,7 @@ def _passes_filters(channel, video_data):
     import isodate
     duration_seconds = isodate.parse_duration(duration_str).total_seconds()
     if min_duration and duration_seconds < min_duration:
+        logger.debug('Filtered out video %s by duration %s < min_duration %s', video_data.get('id'), duration_seconds, min_duration)
         return False
 
     title = video_data.get('snippet', {}).get('title', '').lower()
@@ -196,6 +212,7 @@ def _passes_filters(channel, video_data):
     exclude_keywords = config.get('title_exclude_keywords', [])
     for kw in exclude_keywords:
         if kw.lower() in title:
+            logger.debug('Filtered out video %s by exclude keyword %s', video_data.get('id'), kw)
             return False
 
     # 3. Include keywords (if present, title MUST contain one)
@@ -207,6 +224,7 @@ def _passes_filters(channel, video_data):
                 found = True
                 break
         if not found:
+            logger.debug('Filtered out video %s because include keywords were not found', video_data.get('id'))
             return False
 
     return True
@@ -216,7 +234,7 @@ def _create_skipped_episode(channel, video_data):
     """Logs a video that was detected but filtered out."""
     from apps.episodes.models import Episode, ProcessingStatus
     snippet = video_data.get('snippet', {})
-    Episode.objects.create(
+    episode = Episode.objects.create(
         channel=channel,
         youtube_video_id=video_data['id'],
         youtube_url=f"https://www.youtube.com/watch?v={video_data['id']}",
@@ -227,6 +245,8 @@ def _create_skipped_episode(channel, video_data):
         processing_status=ProcessingStatus.SKIPPED,
         pub_date=snippet.get('publishedAt'),  # Skipped episodes don't really need a pub_date, but it's required
     )
+    logger.info('Created skipped episode record %s for filtered video %s', episode.id, video_data.get('id'))
+    return episode
 
 
 def _create_queued_episode(channel, video_data):
@@ -236,7 +256,7 @@ def _create_queued_episode(channel, video_data):
     import isodate
     duration_seconds = isodate.parse_duration(video_data.get('contentDetails', {}).get('duration', 'PT0S')).total_seconds()
 
-    return Episode.objects.create(
+    episode = Episode.objects.create(
         channel=channel,
         youtube_video_id=video_data['id'],
         youtube_url=f"https://www.youtube.com/watch?v={video_data['id']}",
@@ -248,6 +268,8 @@ def _create_queued_episode(channel, video_data):
         processing_status=ProcessingStatus.QUEUED,
         pub_date=snippet.get('publishedAt'),
     )
+    logger.info('Created queued episode %s for channel %s video %s', episode.id, channel.id, video_data.get('id'))
+    return episode
 
 
 def _build_fake_atom(video_id, youtube_channel_id):
@@ -277,6 +299,7 @@ def extract_audio_workflow(ctx: inngest.Context):
     episode.processing_started_at = timezone.now()
     episode.save(update_fields=['processing_status', 'processing_started_at'])
 
+    logger.info('Starting extract-audio workflow for episode %s', episode_id)
     try:
         def _extract():
             extractor = AudioExtractor()
@@ -306,6 +329,7 @@ def extract_audio_workflow(ctx: inngest.Context):
         ctx.step.run("update-episode-status", _complete)
 
     except Exception as exc:
+        logger.exception('Audio extraction workflow failed for episode %s', episode_id)
         def _fail():
             episode.retry_count += 1
             episode.processing_error = str(exc)
@@ -325,6 +349,7 @@ def schedule_channel_polling_workflow(ctx: inngest.Context):
     from apps.channels.services.youtube import YouTubeService
 
     channels = Channel.objects.filter(monitoring_active=True)
+    logger.info('Running scheduled channel polling for %s monitored channels', channels.count())
     for channel in channels:
         yt = YouTubeService(channel.creator)
         videos = yt.get_latest_videos(channel.youtube_uploads_playlist_id, max_results=10)
@@ -332,6 +357,7 @@ def schedule_channel_polling_workflow(ctx: inngest.Context):
         for item in videos:
             video_id = item['contentDetails']['videoId']
             if not Episode.objects.filter(youtube_video_id=video_id).exists():
+                logger.debug('Polling found new video %s for channel %s', video_id, channel.id)
                 inngest_client.send_sync(
                     inngest.Event(
                         name="youtube/video.notified",
@@ -353,7 +379,10 @@ def schedule_channel_cleanup_workflow(ctx: inngest.Context):
 
     episodes = Episode.objects.filter(channel_id=channel_id, audio_s3_key__isnull=False)
     storage = AudioStorageService()
+    logger.info('Cleaning up audio for channel %s with %s episodes', channel_id, episodes.count())
     for episode in episodes:
         if episode.audio_s3_key:
+            logger.debug('Deleting audio for episode %s key=%s', episode.id, episode.audio_s3_key)
             storage.delete_audio(episode.audio_s3_key)
-    episodes.delete()
+    deleted, _ = episodes.delete()
+    logger.info('Cleanup complete for channel %s deleted_episode_records=%s', channel_id, deleted)

@@ -1,7 +1,10 @@
+import logging
 from feedgen.feed import FeedGenerator
 from django.utils import timezone
 from apps.episodes.models import Episode, ProcessingStatus
 from apps.channels.models import Channel
+
+logger = logging.getLogger('apps.feeds.builder')
 
 
 class RSSFeedBuilder:
@@ -30,11 +33,13 @@ class RSSFeedBuilder:
         fg.podcast.itunes_image(channel.effective_artwork_url)
         fg.updated(timezone.now())
 
+        logger.info('Building RSS feed for channel %s (%s)', channel.id, channel.youtube_channel_id)
         # --- Episodes ---
         episodes = Episode.objects.filter(
             channel=channel,
             processing_status=ProcessingStatus.COMPLETE,
         ).order_by('-pub_date')
+        logger.debug('Found %s complete episodes for channel %s', episodes.count(), channel.id)
 
         for episode in episodes:
             fe = fg.add_entry()

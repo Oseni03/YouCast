@@ -1,5 +1,4 @@
 import logging
-from django.utils import timezone
 from django.utils.text import slugify
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -8,22 +7,27 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
 
+import inngest
+from inngest_django.client import inngest_client
+
 from .models import Channel
 from .serializers import ChannelSerializer, ChannelCreateSerializer, ChannelUpdateSerializer
 from .services.youtube import YouTubeService
 from .services.websub import WebSubService
-# from .tasks.pipeline import schedule_channel_polling
-import inngest
-from inngest_django.client import inngest_client
-
 from apps.episodes.models import Episode
 
+logger = logging.getLogger('apps.channels')
+
+
+# --------------------------------------------------------------------------- #
+#  Channel CRUD                                                                #
+# --------------------------------------------------------------------------- #
 
 @method_decorator(csrf_exempt, name='dispatch')
 class ChannelListCreateView(APIView):
     """
-    GET  /api/channels/        — list all channels for the authenticated creator
-    POST /api/channels/        — connect a new YouTube channel
+    GET  /api/channels/   — list all channels for the authenticated creator
+    POST /api/channels/   — connect a new YouTube channel
     """
     permission_classes = [IsAuthenticated]
 
@@ -32,87 +36,78 @@ class ChannelListCreateView(APIView):
         return Response(ChannelSerializer(channels, many=True).data)
 
     def post(self, request):
-        logger = logging.getLogger('apps.channels')
-        try:
-            # Enforce plan channel limits
-            limit = request.user.channel_limit
-            current_count = Channel.objects.filter(creator=request.user).count()
-            if current_count >= limit:
-                return Response(
-                    {'error': f'Your plan allows a maximum of {limit} channels.'},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
-
-            has_tos = request.user.has_accepted_tos
-            if not has_tos:
-                return Response(
-                    {'error': 'You must accept the Terms of Service before connecting a channel.'},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
-
-            serializer = ChannelCreateSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
-
-            youtube_channel_id = serializer.validated_data['youtube_channel_id']
-
-            # Verify the creator actually owns this channel via YouTube API
-            yt = YouTubeService(request.user)
-            channel_data = yt.verify_channel_ownership(youtube_channel_id)
-            if not channel_data:
-                return Response(
-                    {'error': 'Channel not found or you do not own this channel.'},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
-
-            # Generate a unique RSS slug
-            base_slug = slugify(channel_data['title'])
-            slug      = base_slug
-            counter   = 1
-            while Channel.objects.filter(rss_slug=slug).exists():
-                slug = f'{base_slug}-{counter}'
-                counter += 1
-
-            channel = Channel.objects.create(
-                creator                      = request.user,
-                youtube_channel_id           = youtube_channel_id,
-                channel_title                = channel_data['title'],
-                channel_description          = channel_data['description'],
-                channel_thumbnail_url        = channel_data['thumbnail_url'],
-                youtube_uploads_playlist_id  = channel_data['uploads_playlist_id'],
-                rss_slug                     = slug,
-            )
-
-            # Subscribe to WebSub for real-time new-video notifications
-            try:
-                WebSubService.subscribe(channel)
-            except Exception as e:
-                logger.warning(f"WebSub subscription failed for channel {channel.id}: {e}")
-
-            # Also schedule polling fallback
-            try:
-                inngest_client.send_sync(
-                    inngest.Event(
-                        name="channel/poll",
-                        data={"channel_id": str(channel.id)}
-                    )
-                )
-            except Exception as e:
-                logger.error(f"Failed to schedule polling for channel {channel.id}: {e}")
-
-            return Response(ChannelSerializer(channel).data, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            logger.exception(f"Unhandled error in ChannelListCreateView.post: {e}")
+        # --- plan / ToS guards -------------------------------------------
+        limit = request.user.channel_limit
+        if Channel.objects.filter(creator=request.user).count() >= limit:
             return Response(
-                {'error': 'An internal server error occurred while connecting the channel.'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                {'error': f'Your plan allows a maximum of {limit} channels.'},
+                status=status.HTTP_403_FORBIDDEN,
             )
 
+        if not request.user.has_accepted_tos:
+            return Response(
+                {'error': 'You must accept the Terms of Service before connecting a channel.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # --- validate input -----------------------------------------------
+        serializer = ChannelCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        youtube_channel_id = serializer.validated_data['youtube_channel_id']
+
+        # --- verify ownership via YouTube API -----------------------------
+        yt = YouTubeService(request.user)
+        channel_data = yt.verify_channel_ownership(youtube_channel_id)
+        if not channel_data:
+            return Response(
+                {'error': 'Channel not found or you do not own this channel.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # --- generate unique RSS slug -------------------------------------
+        base_slug = slugify(channel_data['title'])
+        slug, counter = base_slug, 1
+        while Channel.objects.filter(rss_slug=slug).exists():
+            slug = f'{base_slug}-{counter}'
+            counter += 1
+
+        # --- persist -------------------------------------------------------
+        channel = Channel.objects.create(
+            creator=request.user,
+            youtube_channel_id=youtube_channel_id,
+            channel_title=channel_data['title'],
+            channel_description=channel_data['description'],
+            channel_thumbnail_url=channel_data['thumbnail_url'],
+            youtube_uploads_playlist_id=channel_data['uploads_playlist_id'],
+            rss_slug=slug,
+        )
+
+        # --- WebSub subscription (non-fatal) ------------------------------
+        if not WebSubService.subscribe(channel):
+            logger.warning(
+                'WebSub subscription failed for channel %s; polling fallback still active',
+                channel.id,
+            )
+
+        # --- Inngest polling fallback -------------------------------------
+        try:
+            inngest_client.send_sync(
+                inngest.Event(name='channel/poll', data={'channel_id': str(channel.id)})
+            )
+        except Exception:
+            # Non-fatal: polling can be retried; don't roll back channel creation
+            logger.exception('Failed to schedule polling for channel %s', channel.id)
+
+        return Response(ChannelSerializer(channel).data, status=status.HTTP_201_CREATED)
+
+
+# --------------------------------------------------------------------------- #
 
 class YouTubeChannelListView(APIView):
     """
     GET /api/channels/youtube/
     Lists all YouTube channels owned by the authenticated user.
-    Requires that the user has already connected their Google account (tokens stored).
+    Requires the user to have a connected Google account (tokens stored).
     """
     permission_classes = [IsAuthenticated]
 
@@ -120,21 +115,21 @@ class YouTubeChannelListView(APIView):
         if not request.user.google_refresh_token:
             return Response(
                 {'error': 'YouTube account not connected.'},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         yt = YouTubeService(request.user)
         try:
-            channels = yt.list_my_channels()
-            return Response(channels)
-        except Exception as e:
-            logger = logging.getLogger('django')
-            logger.error(f"Failed to fetch YouTube channels: {e}")
+            return Response(yt.list_my_channels())
+        except Exception:
+            logger.exception('Failed to fetch YouTube channels for user %s', request.user.id)
             return Response(
-                {'error': f'Failed to fetch YouTube channels: {str(e)}'},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                {'error': 'Failed to fetch YouTube channels.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+
+# --------------------------------------------------------------------------- #
 
 class ChannelDetailView(APIView):
     """
@@ -144,20 +139,20 @@ class ChannelDetailView(APIView):
     """
     permission_classes = [IsAuthenticated]
 
-    def get_object(self, request, channel_id):
+    def _get_channel(self, request, channel_id):
         try:
             return Channel.objects.get(id=channel_id, creator=request.user)
         except Channel.DoesNotExist:
             return None
 
     def get(self, request, channel_id):
-        channel = self.get_object(request, channel_id)
+        channel = self._get_channel(request, channel_id)
         if not channel:
             return Response(status=status.HTTP_404_NOT_FOUND)
         return Response(ChannelSerializer(channel).data)
 
     def patch(self, request, channel_id):
-        channel = self.get_object(request, channel_id)
+        channel = self._get_channel(request, channel_id)
         if not channel:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
@@ -167,31 +162,25 @@ class ChannelDetailView(APIView):
         return Response(ChannelSerializer(channel).data)
 
     def delete(self, request, channel_id):
-        channel = self.get_object(request, channel_id)
+        channel = self._get_channel(request, channel_id)
         if not channel:
             return Response(status=status.HTTP_404_NOT_FOUND)
 
-        # Unsubscribe from WebSub
         WebSubService.unsubscribe(channel)
 
-        # Schedule audio file deletion (within 30 days per ToS)
-        # Note: Inngest doesn't have a direct 'countdown' in send, 
-        # but we can use step.sleep in a workflow if needed, 
-        # or just trigger it and let the workflow handle the delay if it's critical.
-        # For now, we'll send the event.
-        inngest_client.send_sync(
-            inngest.Event(
-                name="channel/cleanup",
-                data={"channel_id": str(channel.id)}
+        try:
+            inngest_client.send_sync(
+                inngest.Event(name='channel/cleanup', data={'channel_id': str(channel.id)})
             )
-        )
+        except Exception:
+            # Log but don't block deletion — cleanup can be retried via admin
+            logger.exception('Failed to schedule cleanup for channel %s', channel.id)
 
-        channel.monitoring_active = False
-        channel.save(update_fields=['monitoring_active'])
         channel.delete()
-
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
+# --------------------------------------------------------------------------- #
 
 class ChannelRefreshMetadataView(APIView):
     """POST /api/channels/<id>/refresh/ — pull latest metadata from YouTube."""
@@ -206,54 +195,98 @@ class ChannelRefreshMetadataView(APIView):
         yt = YouTubeService(request.user)
         channel_data = yt.get_channel_metadata(channel.youtube_channel_id)
         if channel_data:
-            channel.channel_title         = channel_data['title']
-            channel.channel_description   = channel_data['description']
+            channel.channel_title = channel_data['title']
+            channel.channel_description = channel_data['description']
             channel.channel_thumbnail_url = channel_data['thumbnail_url']
             channel.save(update_fields=[
-                'channel_title', 'channel_description', 'channel_thumbnail_url'
+                'channel_title', 'channel_description', 'channel_thumbnail_url',
             ])
 
         return Response(ChannelSerializer(channel).data)
 
 
+# --------------------------------------------------------------------------- #
+#  WebSub callback                                                             #
+# --------------------------------------------------------------------------- #
+
+@method_decorator(csrf_exempt, name='dispatch')
 class WebSubCallbackView(APIView):
     """
-    GET  /api/channels/websub/callback/ — WebSub subscription verification (hub challenges)
-    POST /api/channels/websub/callback/ — Receive new-video push notification from YouTube
+    GET  /api/channels/websub/callback/ — hub challenge verification
+    POST /api/channels/websub/callback/ — incoming video-published notification
     """
     permission_classes = [AllowAny]
 
     def get(self, request):
-        """YouTube hub sends a GET with hub.challenge to verify the subscription endpoint."""
-        challenge    = request.query_params.get('hub.challenge')
-        mode         = request.query_params.get('hub.mode')
-        topic        = request.query_params.get('hub.topic')
-        lease_seconds = request.query_params.get('hub.lease_seconds', 0)
+        """
+        YouTube hub sends a GET with hub.challenge to verify the endpoint.
+        We must echo the challenge back as plain text with a 200.
+        """
+        mode      = request.query_params.get('hub.mode')
+        topic     = request.query_params.get('hub.topic')
+        challenge = request.query_params.get('hub.challenge')
+        lease_str = request.query_params.get('hub.lease_seconds', '0')
 
-        if mode == 'subscribe' and challenge:
-            # Update subscription expiry on the channel
-            WebSubService.confirm_subscription(topic, int(lease_seconds))
-            return Response(int(challenge), status=status.HTTP_200_OK,
-                            content_type='text/plain')
+        if not (mode == 'subscribe' and challenge and topic):
+            return Response(status=status.HTTP_400_BAD_REQUEST)
 
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        try:
+            lease_seconds = int(lease_str)
+        except (ValueError, TypeError):
+            lease_seconds = 0
+
+        WebSubService.confirm_subscription(topic, lease_seconds)
+
+        # The hub requires the raw challenge string as the response body, not JSON
+        from django.http import HttpResponse
+        return HttpResponse(challenge, content_type='text/plain', status=200)
 
     def post(self, request):
-        """YouTube pushes an Atom feed entry when a new video is published."""
-        inngest_client.send_sync(
-            inngest.Event(
-                name="youtube/video.notified",
-                data={"atom_xml": request.body.decode('utf-8')}
+        """
+        YouTube pushes an Atom feed entry when a new video is published.
+        Verify the HMAC signature before forwarding to Inngest.
+        """
+        # Resolve channel from topic so we can look up its secret
+        topic = request.headers.get('X-Hub-Topic') or request.query_params.get('hub.topic', '')
+        channel_id = WebSubService._extract_channel_id(topic)
+        channel = Channel.objects.filter(youtube_channel_id=channel_id).first() if channel_id else None
+
+        if channel:
+            sig_header = request.headers.get('X-Hub-Signature', '')
+            if not WebSubService.verify_notification_signature(channel, request.body, sig_header):
+                logger.warning(
+                    'Rejected WebSub notification with invalid signature for channel %s',
+                    channel_id,
+                )
+                return Response(status=status.HTTP_403_FORBIDDEN)
+        else:
+            # Channel not found — could be a replay for a deleted channel; log and discard
+            logger.warning('WebSub POST received for unknown channel_id=%s', channel_id)
+            return Response(status=status.HTTP_200_OK)
+
+        try:
+            inngest_client.send_sync(
+                inngest.Event(
+                    name='youtube/video.notified',
+                    data={'atom_xml': request.body.decode('utf-8')},
+                )
             )
-        )
-        # Return 200 quickly — all processing happens async
+        except Exception:
+            logger.exception('Failed to forward WebSub notification to Inngest')
+            # Return 200 anyway — returning 5xx causes the hub to retry aggressively
+        
         return Response(status=status.HTTP_200_OK)
 
+
+# --------------------------------------------------------------------------- #
+#  Eligible videos                                                             #
+# --------------------------------------------------------------------------- #
 
 class EligibleVideoListView(APIView):
     """
     GET /api/channels/<id>/eligible-videos/
-    Fetch videos from the channel's YouTube uploads playlist and filter out those already processed.
+    Fetch up to 50 videos from the channel's uploads playlist,
+    excluding those that already have an Episode record.
     """
     permission_classes = [IsAuthenticated]
 
@@ -264,29 +297,35 @@ class EligibleVideoListView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
 
         if not channel.youtube_uploads_playlist_id:
-            return Response({'error': 'Channel upload playlist ID not found.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'error': 'Channel upload playlist ID not found.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         yt = YouTubeService(request.user)
         videos = yt.get_latest_videos(channel.youtube_uploads_playlist_id, max_results=50)
 
-        # Filter out videos that already have Episode records
         video_ids = [v['contentDetails']['videoId'] for v in videos]
-        existing_video_ids = set(
-            Episode.objects.filter(youtube_video_id__in=video_ids).values_list('youtube_video_id', flat=True)
+        existing_ids = set(
+            Episode.objects.filter(youtube_video_id__in=video_ids)
+            .values_list('youtube_video_id', flat=True)
         )
 
-        eligible_videos = []
+        eligible = []
         for v in videos:
             vid = v['contentDetails']['videoId']
-            if vid not in existing_video_ids:
-                snippet = v.get('snippet', {})
-                eligible_videos.append({
-                    'id': vid,
-                    'title': snippet.get('title', ''),
-                    'thumbnail': (snippet.get('thumbnails', {}).get('high') or snippet.get('thumbnails', {}).get('default') or {}).get('url', ''),
-                    'uploadedAt': snippet.get('publishedAt', ''),
-                    # Duration is not in playlistItems.list by default, would need another call to videos().list
-                    # For now, we'll keep it simple or fetch details if needed.
-                })
+            if vid in existing_ids:
+                continue
+            snippet = v.get('snippet', {})
+            thumbnails = snippet.get('thumbnails', {})
+            thumbnail_url = (
+                (thumbnails.get('high') or thumbnails.get('default') or {}).get('url', '')
+            )
+            eligible.append({
+                'id': vid,
+                'title': snippet.get('title', ''),
+                'thumbnail': thumbnail_url,
+                'uploadedAt': snippet.get('publishedAt', ''),
+            })
 
-        return Response(eligible_videos)
+        return Response(eligible)

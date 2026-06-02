@@ -1,8 +1,10 @@
+import logging
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 from django.conf import settings
 
+logger = logging.getLogger('apps.episodes.storage')
 
 cloudinary.config(
     cloud_name = settings.CLOUDINARY_CLOUD_NAME,
@@ -26,6 +28,7 @@ class AudioStorageService:
         """
         public_id = self._key_to_public_id(s3_key)
 
+        logger.info('Uploading audio to Cloudinary for key=%s filepath=%s', s3_key, filepath)
         cloudinary.uploader.upload(
             filepath,
             resource_type = "video",   # Cloudinary uses "video" for all audio types
@@ -34,7 +37,7 @@ class AudioStorageService:
             overwrite     = True,
             format        = self._content_type_to_format(content_type),
         )
-
+        logger.debug('Upload complete for key=%s public_id=%s', s3_key, public_id)
         return s3_key  # return original key — callers store this as audio_s3_key
 
     def generate_signed_url(self, s3_key: str, expiry_hours: int = 24) -> str:
@@ -44,18 +47,19 @@ class AudioStorageService:
         """
         public_id = self._key_to_public_id(s3_key)
 
+        logger.info('Generating signed audio URL for key=%s expiry_hours=%s', s3_key, expiry_hours)
         url = cloudinary.utils.private_download_url(
             public_id,
             resource_type = "video",
             expires_at    = int(__import__("time").time()) + (expiry_hours * 3600),
             attachment    = False,
         )
-
+        logger.debug('Signed URL generated for key=%s url=%s', s3_key, url)
         return url
 
     def delete_audio(self, s3_key: str):
         public_id = self._key_to_public_id(s3_key)
-
+        logger.info('Deleting Cloudinary audio resource for key=%s public_id=%s', s3_key, public_id)
         cloudinary.api.delete_resources(
             [public_id],
             resource_type = "video",

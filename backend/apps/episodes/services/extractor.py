@@ -1,7 +1,10 @@
+import logging
 import subprocess
 import os
 import tempfile
 from pathlib import Path
+
+logger = logging.getLogger('apps.episodes.extractor')
 
 
 class AudioExtractor:
@@ -17,6 +20,7 @@ class AudioExtractor:
         Downloads audio from youtube_url, normalizes loudness, returns file info.
         Returns: { 'filepath': str, 'duration_seconds': int, 'size_bytes': int }
         """
+        logger.info('Starting audio extraction for %s output_format=%s', youtube_url, output_format)
         with tempfile.TemporaryDirectory() as tmpdir:
             raw_path    = os.path.join(tmpdir, 'raw.%(ext)s')
             output_path = os.path.join(tmpdir, f'episode.{output_format}')
@@ -43,6 +47,7 @@ class AudioExtractor:
 
             size_bytes = os.path.getsize(output_path)
             duration   = self._get_duration(output_path)
+            logger.info('Audio extraction complete for %s size=%s duration=%s', youtube_url, size_bytes, duration)
 
             return {
                 'filepath':         output_path,
@@ -54,6 +59,7 @@ class AudioExtractor:
         codec = 'libmp3lame' if fmt == 'mp3' else 'aac'
         bitrate = '320k' if fmt == 'mp3' else '256k'
 
+        logger.debug('Normalizing audio %s -> %s codec=%s bitrate=%s', input_path, output_path, codec, bitrate)
         subprocess.run([
             'ffmpeg', '-i', input_path,
             '-af', f'loudnorm=I={self.TARGET_LUFS}:TP=-1.5:LRA=11',
