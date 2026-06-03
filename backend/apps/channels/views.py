@@ -92,7 +92,11 @@ class ChannelListCreateView(APIView):
         # --- Inngest polling fallback -------------------------------------
         try:
             inngest_client.send_sync(
-                inngest.Event(name='channel/poll', data={'channel_id': str(channel.id)})
+                inngest.Event(
+                    name='channel/poll',
+                    id=f'channel-poll-{channel.id}',
+                    data={'channel_id': str(channel.id)}
+                )
             )
         except Exception:
             # Non-fatal: polling can be retried; don't roll back channel creation
@@ -170,7 +174,11 @@ class ChannelDetailView(APIView):
 
         try:
             inngest_client.send_sync(
-                inngest.Event(name='channel/cleanup', data={'channel_id': str(channel.id)})
+                inngest.Event(
+                    name='channel/cleanup',
+                    id=f'channel-cleanup-{channel.id}',
+                    data={'channel_id': str(channel.id)}
+                )
             )
         except Exception:
             # Log but don't block deletion — cleanup can be retried via admin
@@ -268,6 +276,7 @@ class WebSubCallbackView(APIView):
             inngest_client.send_sync(
                 inngest.Event(
                     name='youtube/video.notified',
+                    id=f'websub-notification-{channel_id}',
                     data={'atom_xml': request.body.decode('utf-8')},
                 )
             )

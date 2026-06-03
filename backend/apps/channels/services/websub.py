@@ -68,7 +68,7 @@ class WebSubService:
             'WebSub subscribe response status=%s body=%s',
             response.status_code, response.text[:500],
         )
-        success = response.status_code == 204
+        success = response.status_code in (200, 202, 204)
         if not success:
             logger.warning(
                 'Failed to subscribe to WebSub topic %s for channel %s (status=%s)',
@@ -102,7 +102,7 @@ class WebSubService:
             'WebSub unsubscribe response status=%s body=%s',
             response.status_code, response.text[:500],
         )
-        success = response.status_code == 204
+        success = response.status_code in (202, 204)
         if not success:
             logger.warning(
                 'Failed to unsubscribe from WebSub topic %s for channel %s (status=%s)',

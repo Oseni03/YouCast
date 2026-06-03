@@ -313,7 +313,11 @@ export default function GlobalProjectsOverviewPage() {
 														: "Connect your YouTube account first to access your channels and create projects."}
 												</p>
 												<Link
-													href="/onboarding"
+													href={
+														isYouTubeConnected
+															? "/projects/new"
+															: "/onboarding"
+													}
 													className={`inline-block px-8 py-3 font-semibold rounded-lg shadow-md hover:shadow-lg transition-all ${
 														isYouTubeConnected
 															? "bg-linear-to-br from-primary to-primary-container text-primary-foreground"
