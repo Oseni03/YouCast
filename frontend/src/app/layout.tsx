@@ -2,6 +2,7 @@ import QueryProvider from "@/components/providers/QueryProvider";
 import type { Metadata } from "next";
 import { Manrope, Inter } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "@/components/ui/sonner";
 
 const manrope = Manrope({
 	variable: "--font-manrope",
@@ -30,6 +31,7 @@ export default function RootLayout({
 				className={`${manrope.variable} ${inter.variable} font-sans antialiased`}
 			>
 				<QueryProvider>{children}</QueryProvider>
+				<Toaster />
 			</body>
 		</html>
 	);
