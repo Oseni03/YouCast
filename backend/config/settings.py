@@ -251,7 +251,7 @@ WEBSUB_CALLBACK_URL = os.environ.get(
     "WEBSUB_CALLBACK_URL",
     "http://localhost:8000/api/channels/websub/callback/",
 )
-
+WEBSUB_HUB_SECRET= os.environ.get("WEBSUB_HUB_SECRET", "change_me_to_a_random_secret_in_production")
 
 # ---------------------------------------------------------------------------
 # Frontend
