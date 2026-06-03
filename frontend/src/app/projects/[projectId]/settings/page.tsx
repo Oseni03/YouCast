@@ -5,10 +5,11 @@ import React, { useState, useEffect } from 'react';
 import { useChannel, useUpdateChannel, useDeleteChannel } from '@/hooks/useChannels';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogHeader, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 
 export default function ProjectSettingsPage() {
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const router = useRouter();
     const params = useParams();
     const projectId = params.projectId as string;
@@ -56,13 +57,16 @@ export default function ProjectSettingsPage() {
     };
 
     const handleDelete = async () => {
-        try {
-            await deleteChannelMutation.mutateAsync(projectId);
-            toast.success("Project deleted successfully")
-            router.push('/projects');
-        } catch (err) {
-            console.error('Failed to delete project:', err);
-        }
+        deleteChannelMutation.mutate(projectId, {
+            onSuccess: () => {
+                toast.success('Project deleted successfully');
+                router.push('/projects');
+            },
+            onError: (err) => {
+                console.error('Failed to delete project:', err);
+                toast.error('Failed to delete project. Please try again.');
+            },
+        });
     };
 
     if (isLoading) {
@@ -235,7 +239,7 @@ export default function ProjectSettingsPage() {
                 </div>
 
                 {/* Danger Zone */}
-                <AlertDialog>
+                    <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                     <section className="bg-destructive/5 p-6 md:p-8 rounded-3xl border border-destructive/20 mt-12">
                         <div className="flex items-center gap-3 mb-4 text-destructive">
                             <Trash2Icon className="size-5" />
@@ -268,13 +272,13 @@ export default function ProjectSettingsPage() {
                                     >
                                         Cancel
                                     </AlertDialogCancel>
-                                    <AlertDialogAction
+                                    <Button
                                         onClick={handleDelete}
                                         className="flex-1 py-3 bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-xl font-semibold text-sm transition-colors duration-200 disabled:opacity-50"
                                         disabled={deleteChannelMutation.isPending}
                                     >
                                         {deleteChannelMutation.isPending ? 'Deleting...' : 'Confirm'}
-                                    </AlertDialogAction>
+                                    </Button>
                                 </div>
                             </div>
                         </div>
