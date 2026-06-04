@@ -99,7 +99,11 @@ export default function AuthForm({ mode }: AuthFormProps) {
 						className="flex items-center gap-3 mb-10 w-fit group"
 					>
 						<div className="size-10 bg-primary rounded-xl flex items-center justify-center text-primary-foreground shadow-sm">
-							<AppLogo width={24} height={24} className="object-contain" />
+							<AppLogo
+								width={24}
+								height={24}
+								className="object-contain"
+							/>
 						</div>
 						<span className="text-2xl font-manrope font-bold tracking-tight text-primary">
 							Opticast

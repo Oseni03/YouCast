@@ -91,11 +91,15 @@ export default function Sidebar() {
 		<ShadcnSidebar className="border-r border-border bg-surface-container-lowest!">
 			<SidebarHeader className="p-5 border-b border-border bg-surface-container-lowest">
 				<SidebarMenu>
-					<SidebarMenuItem> 
+					<SidebarMenuItem>
 						<SidebarMenuButton size="lg" asChild>
 							<a href="#">
 								<div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-									<AppLogo width={20} height={20} className="object-contain" />
+									<AppLogo
+										width={20}
+										height={20}
+										className="object-contain"
+									/>
 								</div>
 								<div className="grid flex-1 text-left text-sm leading-tight">
 									<span className="truncate font-medium">
