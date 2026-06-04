@@ -1,9 +1,9 @@
 "use client";
 
 import Link from 'next/link';
-import { ArrowRight, Play, Save, WandSparkles, Rss, Activity, Loader2 } from "lucide-react";
-import Image from "next/image";
+import { ArrowRight, Play, WandSparkles, Rss, Activity, Loader2 } from "lucide-react";
 import { useMe } from '@/hooks/useAuth';
+import { AppLogo } from '@/components/app-logo';
 
 export default function Home() {
     const { data: user } = useMe();
@@ -14,7 +14,7 @@ export default function Home() {
                 <div className="max-w-7xl mx-auto px-6 md:px-10 py-5 flex items-center justify-between">
                     <div className="flex items-center gap-3 group cursor-pointer">
                         <div className="size-10 rounded-xl bg-primary flex items-center justify-center text-primary-foreground shadow-md transition-transform group-hover:rotate-12">
-                            <Save />
+                            <AppLogo width={24} height={24} className="object-contain" />
                         </div>
                         <span className="text-xl font-manrope font-bold tracking-tight">Opticast</span>
                     </div>
@@ -139,7 +139,7 @@ export default function Home() {
                 <div className="max-w-7xl mx-auto px-6 md:px-10 flex flex-col md:flex-row justify-between items-center gap-8 md:gap-12">
                     <div className="flex items-center gap-3">
                         <div className="size-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground">
-                            <Save className="size-5" />
+                            <AppLogo width={20} height={20} className="object-contain" />
                         </div>
                         <span className="text-lg font-manrope font-bold tracking-tight">Opticast</span>
                     </div>
