@@ -59,19 +59,19 @@ export function NavUser() {
 						>
 							<Avatar className="h-8 w-8 rounded-lg">
 								<AvatarImage
-									src={user.avatar}
-									alt={user.name}
+									src={user?.avatar_url || undefined}
+									alt={user?.username}
 								/>
 								<AvatarFallback className="rounded-lg">
-									CN
+									{fallbackInitials || "CN"}
 								</AvatarFallback>
 							</Avatar>
 							<div className="grid flex-1 text-left text-sm leading-tight">
 								<span className="truncate font-medium">
-									{user.name}
+									{displayName}
 								</span>
 								<span className="truncate text-xs">
-									{user.email}
+									{displayEmail}
 								</span>
 							</div>
 							<ChevronsUpDown className="ml-auto size-4" />
