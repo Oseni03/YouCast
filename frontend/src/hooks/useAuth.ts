@@ -74,6 +74,7 @@ export const useMe = () => {
 			const response = await api.get<Creator>("/auth/me/");
 			return response.data;
 		},
+		retry: false, // don't hammer the server on 401
 	});
 };
 
