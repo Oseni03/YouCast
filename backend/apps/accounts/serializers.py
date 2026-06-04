@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
-from .models import Creator
+from .models import Creator, NotificationPreferences
 
 class CreatorSerializer(serializers.ModelSerializer):
     class Meta:
@@ -42,3 +42,9 @@ class SignupSerializer(serializers.ModelSerializer):
             password=validated_data['password'],
             username=validated_data['username']
         )
+
+
+class NotificationPreferencesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = NotificationPreferences
+        fields = ['email_notifications', 'push_notifications', 'marketing_emails']

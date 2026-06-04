@@ -14,8 +14,8 @@ from google.oauth2 import id_token as google_id_token
 from google.auth.transport import requests as google_requests
 from django.contrib.auth import authenticate
 
-from .models import Creator
-from .serializers import CreatorSerializer, CreatorUpdateSerializer, TOSAcceptSerializer, SignupSerializer
+from .models import Creator, NotificationPreferences
+from .serializers import CreatorSerializer, CreatorUpdateSerializer, TOSAcceptSerializer, SignupSerializer, NotificationPreferencesSerializer
 
 
 class GoogleOAuthAuthorizeView(APIView):
@@ -270,3 +270,21 @@ class EmailLoginView(APIView):
             }, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+
+class NotificationPreferencesView(APIView):
+    """GET/PATCH /api/auth/notification-preferences/ — manage notification preferences."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """Retrieve the authenticated creator's notification preferences."""
+        prefs, created = NotificationPreferences.objects.get_or_create(creator=request.user)
+        return Response(NotificationPreferencesSerializer(prefs).data)
+
+    def patch(self, request):
+        """Update the authenticated creator's notification preferences."""
+        prefs, created = NotificationPreferences.objects.get_or_create(creator=request.user)
+        serializer = NotificationPreferencesSerializer(prefs, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(NotificationPreferencesSerializer(prefs).data)

@@ -89,3 +89,25 @@ class Creator(AbstractBaseUser, PermissionsMixin):
             PlanTier.AGENCY:  20,
         }
         return limits.get(self.plan_tier, 1)
+
+
+class NotificationPreferences(models.Model):
+    """
+    Stores notification preferences for each creator.
+    OneToOne with Creator — each creator has one preference record.
+    """
+    creator = models.OneToOneField(Creator, on_delete=models.CASCADE, related_name='notification_preferences', primary_key=True)
+    
+    # Email notifications
+    email_notifications = models.BooleanField(default=True)  # Weekly performance reports
+    push_notifications = models.BooleanField(default=True)   # Episode publish alerts
+    marketing_emails = models.BooleanField(default=False)    # Feature announcements
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'notification_preferences'
+    
+    def __str__(self):
+        return f"NotificationPreferences({self.creator.email})"

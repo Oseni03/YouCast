@@ -20,4 +20,5 @@ urlpatterns = [
     # Creator profile
     path('me/',              views.MeView.as_view(),                        name='me'),
     path('tos/',             views.TOSAcceptView.as_view(),                 name='tos_accept'),
+    path('notification-preferences/', views.NotificationPreferencesView.as_view(), name='notification_preferences'),
 ]
