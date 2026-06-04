@@ -42,7 +42,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
 			loginMutation.mutate(
 				{ email, password },
 				{
-					onSuccess: () => router.push("/onboarding"),
+					onSuccess: () => router.push("/projects"),
 					onError: (error: any) => {
 						setFormError(
 							error.response?.data?.error ||
